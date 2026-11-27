@@ -58,7 +58,7 @@ Kein Fine-Tuning, kein Gesetzes-Vollimport außerhalb dieser ID.
 
 | Phase | Kürzel | Inhalt | Status |
 |-------|--------|--------|--------|
-| **A — RAG (jetzt)** | **KR0–KR9** | Verdrahtung Suche → Fakten → Qwen; CRM-Korpus; Quellen; Smoke | **KR0–2 ✅** · als Nächstes **KR3** |
+| **A — RAG (jetzt)** | **KR0–KR9** | Verdrahtung Suche → Fakten → Qwen; CRM-Korpus; Quellen; Smoke | **KR0–3 ✅** · als Nächstes **KR4** |
 | **B — Rechtskorpus** | **KL0–KL5** | Gesetze/Urteile importieren & indexieren (nach stabilem RAG) | geplant |
 | **C — Intent-LLM** | **KI0–KI3** | Qwen nur als Frage-Parser (JSON), Suche weiter PHP | geplant |
 | **D — Produkt/Haftung** | **KH0–KH3** | Disclaimer, Protokoll-Felder, Admin-Qualität | geplant |
@@ -80,7 +80,7 @@ Kein Fine-Tuning, kein Gesetzes-Vollimport außerhalb dieser ID.
 | **KR0** | Plan/Abgrenzung (diese Datei) · Haken in TODOS | 🟢 | [x] 2026-11-27 |
 | **KR1** | Ist-Inventar Kichel-Pipeline (nur lesen) | 🟢 | [x] 2026-11-27 · §3.2 |
 | **KR2** | Fakten-Objekt + Prompt-Vertrag (`phrase` nur aus Fakten) | 🟡 | [x] 2026-11-27 · a–c ✅ |
-| **KR3** | Retrieval-Orchestrierung (Reihenfolge Sucher) | 🟡 | [ ] · Kinder a–d |
+| **KR3** | Retrieval-Orchestrierung (Reihenfolge Sucher) | 🟡 | [x] 2026-11-27 · a–d ✅ |
 | **KR4** | CRM-Korpus v1 (Knowledge/Nav/Felder → einheitliche Chunks) | 🟡 | [ ] · Kinder a–c |
 | **KR5** | Ranking / „kein Treffer“ / Mehrfachtreffer | 🟡 | [ ] · Kinder a–b |
 | **KR6** | Quellenzeile in Antwort + Protokoll | 🟡 | [ ] · Kinder a–b |
@@ -238,22 +238,37 @@ API: `KichelRagFact::make` / `normalize` / `normalizeList` / `fromMoneyCalculati
 
 #### Anbindung Ist
 
-`KichelAssistant::wrapMoney` → RAG-Fakten + `compose`; Response zusätzlich `rag_facts`. Topic/Nav noch ohne phrase (→ KR3).
+`KichelAssistant::wrapMoney` → RAG-Fakten + `compose`; Response zusätzlich `rag_facts`.
 
 **Selftest:** `php bin/kichel-rag-fact-selftest.php` → ALL OK.
 
 ---
 
-### 3.4 KR3 — Retrieval-Orchestrierung
+### 3.4 KR3 — Retrieval-Orchestrierung ✅ 2026-11-27
 
-| Kind | Aufgabe | Abnahme |
-|------|---------|---------|
-| **KR3a** | Eine Stelle „Retriever“: sammelt Kandidaten → normalisiert auf KR2-Schema | eine Aufrufkette |
-| **KR3b** | Reihenfolge verbindlich: Money/Legal-Pflichtpfade **vor** freier Suche; RAG nur wenn nötig | Doc + Code-Pfad |
-| **KR3c** | Budget: max. N Chunks / max. Zeichen an Ollama (Timeout schützen) | Konstante/Config |
-| **KR3d** | Feature-Flag z. B. `rag_enabled` in `kichel.local.php` (Default an auf Dev nach Smoke) | Flag wirkt |
+| Kind | Aufgabe | Abnahme | Status |
+|------|---------|---------|--------|
+| **KR3a** | Eine Stelle Retriever → KR2-Schema | `KichelRetriever::retrieve` | [x] |
+| **KR3b** | Legal → Ledger → Money(calc) → freie Suche; RAG nur bei `candidates`/`money` | Pfad-Feld `path` | [x] |
+| **KR3c** | Budget Chunks/Zeichen | `rag_max_facts` / `rag_max_chars` · `applyBudget` | [x] |
+| **KR3d** | Flag `rag_enabled` | Default **true** wenn Key fehlt · Example gesetzt | [x] |
 
-**Nicht in KR3:** Embedding-DB, Vektorsuche (kann später als Drop-in hinter dieselbe Schnittstelle).
+**Nicht in KR3:** Embedding-DB, Vektorsuche, neuer Gesetzeskorpus (→ KL / KR4c).
+
+#### Aufrufkette
+
+```text
+KichelAssistant::answer
+  → KichelRetriever::retrieve
+       path legal | ledger | money | candidates | empty
+  → Wrap:
+       money / (candidates + rag_enabled) → compose + rag_facts
+       candidates + !rag_enabled → klassische PHP-Bausteine
+```
+
+Config (`config/kichel.local.php` / `.example`): `rag_enabled`, `rag_max_facts` (5), `rag_max_chars` (4000).
+
+**Selftest:** `php bin/kichel-retriever-selftest.php` → ALL OK.
 
 ---
 
@@ -448,8 +463,8 @@ KR0 ✅
 
 ## 12. Nächster konkreter Schritt
 
-**KR3** (Retrieval-Orchestrierung) — Start **KR3a** (Retriever → KR2-Schema).  
-Kein Gesetzesimport, kein Fine-Tuning.
+**KR4** (CRM-Korpus v1) — Start **KR4a** (Knowledge → Chunks mit Quelle).  
+Kein Gesetzes-Vollimport, kein Fine-Tuning.
 
 ---
 
@@ -460,3 +475,4 @@ Kein Gesetzesimport, kein Fine-Tuning.
 | 2026-11-27 | Erstfassung: KR Microschritte · KL/KI/KH · KT/KP/KU beschrieben · RAG zuerst |
 | 2026-11-27 | **KR1 ✅** Ist-Inventar: Pipeline, phrase nur Money, CodeSearch unverdrahtet, Lücken |
 | 2026-11-27 | **KR2 ✅** `KichelRagFact` + Prompt-Vertrag + Fallback/`compose` · Money angebunden · Selftest |
+| 2026-11-27 | **KR3 ✅** `KichelRetriever` · Pflichtpfade · Budget · `rag_enabled` · Assistant compose |

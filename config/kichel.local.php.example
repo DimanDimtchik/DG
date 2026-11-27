@@ -2,13 +2,17 @@
 declare(strict_types=1);
 
 /**
- * Kichel Phase 2 — Ollama (optional). Kopie als config/kichel.local.php (nicht committen).
+ * Kichel Phase 2 / KR3 — Ollama + RAG (optional). Kopie als config/kichel.local.php (nicht committen).
  *
  * Regel: Geldbeträge immer PHP (KichelMoneyLogic). Ollama nur Formulierung.
+ * rag_enabled: freie Suche → Fakten → compose (sonst klassische PHP-Bausteine).
  */
 return [
     'ollama_enabled' => false,
     'ollama_url' => 'http://127.0.0.1:11434',
     'ollama_model' => 'llama3.1:8b',
     'timeout_seconds' => 60,
+    'rag_enabled' => true,
+    'rag_max_facts' => 5,
+    'rag_max_chars' => 4000,
 ];

@@ -4,7 +4,7 @@
 
 Stand: **2026-11-11** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)** (A→C FiBu/Hetzner · **D0 Lohn:** zuerst Lexware-Office-Niveau, dann SV-Automatik, dann Baulohn-Produkt · D1 Jahresblock). Lohn-Detailquelle: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md).
 
-**Nächste Session:** Kichel **RAG** — Plan [`KICHEL-RAG-TRAINING-PLAN.md`](KICHEL-RAG-TRAINING-PLAN.md) · **KR3** (Retriever). Parallel offen: Super-Kichel **SKP1d**/ **SKP1e**. Phase-B Cutover/SC2 **geparkt**. **PB1–PB3 ✅**. AVV ✅.
+**Nächste Session:** Kichel **RAG** — Plan [`KICHEL-RAG-TRAINING-PLAN.md`](KICHEL-RAG-TRAINING-PLAN.md) · **KR4** (CRM-Korpus). Parallel offen: Super-Kichel **SKP1d**/ **SKP1e**. Phase-B Cutover/SC2 **geparkt**. **PB1–PB3 ✅**. AVV ✅.
 
 **Ops-Merkposten (GEX45):** Ollama **SKB1 ✅** + CRM-Proxy **SKC1 ✅** (`llm.ganz-soft.de`). OpenHands **SKP0 ✅**: Tunnel `-L 3000` + `-L 11434` · `/superkihel` → Agent. Details: [`SUPERKICHEL-SKP-PLAN.md`](SUPERKICHEL-SKP-PLAN.md) · [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md).
 
@@ -23,7 +23,7 @@ Stand: **2026-11-11** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZN
 | Tests | [`TESTLISTE-2026-09-22.md`](TESTLISTE-2026-09-22.md) | Manuelle Smoke ganz-soft |
 | ERP V2 | [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) · Rest tokenarm: [`ERP-REST-PLAN.md`](ERP-REST-PLAN.md) | Lohn/Baulohn, Zertifizierungen, Maschinen-Gemeinkosten, Akademie-Wissensbrücke |
 | Super-Kichel / GEX | [`SUPERKICHEL-GEX-PLAN.md`](SUPERKICHEL-GEX-PLAN.md) · UI: [`SUPERKICHEL-UI-PLAN.md`](SUPERKICHEL-UI-PLAN.md) · Agent: [`SUPERKICHEL-SKP-PLAN.md`](SUPERKICHEL-SKP-PLAN.md) | **SKU/SKC/SKD/SKP0 ✅** · **SKP1a–c ✅** (`https://agent.ganz-soft.de`) · nächste **SKP1d/e** |
-| Kichel RAG → Training | [`KICHEL-RAG-TRAINING-PLAN.md`](KICHEL-RAG-TRAINING-PLAN.md) · Basis [`KICHEL-PHASE2.md`](KICHEL-PHASE2.md) | **KR0–2 ✅** · als Nächstes **KR3**; Gesetze **KL** / Fine-Tune **KT** / Volltraining **KP** erst nach RAG-Gate **KR9** |
+| Kichel RAG → Training | [`KICHEL-RAG-TRAINING-PLAN.md`](KICHEL-RAG-TRAINING-PLAN.md) · Basis [`KICHEL-PHASE2.md`](KICHEL-PHASE2.md) | **KR0–3 ✅** · als Nächstes **KR4**; Gesetze **KL** / Fine-Tune **KT** / Volltraining **KP** erst nach RAG-Gate **KR9** |
 
 **Nächster Block:** **SKP1e** empfohlen (CRM-Button auf HTTPS-Agent) · oder **SKP1d** Feinschliff. Cutover/SC2 geparkt. UI/CSS U0–U5 ✅.
 
