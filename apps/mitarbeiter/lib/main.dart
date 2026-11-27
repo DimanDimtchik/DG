@@ -11,7 +11,6 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'api_auth.dart';
 import 'api_base_url.dart';
@@ -175,7 +174,7 @@ class ApiClient {
           if (token != null && token!.isNotEmpty) 'Authorization': 'Bearer $token',
         });
 
-    late final http.Response res;
+    late http.Response res;
     try {
       res = await once();
     } catch (e) {

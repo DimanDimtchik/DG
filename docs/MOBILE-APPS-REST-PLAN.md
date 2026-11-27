@@ -140,10 +140,10 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | **MA3c** | Abwesenheit beantragen + Liste; Schichten Woche | 🟡 | [x] 2026-11-27 · Absences/Shifts Härte · Dev-E2E |
 | **MA3d** | Profil + Konto-Saldo; Akte-Liste/Download wenn API da | 🟡 | [x] 2026-11-27 · Profil/Konto/Akte Härte · Dev-E2E |
 | **MA3e** | Unterschrift (bestehende `signature_page`) — nur Härte/Fehlerpfade | 🟡 | [x] 2026-11-27 · no_crm_user/Pad/Retry · Dev-E2E + Selftest |
-| **MA3f** | Smoke Emulator/Gerät + Kurznotiz §8 | 🔴 | [ ] |
+| **MA3f** | Smoke Emulator/Gerät + Kurznotiz §8 | 🔴 | [x] 2026-11-27 · Flutter analyze/test + Web-UI Chrome · §8 |
 
-**Prompt MA3f:**  
-`Nur Mini-ID MA3f laut docs/MOBILE-APPS-REST-PLAN.md. Nur apps/mitarbeiter. Smoke Emulator/Gerät + Kurznotiz §8. Kein Kalender.`
+**Prompt MA4a:**  
+`Nur Mini-ID MA4a laut docs/MOBILE-APPS-REST-PLAN.md. PHP Selftest Auth + Customer-/Staff-Happy-Path. Kein Flutter-Umbau.`
 
 ---
 
@@ -258,7 +258,7 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | Abwesenheit/Schichten | ✅ MA3c |
 | Profil/Konto/Akte | ✅ MA3d |
 | Unterschrift Härte | ✅ MA3e (`signature_page` + `no_crm_user`) |
-| Smoke Geräte | ✅ MA2e (Web/Chrome + API-Kette; Android-Emulator optional) · **MA3f** |
+| Smoke Geräte | ✅ MA2e Kalender · ✅ MA3f Mitarbeiter (Web/Chrome + API-Kette; Android-Emulator optional) |
 
 ### 7.1 MA0c — Wo kommt die CRM-Basis-URL her? (2026-11-27)
 
@@ -297,7 +297,7 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | MA3c | 2026-11-27 | Dev API `ganz-om.de` | Urlaub beantragen+Liste ✅ · shifts week= ✅ · `mobile-mitarbeiter-absences-shifts-selftest.php` |
 | MA3d | 2026-11-27 | Dev API `ganz-om.de` | Profil/Konto/Akte ✅ · `mobile-mitarbeiter-profile-konto-docs-selftest.php` |
 | MA3e | 2026-11-27 | Dev API `ganz-om.de` | no_crm_user GET/POST · bad_request leer · png_base64 source=app ✅ · `mobile-mitarbeiter-signature-selftest.php` |
-| MA3f | | | |
+| MA3f | 2026-11-27 | Flutter Web/Chrome `127.0.0.1:7358` (kein Android-SDK im Cloud-Agent) | analyze+widget-test ✅ · UI Bootstrap→Login+Validierung ✅ · Dev-API-Kette Staff Login/me/clock/profile/signature ✅ · CORS Web↔API bewusst ungeprüft (nativ) · `bash bin/mobile-mitarbeiter-smoke.sh` |
 
 ---
 
@@ -323,6 +323,8 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | `bin/mobile-kalender-edge-selftest.php` | Guard MA2d |
 | `bin/mobile-kalender-smoke.sh` | MA2e Flutter analyze + test |
 | `bin/mobile-kalender-smoke-selftest.php` | Guard MA2e |
+| `bin/mobile-mitarbeiter-smoke.sh` | MA3f Flutter analyze + test |
+| `bin/mobile-mitarbeiter-smoke-selftest.php` | Guard MA3f |
 | `bin/mobile-mitarbeiter-auth-selftest.php` | Guard MA3a |
 | `bin/mobile-mitarbeiter-clock-selftest.php` | Guard MA3b |
 | `bin/mobile-mitarbeiter-absences-shifts-selftest.php` | Guard MA3c |
@@ -354,5 +356,6 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | 2026-11-27 | **MA3c ✅** AbsencesTab Validierung · ShiftsTab Wochen-Nav · Dev Antrag/Liste/shifts |
 | 2026-11-27 | **MA3d ✅** ProfileTab/KontoTab/DocsTab Härte · Dev Profil/Konto/Akte |
 | 2026-11-27 | **MA3e ✅** SignaturePage Härte · no_crm_user · Dev-E2E · `mobile-mitarbeiter-signature-selftest.php` |
+| 2026-11-27 | **MA3f ✅** Mitarbeiter Smoke: Flutter analyze/test · Web/Chrome Bootstrap→Login · §8 · `mobile-mitarbeiter-smoke.sh` · MA3-Block fertig |
 | 2026-11-27 | **MA1a ✅** `api_message.dart` identisch in beiden Apps · UI über `apiUserMessage`/`apiIsOk` · `php bin/mobile-api-message-selftest.php` |
 | 2026-11-27 | **MA0d ✅** CRM-Download-Slug `apps` → `app-download` · Legacy-Migration nur bei `page_kind=mobile_app_download` · `/apps` frei für Website |
