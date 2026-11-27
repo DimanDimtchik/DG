@@ -2,14 +2,15 @@
 declare(strict_types=1);
 
 /**
- * Kichel Phase 2 — Ollama nur für Formulierung, nie für Beträge.
+ * Kichel Phase 2 / KR2 — Ollama nur für Formulierung, nie für Beträge oder neue Normen.
  */
 final class KichelOllamaClient
 {
     /**
-     * Formuliert eine Antwort aus vorgegebenen Fakten. Zahlen dürfen nicht geändert werden.
+     * Formuliert eine Antwort aus vorgegebenen RAG-Fakten (oder Legacy-Assoc bei Money).
+     * Bei ausgeschaltetem Ollama / Fehler: null — Caller nutzt Fallback (compose / basis).
      *
-     * @param array<string, mixed> $facts
+     * @param list<array<string, mixed>>|array<string, mixed> $facts
      */
     public static function phrase(string $userQuery, string $baseAnswer, array $facts): ?string
     {
@@ -21,23 +22,31 @@ final class KichelOllamaClient
         $url = rtrim((string) ($cfg['ollama_url'] ?? 'http://127.0.0.1:11434'), '/') . '/api/generate';
         $model = (string) ($cfg['ollama_model'] ?? 'llama3.1:8b');
 
-        $factsJson = json_encode($facts, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+        $promptFacts = self::factsForPrompt($facts);
+        $factsJson = json_encode($promptFacts, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
         $prompt = <<<PROMPT
 Du bist Kichel, der CRM-Helfer. Formuliere eine kurze, freundliche Antwort auf Deutsch.
 
+VERBINDLICH — nur diese Fakten:
+- Nutze ausschließlich die JSON-Fakten und die Basisantwort.
+- Zahlen, Beträge, Prozente und Summen unverändert übernehmen (Schreibweise wie in den Fakten/Basisantwort).
+- Keine neuen Gesetze, Paragraphen (§), Urteile oder Rechtsfolgen erfinden.
+- Wenn die Fakten die Frage nicht decken: klar sagen, dass dazu keine gesicherten Angaben vorliegen — nicht raten.
+
 STRENG VERBOTEN:
 - Beträge, Prozente oder Summen selbst berechnen oder ändern
-- Fakten aus dem JSON ignorieren oder widersprechen
+- Fakten widersprechen oder weglassen, die die Antwort tragen
+- Wissen „aus dem Gedächtnis“ zu Steuern/Recht hinzufügen
 
 Nutzerfrage: {$userQuery}
 
-Fakten (verbindlich, unverändert übernehmen):
+Fakten (verbindlich):
 {$factsJson}
 
 Basisantwort aus dem CRM (Zahlen daraus sind maßgeblich):
 {$baseAnswer}
 
-Antworte in 2–4 Sätzen. Alle Geldbeträge exakt wie in den Fakten.
+Antworte in 2–4 Sätzen. Am Ende kurz die Quelle nennen, wenn in den Fakten source_label gesetzt ist.
 PROMPT;
 
         $payload = json_encode([
@@ -78,6 +87,20 @@ PROMPT;
         return $text;
     }
 
+    /**
+     * phrase wenn Ollama ok, sonst bausteinartiger Fallback aus Fakten (KR2c).
+     *
+     * @param list<array<string, mixed>> $facts RAG-Faktenliste
+     */
+    public static function compose(string $userQuery, array $facts, ?string $baseAnswer = null): string
+    {
+        $facts = KichelRagFact::normalizeList($facts);
+        $fallback = KichelRagFact::fallbackAnswer($facts, $baseAnswer);
+        $phrased = self::phrase($userQuery, $fallback, $facts);
+
+        return $phrased ?? $fallback;
+    }
+
     public static function isEnabled(): bool
     {
         $cfg = self::config();
@@ -101,21 +124,57 @@ PROMPT;
     }
 
     /**
-     * @param array<string, mixed> $facts
+     * @param list<array<string, mixed>>|array<string, mixed> $facts
+     * @return list<array<string, mixed>>|array<string, mixed>
+     */
+    private static function factsForPrompt(array $facts): array
+    {
+        if ($facts === []) {
+            return [];
+        }
+        if (!array_is_list($facts)) {
+            return $facts;
+        }
+
+        $out = [];
+        foreach (KichelRagFact::normalizeList($facts) as $fact) {
+            $row = [
+                'type' => $fact['type'],
+                'title' => $fact['title'],
+                'body' => $fact['body'],
+                'source_label' => $fact['source_label'],
+                'source_ref' => $fact['source_ref'],
+                'confidence' => $fact['confidence'],
+            ];
+            if ($fact['href'] !== null) {
+                $row['href'] = $fact['href'];
+            }
+            if ($fact['numbers'] !== []) {
+                $row['numbers'] = $fact['numbers'];
+            }
+            $out[] = $row;
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param list<array<string, mixed>>|array<string, mixed> $facts
      */
     private static function numbersConsistent(string $baseAnswer, array $facts, string $ollamaText): bool
     {
+        $numbers = KichelRagFact::collectNumbers($facts);
+        if ($numbers === []) {
+            return true;
+        }
+
         $haystack = $baseAnswer . ' ' . $ollamaText;
-        foreach ($facts as $key => $value) {
-            if (!is_int($value) && !is_float($value)) {
-                continue;
-            }
+        foreach ($numbers as $key => $value) {
             if ($key === 'payment_days' && (int) $value === 0) {
                 continue;
             }
             $formatted = number_format((float) $value, 2, ',', '.');
             if (!str_contains($haystack, $formatted) && !str_contains($ollamaText, (string) $value)) {
-                // Ollama muss mindestens einen Schlüsselbetrag in korrekter Schreibweise enthalten
                 if (str_contains((string) $key, 'amount') || str_contains((string) $key, 'percent')) {
                     return false;
                 }

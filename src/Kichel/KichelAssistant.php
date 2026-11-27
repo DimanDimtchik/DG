@@ -452,14 +452,15 @@ final class KichelAssistant
      */
     private static function wrapMoney(string $query, array $moneyAnswer): array
     {
-        $moneyFacts = $moneyAnswer['facts'] ?? [];
+        $moneyFacts = is_array($moneyAnswer['facts'] ?? null) ? $moneyAnswer['facts'] : [];
         $baseMoneyAnswer = (string) ($moneyAnswer['answer'] ?? '');
-        $phrased = KichelOllamaClient::phrase($query, $baseMoneyAnswer, $moneyFacts);
+        $ragFacts = KichelRagFact::fromMoneyCalculation($moneyFacts, $baseMoneyAnswer);
+        $answer = KichelOllamaClient::compose($query, $ragFacts, $baseMoneyAnswer);
 
         return [
             'presentation' => 'simple',
             'kind' => 'calculation',
-            'answer' => $phrased ?? $baseMoneyAnswer,
+            'answer' => $answer,
             'follow_up' => self::FOLLOW_UP,
             'action_links' => [[
                 'label' => 'Zahlungsbedingungen öffnen',
@@ -470,6 +471,7 @@ final class KichelAssistant
                 'facts' => $moneyFacts,
                 'computed_by' => 'php',
             ],
+            'rag_facts' => $ragFacts,
         ];
     }
 

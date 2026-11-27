@@ -49,7 +49,8 @@ Nutzerfrage
 | Datei | Rolle |
 |-------|--------|
 | `src/Kichel/KichelMoneyLogic.php` | Beträge in PHP |
-| `src/Kichel/KichelOllamaClient.php` | Ollama nur `phrase()`, Fakten unveränderlich |
+| `src/Kichel/KichelOllamaClient.php` | Ollama nur `phrase()` / `compose()`, Fakten unveränderlich |
+| `src/Kichel/KichelRagFact.php` | KR2: einheitliches `facts[]`-Schema + Fallback ohne Ollama |
 | `src/Kichel/KichelAssistant.php` | Orchestrierung |
 | `MenuRegistry::kichelAliases()` | Such-Aliase Menü/Module (Quelle der Wahrheit) |
 | `SettingsRegistry` → `kichel_aliases` | Such-Aliase je Einstellungs-Tab |

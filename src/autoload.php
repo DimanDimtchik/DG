@@ -542,6 +542,7 @@ spl_autoload_register(static function (string $class): void {
         'KichelApi' => '/src/Kichel/KichelApi.php',
         'KichelMoneyLogic' => '/src/Kichel/KichelMoneyLogic.php',
         'KichelOllamaClient' => '/src/Kichel/KichelOllamaClient.php',
+        'KichelRagFact' => '/src/Kichel/KichelRagFact.php',
         'KichelProtocolRepository' => '/src/Kichel/KichelProtocolRepository.php',
         'KichelLegalPages' => '/src/Kichel/KichelLegalPages.php',
         'KichelLedgerAccounts' => '/src/Kichel/KichelLedgerAccounts.php',

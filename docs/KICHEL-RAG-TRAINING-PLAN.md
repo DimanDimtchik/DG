@@ -58,7 +58,7 @@ Kein Fine-Tuning, kein Gesetzes-Vollimport außerhalb dieser ID.
 
 | Phase | Kürzel | Inhalt | Status |
 |-------|--------|--------|--------|
-| **A — RAG (jetzt)** | **KR0–KR9** | Verdrahtung Suche → Fakten → Qwen; CRM-Korpus; Quellen; Smoke | **KR0–1 ✅** · als Nächstes **KR2** |
+| **A — RAG (jetzt)** | **KR0–KR9** | Verdrahtung Suche → Fakten → Qwen; CRM-Korpus; Quellen; Smoke | **KR0–2 ✅** · als Nächstes **KR3** |
 | **B — Rechtskorpus** | **KL0–KL5** | Gesetze/Urteile importieren & indexieren (nach stabilem RAG) | geplant |
 | **C — Intent-LLM** | **KI0–KI3** | Qwen nur als Frage-Parser (JSON), Suche weiter PHP | geplant |
 | **D — Produkt/Haftung** | **KH0–KH3** | Disclaimer, Protokoll-Felder, Admin-Qualität | geplant |
@@ -79,7 +79,7 @@ Kein Fine-Tuning, kein Gesetzes-Vollimport außerhalb dieser ID.
 |----|---------|-------|--------|
 | **KR0** | Plan/Abgrenzung (diese Datei) · Haken in TODOS | 🟢 | [x] 2026-11-27 |
 | **KR1** | Ist-Inventar Kichel-Pipeline (nur lesen) | 🟢 | [x] 2026-11-27 · §3.2 |
-| **KR2** | Fakten-Objekt + Prompt-Vertrag (`phrase` nur aus Fakten) | 🟡 | [ ] · Kinder a–c |
+| **KR2** | Fakten-Objekt + Prompt-Vertrag (`phrase` nur aus Fakten) | 🟡 | [x] 2026-11-27 · a–c ✅ |
 | **KR3** | Retrieval-Orchestrierung (Reihenfolge Sucher) | 🟡 | [ ] · Kinder a–d |
 | **KR4** | CRM-Korpus v1 (Knowledge/Nav/Felder → einheitliche Chunks) | 🟡 | [ ] · Kinder a–c |
 | **KR5** | Ranking / „kein Treffer“ / Mehrfachtreffer | 🟡 | [ ] · Kinder a–b |
@@ -203,15 +203,44 @@ PHASE2-Doc nennt Code/Schema als Schicht — **Implementierungsstand: tot / unge
 
 ---
 
-### 3.3 KR2 — Fakten-Objekt + Prompt-Vertrag
+### 3.3 KR2 — Fakten-Objekt + Prompt-Vertrag ✅ 2026-11-27
 
-| Kind | Aufgabe | Abnahme |
-|------|---------|---------|
-| **KR2a** | Schema festlegen (Doc oder PHP-Array-Form): `facts[]` mit `type`, `title`, `body`, `source_label`, `source_ref`, `href?`, `confidence` | Schema geschrieben |
-| **KR2b** | `phrase()`-Prompt: „nur diese Fakten; Zahlen unverändert; keine neuen §§ erfinden; bei Lücke sagen“ | Prompt-Text + Unit/Selftest-Skizze |
-| **KR2c** | Fallback ohne Ollama: Antwort aus Fakten bausteinartig (wie heute) | Ollama aus → sinnvolle Antwort |
+| Kind | Aufgabe | Abnahme | Status |
+|------|---------|---------|--------|
+| **KR2a** | Schema `facts[]` | `KichelRagFact` | [x] |
+| **KR2b** | `phrase()`-Prompt + Selftest | Prompt in `KichelOllamaClient` · `bin/kichel-rag-fact-selftest.php` | [x] |
+| **KR2c** | Fallback ohne Ollama | `KichelRagFact::fallbackAnswer` · `compose()` · Money-Pfad | [x] |
 
-**Nicht in KR2:** neue Suchquellen, Gesetzesimport.
+**Nicht in KR2:** neue Suchquellen, Gesetzesimport, Retriever (→ KR3).
+
+#### Schema (verbindlich)
+
+Jeder Fakt (Assoc):
+
+| Key | Typ | Pflicht |
+|-----|-----|---------|
+| `type` | string | ja — z. B. `topic`, `navigation`, `field_help`, `media`, `legal_pages`, `ledger_account`, `calculation`, `statute`, `caselaw`, `other` |
+| `title` | string | ja (oder body) |
+| `body` | string | ja (oder title) |
+| `source_label` | string | ja (Default „CRM“) |
+| `source_ref` | string | ja (stabile ID, z. B. `topic:ust-id`) |
+| `href` | string\|null | nein |
+| `confidence` | float 0…1 | ja (Default 1) |
+| `numbers` | map string→number | nein — für Betrags-Guards |
+
+API: `KichelRagFact::make` / `normalize` / `normalizeList` / `fromMoneyCalculation` / `fallbackAnswer` / `collectNumbers`.
+
+#### Prompt-Vertrag (KR2b)
+
+`KichelOllamaClient::phrase`: nur JSON-Fakten + Basisantwort; keine neuen §§; Zahlen unverändert; bei Lücke „keine gesicherten Angaben“; Guard `numbersConsistent` über `numbers`.
+
+`compose($query, $facts, $base?)`: phrase oder Fallback.
+
+#### Anbindung Ist
+
+`KichelAssistant::wrapMoney` → RAG-Fakten + `compose`; Response zusätzlich `rag_facts`. Topic/Nav noch ohne phrase (→ KR3).
+
+**Selftest:** `php bin/kichel-rag-fact-selftest.php` → ALL OK.
 
 ---
 
@@ -419,7 +448,7 @@ KR0 ✅
 
 ## 12. Nächster konkreter Schritt
 
-**KR2** (Fakten-Objekt + Prompt-Vertrag) — empfohlen Start **KR2a** (Schema Doc/PHP-Form).  
+**KR3** (Retrieval-Orchestrierung) — Start **KR3a** (Retriever → KR2-Schema).  
 Kein Gesetzesimport, kein Fine-Tuning.
 
 ---
@@ -430,3 +459,4 @@ Kein Gesetzesimport, kein Fine-Tuning.
 |-------|--------|
 | 2026-11-27 | Erstfassung: KR Microschritte · KL/KI/KH · KT/KP/KU beschrieben · RAG zuerst |
 | 2026-11-27 | **KR1 ✅** Ist-Inventar: Pipeline, phrase nur Money, CodeSearch unverdrahtet, Lücken |
+| 2026-11-27 | **KR2 ✅** `KichelRagFact` + Prompt-Vertrag + Fallback/`compose` · Money angebunden · Selftest |
