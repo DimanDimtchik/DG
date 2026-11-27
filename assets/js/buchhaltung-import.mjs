@@ -1056,6 +1056,7 @@ function renderMatchPanel(suggestion, matchRows) {
   wrap.hidden = false;
   if (!Array.isArray(matchRows) || matchRows.length === 0) {
     body.innerHTML = '<p class="dg-field-hint">Keine Katalog-Treffer zu den Positionen.</p>';
+    refreshReceiptProposal(suggestion);
     return;
   }
 
@@ -1156,6 +1157,157 @@ function renderMatchPanel(suggestion, matchRows) {
       savePurchaseSourceFromExtract(suggestion, matchRows, lineIdx, btn);
     });
   });
+
+  refreshReceiptProposal(suggestion);
+}
+
+async function refreshReceiptProposal(suggestion) {
+  const wrap = $('dg-voucher-extract-receipt');
+  const body = $('dg-voucher-extract-receipt-body');
+  if (!wrap || !body) return;
+
+  const lines = suggestionExtractLines(suggestion);
+  const matched = lines.filter((l) => Number(l.match_article_id || 0) > 0);
+  if (!matched.length) {
+    wrap.hidden = true;
+    body.innerHTML = '';
+    return;
+  }
+
+  wrap.hidden = false;
+  body.innerHTML = `<p class="dg-field-hint">${spinner()} Wareneingang wird geprüft …</p>`;
+
+  const payload = matched.map((line, i) => ({
+    line_no: line.line_no || i + 1,
+    title: line.title || '',
+    match_article_id: Number(line.match_article_id) || 0,
+    quantity: line.quantity || '1',
+    unit: line.unit || 'Stück',
+    catalog_kind: line.catalog_kind || 'product',
+  }));
+  const voucherId = getVoucherId();
+  try {
+    const url = '/api/voucher?action=stock_receipt_preview'
+      + '&voucher_id=' + encodeURIComponent(String(voucherId || 0))
+      + '&lines=' + encodeURIComponent(JSON.stringify(payload));
+    const response = await fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' } });
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok || !json.success || !json.data) {
+      body.innerHTML = '<p class="dg-field-hint">Wareneingang-Vorschlag nicht geladen.</p>';
+      return;
+    }
+    renderReceiptProposal(suggestion, json.data);
+  } catch {
+    body.innerHTML = '<p class="dg-field-hint">Wareneingang-Vorschlag nicht geladen.</p>';
+  }
+}
+
+function renderReceiptProposal(suggestion, proposal) {
+  const wrap = $('dg-voucher-extract-receipt');
+  const body = $('dg-voucher-extract-receipt-body');
+  if (!wrap || !body) return;
+  wrap.hidden = false;
+
+  const bookable = Array.isArray(proposal.bookable) ? proposal.bookable : [];
+  const skipped = Array.isArray(proposal.skipped) ? proposal.skipped : [];
+  const already = !!proposal.already_booked;
+  const voucherId = getVoucherId();
+
+  let html = '';
+  if (already) {
+    html += '<p class="dg-field-hint dg-field-hint--ok">Für diesen Beleg ist bereits ein Wareneingang gebucht.</p>';
+  }
+  if (bookable.length) {
+    html += `<ul class="dg-voucher-extract__match-list">${bookable.map((row) => {
+      const label = row.article_number
+        ? `${row.article_number} — ${row.title}`
+        : (row.title || 'Artikel');
+      const qty = `${row.quantity} ${row.unit || ''}`.trim();
+      return `<li class="dg-voucher-extract__match-item"><div class="dg-voucher-extract__match-meta"><strong>${escapeHtml(label)}</strong><br><span class="dg-muted">${escapeHtml(qty)}</span></div></li>`;
+    }).join('')}</ul>`;
+  } else if (!already) {
+    html += '<p class="dg-muted">Keine lagergeführten Artikel zum Buchen (Lagerführung am Artikel prüfen).</p>';
+  }
+  if (skipped.length) {
+    html += `<p class="dg-field-hint">Übersprungen:</p><ul class="dg-voucher-extract__match-list">${skipped.map((row) => (
+      `<li class="dg-voucher-extract__match-item"><div class="dg-voucher-extract__match-meta"><strong>${escapeHtml(row.title || '—')}</strong><br><span class="dg-muted">${escapeHtml(row.reason || '')}</span></div></li>`
+    )).join('')}</ul>`;
+  }
+
+  if (!already && bookable.length) {
+    if (voucherId < 1) {
+      html += '<p class="dg-field-hint">Beleg zuerst speichern — danach Wareneingang buchen.</p>';
+    } else {
+      html += `<div class="dg-btn-row dg-mt-2">
+        <button type="button" class="dg-button dg-button--small" id="dg-voucher-extract-receipt-book">Wareneingang buchen</button>
+      </div>`;
+    }
+  }
+
+  body.innerHTML = html;
+  const bookBtn = $('dg-voucher-extract-receipt-book');
+  if (bookBtn) {
+    bookBtn.addEventListener('click', () => bookReceiptFromExtract(suggestion, bookBtn));
+  }
+}
+
+async function bookReceiptFromExtract(suggestion, buttonEl) {
+  const voucherId = getVoucherId();
+  if (voucherId < 1) {
+    setStatus('warn', 'Beleg zuerst speichern — dann Wareneingang buchen.');
+    return;
+  }
+  const csrf = importConfig.csrf
+    || document.querySelector('#dg-voucher-form input[name="_csrf"]')?.value
+    || '';
+  if (!csrf) {
+    setStatus('warn', 'Wareneingang nicht möglich — Sicherheitstoken fehlt. Bitte Seite neu laden.');
+    return;
+  }
+
+  const lines = suggestionExtractLines(suggestion).filter((l) => Number(l.match_article_id || 0) > 0);
+  const prevLabel = buttonEl ? buttonEl.textContent : '';
+  if (buttonEl) {
+    buttonEl.disabled = true;
+    buttonEl.textContent = 'Wird gebucht …';
+  }
+
+  const body = new FormData();
+  body.set('_csrf', csrf);
+  body.set('voucher_id', String(voucherId));
+  body.set('lines', JSON.stringify(lines.map((line, i) => ({
+    line_no: line.line_no || i + 1,
+    title: line.title || '',
+    match_article_id: Number(line.match_article_id) || 0,
+    quantity: line.quantity || '1',
+    unit: line.unit || 'Stück',
+  }))));
+  body.set('note', 'Wareneingang aus Beleg-Vorschlag');
+
+  try {
+    const response = await fetch('/api/voucher?action=stock_receipt', {
+      method: 'POST',
+      body,
+      credentials: 'same-origin',
+    });
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok || !json.success) {
+      throw new Error(json.message || 'Wareneingang fehlgeschlagen.');
+    }
+    const count = Number(json.data?.count || 0);
+    setStatus('ok', `Wareneingang gebucht (${count} Position${count === 1 ? '' : 'en'}). Bitte Bestand prüfen.`);
+    if (json.data?.proposal) {
+      renderReceiptProposal(suggestion, json.data.proposal);
+    } else {
+      refreshReceiptProposal(suggestion);
+    }
+  } catch (error) {
+    setStatus('warn', 'Wareneingang nicht gebucht: ' + escapeHtml(error.message || String(error)));
+    if (buttonEl) {
+      buttonEl.disabled = false;
+      buttonEl.textContent = prevLabel;
+    }
+  }
 }
 
 async function createArticleFromExtract(suggestion, matchRows, lineIdx, forceKind, buttonEl) {

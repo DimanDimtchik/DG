@@ -43,6 +43,10 @@ final class VoucherApi
                 self::handleArticlePurchaseSource();
                 return;
             }
+            if ($action === 'stock_receipt') {
+                self::handleStockReceipt();
+                return;
+            }
 
             http_response_code(405);
             echo json_encode(['success' => false, 'message' => 'Unbekannte POST-Aktion.'], JSON_UNESCAPED_UNICODE);
@@ -85,6 +89,11 @@ final class VoucherApi
 
             if ($action === 'article_match') {
                 self::handleArticleMatch();
+                return;
+            }
+
+            if ($action === 'stock_receipt_preview') {
+                self::handleStockReceiptPreview();
                 return;
             }
 
@@ -344,6 +353,78 @@ final class VoucherApi
             'success' => true,
             'data' => ['items' => $out],
         ], JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * BO5e — WE-Vorschlag aus Extrakt (nur lesen). Kein Buchen.
+     */
+    private static function handleStockReceiptPreview(): void
+    {
+        try {
+            $linesRaw = $_GET['lines'] ?? '[]';
+            if (is_string($linesRaw)) {
+                $decoded = json_decode($linesRaw, true);
+                $lines = is_array($decoded) ? $decoded : [];
+            } else {
+                $lines = is_array($linesRaw) ? $linesRaw : [];
+            }
+            $voucherId = (int) ($_GET['voucher_id'] ?? 0);
+            $proposal = StockReceiptIssueService::proposalFromExtractLines($lines, $voucherId);
+            echo json_encode([
+                'success' => true,
+                'data' => $proposal,
+            ], JSON_UNESCAPED_UNICODE);
+        } catch (Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+        }
+    }
+
+    /**
+     * BO5e — Wareneingang nach User-Klick (Path B / processReceipt). Kein syncForVoucher.
+     */
+    private static function handleStockReceipt(): void
+    {
+        $user = AuthService::user();
+        if ($user === null || !RoleResolver::canEdit($user)) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Keine Berechtigung.'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'CSRF ungültig.'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        try {
+            $linesRaw = $_POST['lines'] ?? '[]';
+            if (is_string($linesRaw)) {
+                $decoded = json_decode($linesRaw, true);
+                $lines = is_array($decoded) ? $decoded : [];
+            } else {
+                $lines = is_array($linesRaw) ? $linesRaw : [];
+            }
+            $voucherId = (int) ($_POST['voucher_id'] ?? 0);
+            $note = trim((string) ($_POST['note'] ?? ''));
+            $result = StockReceiptIssueService::bookExtractProposal(
+                $lines,
+                $voucherId,
+                (int) ($user->id ?? 0) ?: null,
+                $note
+            );
+            echo json_encode([
+                'success' => true,
+                'data' => $result,
+            ], JSON_UNESCAPED_UNICODE);
+        } catch (InvalidArgumentException $e) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+        } catch (Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+        }
     }
 
     /**

@@ -173,7 +173,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | **BO5b** | Match-Vorschläge: bestehende Artikel/Leistungen (Nummer/Titel); UI-Liste zur Bestätigung | 🟢 | [x] 2026-11-27 · `article_match` + UI |
 | **BO5c** | Neuanlage-Vorschlag: product vs. service; **nur nach User-Klick** speichern | 🟢 | [x] 2026-11-27 · `article_create` |
 | **BO5d** | EK-Quelle am Artikel aus Beleg (Lieferant-Kontakt + Preis), Preferred optional | 🟢 | [x] 2026-11-27 · `article_purchase_source` |
-| **BO5e** | Wareneingang-**Vorschlag** (bestehender Lager-Service) nach gespeichertem Eingangsbeleg — kein Auto-Post ohne Klick | 🟡🔴 | [ ] |
+| **BO5e** | Wareneingang-**Vorschlag** (bestehender Lager-Service) nach gespeichertem Eingangsbeleg — kein Auto-Post ohne Klick | 🟢 | [x] 2026-11-27 · `stock_receipt` |
 | **BO5f** | Smoke: 1 Artikel-Match + 1 Neuanlage + EK sichtbar; Kurznotiz | 🔴 | [ ] |
 
 **Prompt BO5c:**  
@@ -181,6 +181,9 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 **Prompt BO5d:**  
 `Nur Mini-ID BO5d laut docs/BELEG-OCR-LAGER-REST-PLAN.md. EK-Quelle aus Beleg an den Artikel. Prüfe Purchase-Source-API und UI-Anbindung.`
+
+**Prompt BO5e:**  
+`Nur Mini-ID BO5e laut docs/BELEG-OCR-LAGER-REST-PLAN.md. Wareneingang-Vorschlag nach gespeichertem Beleg — nur nach Klick buchen, kein Auto-syncForVoucher.`
 
 ---
 
@@ -253,7 +256,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | **BO5b** | Match über Nummer/Titel/Import-Titel + Suche; UI-Liste zur Bestätigung — kein stilles `article_id` |
 | **BO5c** | Neuanlage nur nach Klick → `CalendarArticleRepository::save` mit `catalog_kind` aus Extrakt |
 | **BO5d** | EK-Zeile via `replaceFromInput` / Purchase-Source (Lieferant-Kontakt + Preis aus Beleg) |
-| **BO5e** | **Nicht** still `syncForVoucher` aus OCR; Vorschlag + Klick (manueller WE-Pfad oder bestätigter Beleg-Hook) |
+| **BO5e** | **Nicht** still `syncForVoucher` aus OCR; `proposalFromExtractLines` + Klick → `processReceipt` (Path B) |
 
 **Verweise:** [`LAGER-WIRTSCHAFT.md`](LAGER-WIRTSCHAFT.md) · [`LAGER-EINKAUF-RESERVIERUNG-PLAN.md`](LAGER-EINKAUF-RESERVIERUNG-PLAN.md) · `StockMovementService` · `StockReceiptIssueService` · Plan §12 (Ausgabe ohne items)
 
@@ -511,3 +514,4 @@ Parallel ok: BO1 und BO2a (Schema schon hier). **BO5 nicht vor BO4.**
 | 2026-11-27 | **BO5b ✅** `VoucherArticleMatchService` + `article_match` · UI Katalog-Vorschläge mit Zuordnen (kein Auto-Save) |
 | 2026-11-27 | **BO5c ✅** Neuanlage Artikel/Leistung per Klick (`article_create`, track_stock aus, kein WE) |
 | 2026-11-27 | **BO5d ✅** EK-Quelle aus Beleg (`upsertFromBeleg` + `article_purchase_source`, Preferred optional, kein WE) |
+| 2026-11-27 | **BO5e ✅** WE-Vorschlag + Klick (`stock_receipt_preview` / `stock_receipt` → `processReceipt`, kein syncForVoucher) |

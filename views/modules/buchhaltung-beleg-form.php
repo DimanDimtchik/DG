@@ -489,6 +489,14 @@ $paymentTermsPreview = PaymentTermsService::composeText(
                 Neuanlage ohne Lagerbuchung. Einkaufspreis vom Beleg optional am Artikel speichern.
               </p>
               <div id="dg-voucher-extract-matches-body"></div>
+              <div class="dg-voucher-extract__receipt dg-mt-2" id="dg-voucher-extract-receipt" hidden>
+                <h3 class="dg-subsection-title">Wareneingang-Vorschlag</h3>
+                <p class="dg-field-hint">
+                  Nur lagergeführte Artikel — erst nach Speichern des Belegs und Ihrem Klick.
+                  Keine automatische Lagerbuchung.
+                </p>
+                <div id="dg-voucher-extract-receipt-body"></div>
+              </div>
             </div>
             <div class="dg-voucher-extract__actions" id="dg-voucher-extract-actions" hidden>
               <label class="dg-voucher-extract__contact-sync" id="dg-voucher-extract-contact-sync-wrap" hidden>

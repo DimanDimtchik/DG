@@ -217,6 +217,165 @@ final class StockReceiptIssueService
         return $lines;
     }
 
+    /**
+     * BO5e — Wareneingang-Vorschlag aus Extraktzeilen mit match_article_id.
+     * Kein Buchen; nur bookable/skipped. Path B (manuell), nicht syncForVoucher.
+     *
+     * @param list<array<string, mixed>> $extractLines
+     * @return array{
+     *   bookable: list<array<string, mixed>>,
+     *   skipped: list<array<string, mixed>>,
+     *   already_booked: bool,
+     *   voucher_id: int
+     * }
+     */
+    public static function proposalFromExtractLines(array $extractLines, int $voucherId = 0): array
+    {
+        $bookable = [];
+        $skipped = [];
+        $seenArticles = [];
+
+        foreach ($extractLines as $index => $line) {
+            if (!is_array($line)) {
+                continue;
+            }
+            $lineNo = (int) ($line['line_no'] ?? ($index + 1));
+            $title = trim((string) ($line['title'] ?? $line['description'] ?? ''));
+            $articleId = (int) ($line['match_article_id'] ?? $line['article_id'] ?? 0);
+            $qty = round((float) str_replace(',', '.', (string) ($line['quantity'] ?? '0')), 3);
+            if ($qty <= 0) {
+                $qty = 1.0;
+            }
+
+            if ($articleId < 1) {
+                if ($title !== '') {
+                    $skipped[] = [
+                        'line_no' => $lineNo,
+                        'title' => $title,
+                        'reason' => 'Kein Katalogartikel zugeordnet.',
+                    ];
+                }
+                continue;
+            }
+
+            $article = Database::isConfigured()
+                ? CalendarArticleRepository::findById($articleId)
+                : null;
+            if ($article === null) {
+                $skipped[] = [
+                    'line_no' => $lineNo,
+                    'title' => $title !== '' ? $title : ('Artikel #' . $articleId),
+                    'article_id' => $articleId,
+                    'reason' => 'Artikel nicht gefunden.',
+                ];
+                continue;
+            }
+
+            $kind = CalendarArticleCatalog::normalizeKind((string) ($article['catalog_kind'] ?? ''));
+            $label = trim((string) ($article['article_number'] ?? ''));
+            $articleTitle = trim((string) ($article['title'] ?? $title));
+            $display = $label !== '' ? ($label . ' — ' . $articleTitle) : $articleTitle;
+
+            if ($kind !== CalendarArticleCatalog::KIND_PRODUCT) {
+                $skipped[] = [
+                    'line_no' => $lineNo,
+                    'title' => $display,
+                    'article_id' => $articleId,
+                    'reason' => 'Leistung — kein Wareneingang.',
+                ];
+                continue;
+            }
+            if (empty($article['track_stock'])) {
+                $skipped[] = [
+                    'line_no' => $lineNo,
+                    'title' => $display,
+                    'article_id' => $articleId,
+                    'reason' => 'Lagerführung am Artikel ist aus — im Stamm aktivieren.',
+                ];
+                continue;
+            }
+
+            if (isset($seenArticles[$articleId])) {
+                $bookable[$seenArticles[$articleId]]['quantity'] = round(
+                    (float) $bookable[$seenArticles[$articleId]]['quantity'] + $qty,
+                    3
+                );
+                continue;
+            }
+            $seenArticles[$articleId] = count($bookable);
+            $bookable[] = [
+                'line_no' => $lineNo,
+                'article_id' => $articleId,
+                'article_number' => (string) ($article['article_number'] ?? ''),
+                'title' => $articleTitle,
+                'quantity' => $qty,
+                'unit' => (string) ($article['unit'] ?? ($line['unit'] ?? 'Stück')),
+            ];
+        }
+
+        return [
+            'bookable' => $bookable,
+            'skipped' => $skipped,
+            'already_booked' => $voucherId > 0 && self::hasReceiptMovementsForVoucher($voucherId),
+            'voucher_id' => $voucherId,
+        ];
+    }
+
+    public static function hasReceiptMovementsForVoucher(int $voucherId): bool
+    {
+        if ($voucherId < 1 || !Database::isConfigured()) {
+            return false;
+        }
+
+        $stmt = Database::pdo()->prepare(
+            "SELECT 1 FROM dg_stock_movements
+             WHERE voucher_id = :vid AND reason IN ('receipt', 'purchase')
+             LIMIT 1"
+        );
+        $stmt->execute(['vid' => $voucherId]);
+
+        return (bool) $stmt->fetchColumn();
+    }
+
+    /**
+     * BO5e — Wareneingang buchen nach User-Klick (Path B).
+     *
+     * @param list<array<string, mixed>> $extractLines
+     * @return array{count: int, movement_ids: list<int>, proposal: array<string, mixed>}
+     */
+    public static function bookExtractProposal(
+        array $extractLines,
+        int $voucherId,
+        ?int $userId,
+        string $note = ''
+    ): array {
+        if ($voucherId < 1) {
+            throw new InvalidArgumentException('Beleg zuerst speichern — dann Wareneingang buchen.');
+        }
+        if (self::hasReceiptMovementsForVoucher($voucherId)) {
+            throw new InvalidArgumentException('Für diesen Beleg ist bereits ein Wareneingang gebucht.');
+        }
+
+        $proposal = self::proposalFromExtractLines($extractLines, $voucherId);
+        $bookable = $proposal['bookable'];
+        if ($bookable === []) {
+            throw new InvalidArgumentException('Keine lagergeführten Artikel zum Buchen.');
+        }
+
+        $note = trim($note);
+        if ($note === '') {
+            $note = 'Wareneingang aus Beleg-Vorschlag #' . $voucherId;
+        }
+
+        $ids = self::processReceipt($bookable, $voucherId, $userId, $note);
+
+        return [
+            'count' => count($ids),
+            'movement_ids' => $ids,
+            'proposal' => self::proposalFromExtractLines($extractLines, $voucherId),
+        ];
+    }
+
     /** @param array<string, mixed> $post */
     public static function receiptFromPost(array $post, ?int $userId): int
     {
