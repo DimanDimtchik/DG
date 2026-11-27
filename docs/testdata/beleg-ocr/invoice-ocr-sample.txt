@@ -1,0 +1,17 @@
+Demo Lieferant GmbH
+Musterstraße 1
+12345 Demostadt
+
+Rechnung Nr. RE-BO3E-42
+Rechnungsdatum: 15.03.2024
+
+2,00 Stück Kupferkabel 5m 12,50 25,00
+1,00 Stück Montagepauschale Beratung 40,00 40,00
+
+Netto 65,00
+MwSt 19% 12,35
+Gesamtbetrag EUR 77,35
+
+IBAN DE89370400440532013000
+BIC COBADEFFXXX
+USt-IdNr. DE123456789

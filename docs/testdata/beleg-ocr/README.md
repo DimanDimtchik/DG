@@ -1,12 +1,14 @@
-# Beleg-OCR Testdaten (BO2)
+# Beleg-OCR Testdaten (BO2 / BO3e)
 
-Demo-XMLs ohne echte Firmendaten. Nutzung:
+Demo-Dateien ohne echte Firmendaten. Nutzung:
 
 ```bash
 node bin/beleg-ocr-bo2-fixture-selftest.mjs
+php bin/beleg-ocr-bo3e-gobd-selftest.php
 ```
 
 | Datei | Inhalt |
 |-------|--------|
 | `cii-invoice.xml` | CII mit Artikel + Dienstleistung |
 | `ubl-invoice.xml` | UBL mit einer Artikelzeile |
+| `invoice-ocr-sample.txt` | OCR-/Textlayer-Rohtext (Kopf + 2 Positionen) für Extrakt/GoBD |

@@ -299,10 +299,7 @@ final class VoucherApi
     }
 
     /**
-     * Sofortiger Datei-Upload: legt bei Bedarf einen Entwurf an und hängt die Datei an.
-     */
-    /**
-     * BO3c — Rohtext → BO2-Extrakt (optional Ollama).
+     * BO3c — Rohtext → BO2-Extrakt (optional Ollama). Kein Speichern/Buchen.
      */
     private static function handleVoucherExtract(): void
     {
@@ -340,6 +337,9 @@ final class VoucherApi
         }
     }
 
+    /**
+     * Sofortiger Datei-Upload: legt bei Bedarf einen Entwurf an und hängt die Datei an.
+     */
     private static function handleFileUpload(): void
     {
         $user = AuthService::user();

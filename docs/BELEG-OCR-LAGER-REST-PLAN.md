@@ -140,7 +140,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | **BO3b** | Spec API: `action=voucher_extract` (o. Ä.) — Input Rohtext (+ Meta), Output BO2-JSON; **kein** Chat-Ersatz | 🟢 | [x] 2026-11-27 · §11 |
 | **BO3c** | PHP: Extrakt-Service — Prompt „nur strukturieren“, PHP-Abgleich Brutto/Netto/MwSt, Fehler → soft fail | 🟢 | [x] 2026-11-27 · `VoucherExtractService` + API |
 | **BO3d** | Client: nach OCR/Textlayer optional Kichel-Extrakt aufrufen; UI zeigt „geordnet durch Assistenz“ ohne Plan-Codes | 🟢 | [x] 2026-11-27 · `enrichWithAssistenz` |
-| **BO3e** | Smoke Dev + GoBD: keine Auto-Buchung; Selftest mit Fixture-Text | 🔴🟡 | [ ] |
+| **BO3e** | Smoke Dev + GoBD: keine Auto-Buchung; Selftest mit Fixture-Text | 🟢 | [x] 2026-11-27 · Fixture+GoBD-Selftest; UI-Smoke nach Deploy/BO1d |
 
 **Regeln BO3:**  
 - Beträge: LLM-Vorschlag vs. Regex-Hints vs. Summenzeile — PHP markiert Konflikte.  
@@ -398,3 +398,4 @@ Parallel ok: BO1 und BO2a (Schema schon hier). **BO5 nicht vor BO4.**
 | 2026-11-27 | **BO3b ✅** Spec `POST /api/voucher?action=voucher_extract` §11 (kein Chat, Soft-Fail, BO2-JSON) |
 | 2026-11-27 | **BO3c ✅** `VoucherExtractService` + `VoucherApi` Zweig + `KichelOllamaClient::generate` · Soft-Fail Selftest |
 | 2026-11-27 | **BO3d ✅** Client `enrichWithAssistenz` → `voucher_extract` nach OCR/Text; E-Rechnung-Zeilen überspringen |
+| 2026-11-27 | **BO3e ✅** Fixture `invoice-ocr-sample.txt` + GoBD-Scan (kein stilles Buchen/Lager/Auto-Apply) · `beleg-ocr-bo3e-gobd-selftest.php` · BO3-Block fertig |
