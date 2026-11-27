@@ -468,6 +468,12 @@ $paymentTermsPreview = PaymentTermsService::composeText(
         </p>
       </div>
       <div class="dg-voucher-attachments" id="dg-voucher-attachments-live" hidden></div>
+      <div class="dg-mt-3" id="dg-voucher-extract-reread-wrap" hidden>
+        <div class="dg-btn-row">
+          <button type="button" class="dg-button" id="dg-voucher-extract-reread">Erneut auslesen</button>
+        </div>
+        <p class="dg-field-hint" id="dg-voucher-extract-reread-hint">Gespeicherte Datei noch einmal analysieren (z.&nbsp;B. nach Install-Import).</p>
+      </div>
       <div class="dg-voucher-extract" id="dg-voucher-extract" hidden>
         <div class="dg-voucher-extract__status" id="dg-voucher-extract-status"></div>
         <div class="dg-voucher-extract__layout">

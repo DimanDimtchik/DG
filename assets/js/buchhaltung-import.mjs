@@ -105,17 +105,50 @@ function setVoucherId(voucherId) {
   }
 }
 
+/** Zuletzt gerenderte Anhänge (für „Erneut auslesen“). */
+let storedFilesCache = [];
+
+function canAnalyzeFileMeta(file) {
+  if (!file) return false;
+  if (file.is_pdf || file.is_image) return true;
+  const mime = String(file.mime || '').toLowerCase();
+  if (mime === 'application/pdf' || mime.startsWith('image/') || mime.includes('xml')) return true;
+  const name = String(file.original_name || '').toLowerCase();
+  const ext = name.split('.').pop() || '';
+  return ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'gif', 'xml'].includes(ext);
+}
+
+function latestAnalyzableStoredFile() {
+  for (let i = storedFilesCache.length - 1; i >= 0; i -= 1) {
+    if (canAnalyzeFileMeta(storedFilesCache[i])) return storedFilesCache[i];
+  }
+  return null;
+}
+
+function updateRereadToolbar() {
+  const wrap = $('dg-voucher-extract-reread-wrap');
+  if (!wrap) return;
+  if (isNotesAttachmentMode() || !latestAnalyzableStoredFile()) {
+    wrap.hidden = true;
+    return;
+  }
+  wrap.hidden = false;
+}
+
 function renderAttachedFiles(files) {
   const container = $('dg-voucher-attachments-live');
   if (!container) return;
-  if (!files || files.length === 0) {
+  storedFilesCache = Array.isArray(files) ? files.slice() : [];
+  if (storedFilesCache.length === 0) {
     container.hidden = true;
     container.innerHTML = '';
+    updateRereadToolbar();
     return;
   }
   container.hidden = false;
+  const allowReread = !isNotesAttachmentMode();
   container.innerHTML = '<h3 class="dg-subsection-title">Gespeicherte Dateien</h3><ul class="dg-voucher-attachments__list">'
-    + files.map((file) => {
+    + storedFilesCache.map((file, idx) => {
       const name = escapeHtml(file.original_name || 'Datei');
       const size = escapeHtml(file.size_label || '');
       const viewUrl = escapeHtml(file.view_url || '#');
@@ -123,9 +156,35 @@ function renderAttachedFiles(files) {
       const thumb = file.is_image
         ? `<a href="${viewUrl}" target="_blank" rel="noopener" class="dg-voucher-attachments__thumb"><img src="${viewUrl}" alt="${name}" loading="lazy"></a>`
         : `<a href="${viewUrl}" target="_blank" rel="noopener" class="dg-voucher-attachments__thumb dg-voucher-attachments__thumb--file">PDF</a>`;
-      return `<li class="dg-voucher-attachments__item">${thumb}<div class="dg-voucher-attachments__meta"><a href="${viewUrl}" target="_blank" rel="noopener" class="dg-voucher-attachments__name">${name}</a><span class="dg-muted">${size}</span><span class="dg-voucher-attachments__links"><a href="${downloadUrl}">Herunterladen</a></span></div></li>`;
+      const rereadBtn = allowReread && canAnalyzeFileMeta(file)
+        ? `<button type="button" class="dg-button dg-button--small" data-voucher-reread="${idx}">Erneut auslesen</button>`
+        : '';
+      return `<li class="dg-voucher-attachments__item">${thumb}<div class="dg-voucher-attachments__meta"><a href="${viewUrl}" target="_blank" rel="noopener" class="dg-voucher-attachments__name">${name}</a><span class="dg-muted">${size}</span><span class="dg-voucher-attachments__links dg-table__actions-group"><a class="dg-button dg-button--small" href="${downloadUrl}">Herunterladen</a>${rereadBtn}</span></div></li>`;
     }).join('')
     + '</ul>';
+  updateRereadToolbar();
+}
+
+async function rereadStoredAttachment(fileMeta) {
+  if (isNotesAttachmentMode()) {
+    setNotesUploadStatus('error', 'Bei Auftrag/Angebot gibt es kein automatisches Auslesen.');
+    return;
+  }
+  if (!canAnalyzeFileMeta(fileMeta)) {
+    setStatus('warn', 'Dieser Dateityp kann nicht automatisch ausgelesen werden.');
+    return;
+  }
+  showServerFilePreview(fileMeta, fileMeta.original_name || 'Beleg');
+  try {
+    setStatus('working', `${spinner()} Gespeicherte Datei wird erneut ausgelesen …`);
+    const suggestion = await analyzeStoredFile(fileMeta, null);
+    renderSuggestion(suggestion);
+  } catch (error) {
+    setStatus('warn', 'Erneutes Auslesen fehlgeschlagen: ' + escapeHtml(error.message || String(error))
+      + ' — Felder bitte manuell ausfüllen.');
+    const actionsEl = $('dg-voucher-extract-actions');
+    if (actionsEl) actionsEl.hidden = true;
+  }
 }
 
 async function uploadFileImmediate(file) {
@@ -861,12 +920,19 @@ function init() {
 
   if (Array.isArray(importConfig.initialFiles) && importConfig.initialFiles.length > 0) {
     renderAttachedFiles(importConfig.initialFiles);
-    const latestFile = importConfig.initialFiles[importConfig.initialFiles.length - 1];
+    const latestFile = latestAnalyzableStoredFile()
+      || importConfig.initialFiles[importConfig.initialFiles.length - 1];
     if (latestFile && !isNotesAttachmentMode()) {
       showServerFilePreview(latestFile, latestFile.original_name || 'Beleg');
       const panel = $('dg-voucher-extract');
       if (panel) panel.hidden = false;
+      setStatus(
+        'ok',
+        'Gespeicherte Datei bereit. Mit <strong>Erneut auslesen</strong> Felder vorschlagen.',
+      );
     }
+  } else {
+    updateRereadToolbar();
   }
 
   input.addEventListener('change', () => handleFiles(input.files));
@@ -881,6 +947,33 @@ function init() {
       clearPreview();
       const panel = $('dg-voucher-extract');
       if (panel) panel.hidden = true;
+    });
+  }
+
+  const rereadBtn = $('dg-voucher-extract-reread');
+  if (rereadBtn) {
+    rereadBtn.addEventListener('click', () => {
+      const fileMeta = latestAnalyzableStoredFile();
+      if (!fileMeta) {
+        setStatus('warn', 'Keine gespeicherte Datei zum Auslesen gefunden.');
+        return;
+      }
+      rereadStoredAttachment(fileMeta);
+    });
+  }
+
+  const attachmentsLive = $('dg-voucher-attachments-live');
+  if (attachmentsLive) {
+    attachmentsLive.addEventListener('click', (event) => {
+      const btn = event.target && event.target.closest
+        ? event.target.closest('[data-voucher-reread]')
+        : null;
+      if (!btn) return;
+      event.preventDefault();
+      const idx = Number(btn.getAttribute('data-voucher-reread'));
+      const fileMeta = storedFilesCache[idx];
+      if (!fileMeta) return;
+      rereadStoredAttachment(fileMeta);
     });
   }
 

@@ -76,7 +76,7 @@ Datei (PDF/Bild/XML)
 | ID | Thema | Status | Token |
 |----|--------|--------|-------|
 | **BO0** | Inventar / Zielbild / Doc-Sync | [x] BO0a–c ✅ | 🟢 |
-| **BO1** | Rohpipeline Client härten | [ ] | 🟡🔴 |
+| **BO1** | Rohpipeline Client härten | [~] BO1b ✅ | 🟡🔴 |
 | **BO2** | Extrakt-Schema (Kopf + Positionen) | [ ] | 🟢🟡 |
 | **BO3** | Kichel-Strukturierung | [ ] | 🟡🔴 |
 | **BO4** | FiBu-UI Positionen übernehmen | [ ] | 🟡 |
@@ -106,8 +106,8 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| **BO1a** | Ist lesen: Upload, Analyse-Kaskade, Apply-Felder (nur Doc-Notiz hier §6) | 🟢 | [ ] |
-| **BO1b** | Button **„Erneut auslesen“** für bereits gespeicherte Anhänge (Install-Entwurf) | 🟡 | [ ] |
+| **BO1a** | Ist lesen: Upload, Analyse-Kaskade, Apply-Felder (nur Doc-Notiz hier §6) | 🟢 | [x] 2026-11-27 §6 |
+| **BO1b** | Button **„Erneut auslesen“** für bereits gespeicherte Anhänge (Install-Entwurf) | 🟡 | [x] 2026-11-27 · Toolbar + je Datei · `bin/beleg-ocr-reread-selftest.php` |
 | **BO1c** | Scan-PDF: OCR über **weitere Seiten** (sinnvolles Limit, z. B. max. N Seiten, Statuszeile) | 🟡 | [ ] |
 | **BO1d** | Smoke Dev: 1 digitales PDF + 1 Scan/Foto — Kurznotiz im Plan | 🔴 | [ ] |
 
@@ -287,3 +287,4 @@ Parallel ok: BO1 und BO2a (Schema schon hier). **BO5 nicht vor BO4.**
 |-------|--------|
 | 2026-11-27 | Plan angelegt · Zielbild Lexware-plus + Kichel + Lager · Mini-IDs BO0–BO6 · Schema §7 |
 | 2026-11-27 | **BO0a–c ✅** Verweise TODOS/IQ-STROM/Import · buchhaltung-todo §6 · Ist-Tabelle §6 |
+| 2026-11-27 | **BO1b ✅** „Erneut auslesen“ Toolbar + je Anhang · Selftest `beleg-ocr-reread-selftest.php` |
