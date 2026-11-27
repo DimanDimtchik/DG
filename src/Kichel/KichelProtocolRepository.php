@@ -89,4 +89,67 @@ final class KichelProtocolRepository
             return ListPagination::emptyResult($perPageKey);
         }
     }
+
+    /**
+     * KR6b — Meta aus response_json (ohne Extra-Migration).
+     *
+     * @return array{rag_used: bool, source_refs: list<string>, sources: list<array{label: string, ref: string, href?: string|null}>}
+     */
+    public static function metaFromResponseJson(?string $json): array
+    {
+        $empty = [
+            'rag_used' => false,
+            'source_refs' => [],
+            'sources' => [],
+        ];
+        if ($json === null || trim($json) === '') {
+            return $empty;
+        }
+        try {
+            $data = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+        } catch (Throwable) {
+            return $empty;
+        }
+        if (!is_array($data)) {
+            return $empty;
+        }
+
+        $ragUsed = !empty($data['rag_used']);
+        $sources = [];
+        if (isset($data['sources']) && is_array($data['sources'])) {
+            foreach ($data['sources'] as $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+                $label = trim((string) ($row['label'] ?? ''));
+                $ref = trim((string) ($row['ref'] ?? ''));
+                if ($label === '' && $ref === '') {
+                    continue;
+                }
+                $sources[] = [
+                    'label' => $label !== '' ? $label : $ref,
+                    'ref' => $ref,
+                    'href' => isset($row['href']) && is_string($row['href']) ? $row['href'] : null,
+                ];
+            }
+        }
+        if ($sources === [] && isset($data['rag_facts']) && is_array($data['rag_facts'])) {
+            $sources = KichelRagFact::sourcesForUi($data['rag_facts']);
+            $ragUsed = $ragUsed || $sources !== [];
+        }
+
+        $refs = [];
+        foreach ($sources as $source) {
+            $ref = trim((string) ($source['ref'] ?? ''));
+            if ($ref !== '') {
+                $refs[] = $ref;
+            }
+        }
+
+        return [
+            'rag_used' => $ragUsed,
+            'source_refs' => array_values(array_unique($refs)),
+            'sources' => $sources,
+        ];
+    }
 }

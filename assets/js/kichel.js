@@ -163,6 +163,44 @@
     saveState();
   }
 
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function renderSources(items) {
+    if (!items || !items.length) {
+      return;
+    }
+    var html = '<h4>Quellen</h4><ul class="dg-kichel-sources">';
+    items.forEach(function (item) {
+      var label = escapeHtml(item.label || item.ref || 'Quelle');
+      var ref = item.ref ? escapeHtml(item.ref) : '';
+      var href = item.href ? String(item.href) : '';
+      html += '<li class="dg-kichel-source">';
+      if (href) {
+        html +=
+          '<a class="dg-kichel-source__link" href="' +
+          escapeHtml(href) +
+          '">' +
+          label +
+          '</a>';
+      } else {
+        html += '<span class="dg-kichel-source__label">' + label + '</span>';
+      }
+      if (ref && ref !== label) {
+        html += ' <span class="dg-kichel-source__ref">(' + ref + ')</span>';
+      }
+      html += '</li>';
+    });
+    html += '</ul>';
+    appendHtmlSection('dg-kichel-section dg-kichel-section--sources', html);
+  }
+
   function renderActionLinks(items) {
     if (!items || !items.length) {
       return;
@@ -170,7 +208,12 @@
     var html = '<ul class="dg-kichel-links dg-kichel-links--action">';
     items.forEach(function (item) {
       if (item.href) {
-        html += '<li><a class="dg-kichel-action" href="' + item.href + '">' + item.label + '</a></li>';
+        html +=
+          '<li><a class="dg-kichel-action" href="' +
+          escapeHtml(item.href) +
+          '">' +
+          escapeHtml(item.label || item.href) +
+          '</a></li>';
       }
     });
     html += '</ul>';
@@ -244,6 +287,7 @@
         }
         var data = json.data || {};
         appendMessage(data.answer || 'Keine Antwort.', 'bot');
+        renderSources(data.sources || []);
         renderPageLinks(data.page_links || []);
         renderActionLinks(data.action_links || []);
         renderFollowUp(data.follow_up);

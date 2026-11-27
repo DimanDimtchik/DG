@@ -58,7 +58,7 @@ Kein Fine-Tuning, kein Gesetzes-Vollimport außerhalb dieser ID.
 
 | Phase | Kürzel | Inhalt | Status |
 |-------|--------|--------|--------|
-| **A — RAG (jetzt)** | **KR0–KR9** | Verdrahtung Suche → Fakten → Qwen; CRM-Korpus; Quellen; Smoke | **KR0–5 ✅** · als Nächstes **KR6** |
+| **A — RAG (jetzt)** | **KR0–KR9** | Verdrahtung Suche → Fakten → Qwen; CRM-Korpus; Quellen; Smoke | **KR0–6 ✅** · als Nächstes **KR7** |
 | **B — Rechtskorpus** | **KL0–KL5** | Gesetze/Urteile importieren & indexieren (nach stabilem RAG) | geplant |
 | **C — Intent-LLM** | **KI0–KI3** | Qwen nur als Frage-Parser (JSON), Suche weiter PHP | geplant |
 | **D — Produkt/Haftung** | **KH0–KH3** | Disclaimer, Protokoll-Felder, Admin-Qualität | geplant |
@@ -83,7 +83,7 @@ Kein Fine-Tuning, kein Gesetzes-Vollimport außerhalb dieser ID.
 | **KR3** | Retrieval-Orchestrierung (Reihenfolge Sucher) | 🟡 | [x] 2026-11-27 · a–d ✅ |
 | **KR4** | CRM-Korpus v1 (Knowledge/Nav/Felder → einheitliche Chunks) | 🟡 | [x] 2026-11-27 · a–c ✅ |
 | **KR5** | Ranking / „kein Treffer“ / Mehrfachtreffer | 🟡 | [x] 2026-11-27 · a–b ✅ |
-| **KR6** | Quellenzeile in Antwort + Protokoll | 🟡 | [ ] · Kinder a–b |
+| **KR6** | Quellenzeile in Antwort + Protokoll | 🟡 | [x] 2026-11-27 · a–b ✅ |
 | **KR7** | Super-Kichel/Widget: gleiche Pipeline (kein Parallelweg) | 🟡 | [ ] |
 | **KR8** | Selftests + Dev-Smoke | 🔴🟡 | [ ] · Kinder a–b |
 | **KR9** | Docs-Haken / Abnahmekriterien „RAG stabil“ | 🟢 | [ ] |
@@ -314,12 +314,19 @@ Quelle Tax: Label **CRM-Steuerkurztext**, Ref `tax:{id}`, Body inkl. Normhinweis
 
 ---
 
-### 3.7 KR6 — Quellen & Protokoll
+### 3.7 KR6 — Quellen & Protokoll ✅ 2026-11-27
 
-| Kind | Aufgabe | Abnahme |
-|------|---------|---------|
-| **KR6a** | Antwort enthält kurze Quellenzeile(n) (für Nutzer verständlich) | UI Widget + Super-Kichel |
-| **KR6b** | `dg_kichel_log` (o. Ä.): Fakten-Refs / rag_used speichern (Migration nur wenn nötig) | Admin-Protokoll auswertbar |
+| Kind | Aufgabe | Abnahme | Status |
+|------|---------|---------|--------|
+| **KR6a** | Strukturierte `sources[]` + UI-Block „Quellen“ | Widget + Super-Kichel (`renderSources`) | [x] |
+| **KR6b** | Protokoll: RAG + Quellen-Refs | `metaFromResponseJson` · Spalten in `kichel-protokoll` · **keine** Migration (JSON reicht) | [x] |
+
+#### API
+
+- Response: `sources: [{ label, ref, href }]` · eingebettete `Quelle:`-Zeilen aus `answer` entfernt, wenn `sources` gesetzt.
+- `rag_used` / `rag_facts` weiter im `response_json` fürs Protokoll.
+
+**Selftest:** `php bin/kichel-sources-selftest.php` → ALL OK.
 
 ---
 
@@ -484,7 +491,7 @@ KR0 ✅
 
 ## 12. Nächster konkreter Schritt
 
-**KR6** (Quellenzeile UI + Protokoll) — Start **KR6a**.  
+**KR7** (ein Pipeline-Pfad absichern) — Doc/Smoke Widget = Super-Kichel.  
 Kein Gesetzes-Vollimport, kein Fine-Tuning.
 
 ---
@@ -499,3 +506,4 @@ Kein Gesetzes-Vollimport, kein Fine-Tuning.
 | 2026-11-27 | **KR3 ✅** `KichelRetriever` · Pflichtpfade · Budget · `rag_enabled` · Assistant compose |
 | 2026-11-27 | **KR4 ✅** `KichelCorpus` · Tax-Kurztexte · einheitliche Chunks |
 | 2026-11-27 | **KR5 ✅** `KichelRanker` · Leerfall · Top-K · nummerierte Mehrfachtreffer |
+| 2026-11-27 | **KR6 ✅** `sources[]` UI · Protokoll RAG/Refs ohne Migration |

@@ -78,9 +78,9 @@ $multiAns = KichelAssistant::answer($user, 'Wo trage ich die USt-ID ein?');
 if (!empty($multiAns['rag_facts']) && count($multiAns['rag_facts']) > 1) {
     kr5_assert(
         str_contains((string) ($multiAns['answer'] ?? ''), '1.')
-        && str_contains((string) ($multiAns['answer'] ?? ''), 'Quelle:'),
-        'multi facts labeled in answer',
-        $multiAns['answer'] ?? ''
+        && (!empty($multiAns['sources']) || str_contains((string) ($multiAns['answer'] ?? ''), 'Quelle:')),
+        'multi facts labeled + sources',
+        ['answer' => $multiAns['answer'] ?? '', 'sources' => $multiAns['sources'] ?? []]
     );
 } else {
     kr5_assert(

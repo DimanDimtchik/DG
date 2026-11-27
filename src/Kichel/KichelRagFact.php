@@ -298,6 +298,59 @@ final class KichelRagFact
     }
 
     /**
+     * KR6a — strukturierte Quellen für Widget/Super-Kichel.
+     *
+     * @param list<array<string, mixed>> $facts
+     * @return list<array{label: string, ref: string, href: string|null}>
+     */
+    public static function sourcesForUi(array $facts): array
+    {
+        $out = [];
+        $seen = [];
+        foreach (self::normalizeList($facts) as $fact) {
+            $label = trim((string) ($fact['source_label'] ?? ''));
+            $ref = trim((string) ($fact['source_ref'] ?? ''));
+            if ($label === '' && $ref === '') {
+                continue;
+            }
+            $key = mb_strtolower($label . '|' . $ref, 'UTF-8');
+            if (isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+            $out[] = [
+                'label' => $label !== '' ? $label : $ref,
+                'ref' => $ref,
+                'href' => $fact['href'] ?? null,
+            ];
+        }
+
+        return $out;
+    }
+
+    /** Entfernt eingebettete „Quelle:“-Zeilen, wenn die UI `sources` separat zeigt. */
+    public static function stripSourceLinesFromAnswer(string $answer): string
+    {
+        $lines = preg_split("/\r\n|\n|\r/", $answer) ?: [];
+        $kept = [];
+        foreach ($lines as $line) {
+            $trim = trim($line);
+            if ($trim === '') {
+                $kept[] = $line;
+                continue;
+            }
+            if (str_starts_with($trim, 'Quelle:')) {
+                continue;
+            }
+            $kept[] = $line;
+        }
+        $text = implode("\n", $kept);
+        $text = preg_replace("/\n{3,}/", "\n\n", $text) ?? $text;
+
+        return trim($text);
+    }
+
+    /**
      * Flache Zahlen für number-Guards (RAG-Liste oder Legacy-Assoc).
      *
      * @param list<array<string, mixed>>|array<string, mixed> $facts

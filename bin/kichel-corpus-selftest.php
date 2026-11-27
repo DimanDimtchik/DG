@@ -105,6 +105,7 @@ kr4_assert(
     'assistant answers ist-versteuerung',
     $answer['answer'] ?? ''
 );
+kr4_assert(!empty($answer['sources']), 'ist-versteuerung has sources', $answer['sources'] ?? null);
 
 echo $failed === 0 ? "ALL OK\n" : "FAILED {$failed}\n";
 exit($failed === 0 ? 0 : 1);

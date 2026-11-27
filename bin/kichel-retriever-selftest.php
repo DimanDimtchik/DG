@@ -75,8 +75,15 @@ kr3_assert($hasUstFact && ($ust['facts'] ?? []) !== [], 'ust-id yields rag facts
 $answer = KichelAssistant::answer($user, 'Wo trage ich die USt-ID ein?');
 if (KichelRetriever::isRagEnabled()) {
     kr3_assert(!empty($answer['rag_used']), 'assistant rag_used when enabled', $answer['rag_used'] ?? null);
-    kr3_assert(str_contains((string) ($answer['answer'] ?? ''), 'Quelle:') || str_contains((string) ($answer['answer'] ?? ''), 'Firmendaten'), 'rag answer has content', $answer['answer'] ?? '');
+    kr3_assert(
+        str_contains((string) ($answer['answer'] ?? ''), 'Firmendaten')
+        || str_contains((string) ($answer['answer'] ?? ''), 'USt')
+        || !empty($answer['sources']),
+        'rag answer has content',
+        $answer['answer'] ?? ''
+    );
     kr3_assert(isset($answer['rag_facts']) && is_array($answer['rag_facts']), 'rag_facts present');
+    kr3_assert(!empty($answer['sources']), 'sources present for UI');
 } else {
     echo "SKIP  assistant rag_used (rag_enabled=false)\n";
 }

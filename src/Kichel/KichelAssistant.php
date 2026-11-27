@@ -103,7 +103,7 @@ final class KichelAssistant
             $out['rank_meta'] = $rankMeta;
         }
 
-        return $out;
+        return self::attachSources($out, $facts);
     }
 
     /**
@@ -174,7 +174,7 @@ final class KichelAssistant
             ];
         }
 
-        return [
+        $out = [
             'presentation' => 'simple',
             'kind' => (string) $candidate['kind'],
             'answer' => trim(implode("\n\n", $parts)),
@@ -182,6 +182,8 @@ final class KichelAssistant
             'action_links' => $actionLinks,
             'rag_used' => false,
         ];
+
+        return self::attachSources($out, KichelCorpus::factsFromCandidates([$candidate]));
     }
 
     /**
@@ -203,7 +205,7 @@ final class KichelAssistant
             $lines[] = $line;
         }
 
-        return [
+        $out = [
             'presentation' => 'simple',
             'kind' => 'multi_match',
             'answer' => implode("\n\n", $lines),
@@ -211,6 +213,8 @@ final class KichelAssistant
             'action_links' => self::actionLinksFromCandidates($candidates),
             'rag_used' => false,
         ];
+
+        return self::attachSources($out, KichelCorpus::factsFromCandidates($candidates));
     }
 
     private static function buttonLabelFromTitle(string $title): string
@@ -232,7 +236,7 @@ final class KichelAssistant
      */
     private static function wrapLegal(array $legalAnswer): array
     {
-        return [
+        $out = [
             'presentation' => 'simple',
             'kind' => 'legal_pages',
             'answer' => (string) ($legalAnswer['answer'] ?? ''),
@@ -241,6 +245,16 @@ final class KichelAssistant
             'page_links' => $legalAnswer['page_links'] ?? [],
             'rag_used' => false,
         ];
+
+        return self::attachSources($out, [
+            KichelRagFact::make(
+                KichelRagFact::TYPE_LEGAL,
+                'Pflichtseiten',
+                (string) ($legalAnswer['answer'] ?? ''),
+                'CRM-Rechtstexte',
+                'legal:pflichtseiten'
+            ),
+        ]);
     }
 
     /**
@@ -249,7 +263,7 @@ final class KichelAssistant
      */
     private static function wrapSimple(array $payload, string $kind): array
     {
-        return [
+        $out = [
             'presentation' => 'simple',
             'kind' => $kind,
             'answer' => (string) ($payload['answer'] ?? ''),
@@ -257,6 +271,22 @@ final class KichelAssistant
             'action_links' => $payload['action_links'] ?? [],
             'rag_used' => false,
         ];
+        $href = null;
+        $links = is_array($payload['action_links'] ?? null) ? $payload['action_links'] : [];
+        if ($links !== []) {
+            $href = (string) ($links[0]['href'] ?? '') ?: null;
+        }
+
+        return self::attachSources($out, [
+            KichelRagFact::make(
+                $kind === 'ledger_account' ? KichelRagFact::TYPE_LEDGER : KichelRagFact::TYPE_OTHER,
+                $kind === 'ledger_account' ? 'Konto' : 'Hinweis',
+                (string) ($payload['answer'] ?? ''),
+                $kind === 'ledger_account' ? 'CRM-Konten' : 'CRM',
+                $kind === 'ledger_account' ? 'ledger:match' : 'crm:note',
+                $href
+            ),
+        ]);
     }
 
     /**
@@ -273,7 +303,7 @@ final class KichelAssistant
         }
         $answer = KichelOllamaClient::compose($query, $ragFacts, $baseMoneyAnswer);
 
-        return [
+        $out = [
             'presentation' => 'simple',
             'kind' => 'calculation',
             'answer' => $answer,
@@ -290,6 +320,25 @@ final class KichelAssistant
             'rag_facts' => $ragFacts,
             'rag_used' => true,
         ];
+
+        return self::attachSources($out, $ragFacts);
+    }
+
+    /**
+     * @param array<string, mixed> $response
+     * @param list<array<string, mixed>> $facts
+     * @return array<string, mixed>
+     */
+    private static function attachSources(array $response, array $facts): array
+    {
+        $sources = KichelRagFact::sourcesForUi($facts);
+        if ($sources === []) {
+            return $response;
+        }
+        $response['sources'] = $sources;
+        $response['answer'] = KichelRagFact::stripSourceLinesFromAnswer((string) ($response['answer'] ?? ''));
+
+        return $response;
     }
 
     /**
@@ -303,6 +352,7 @@ final class KichelAssistant
             'follow_up' => self::FOLLOW_UP,
             'action_links' => [],
             'rag_used' => false,
+            'sources' => [],
         ];
     }
 }
