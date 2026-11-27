@@ -333,10 +333,23 @@ final class KichelAssistant
     {
         $sources = KichelRagFact::sourcesForUi($facts);
         if ($sources === []) {
-            return $response;
+            return self::applyGobdTone($response);
         }
         $response['sources'] = $sources;
         $response['answer'] = KichelRagFact::stripSourceLinesFromAnswer((string) ($response['answer'] ?? ''));
+
+        return self::applyGobdTone($response);
+    }
+
+    /**
+     * KH3 — GoBD-Ton auf jede ausgehende Antwort.
+     *
+     * @param array<string, mixed> $response
+     * @return array<string, mixed>
+     */
+    private static function applyGobdTone(array $response): array
+    {
+        $response['answer'] = KichelGobdTone::filterAnswer((string) ($response['answer'] ?? ''));
 
         return $response;
     }
@@ -346,13 +359,13 @@ final class KichelAssistant
      */
     private static function emptyResponse(string $message): array
     {
-        return [
+        return self::applyGobdTone([
             'presentation' => 'simple',
             'answer' => $message,
             'follow_up' => self::FOLLOW_UP,
             'action_links' => [],
             'rag_used' => false,
             'sources' => [],
-        ];
+        ]);
     }
 }

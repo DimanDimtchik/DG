@@ -37,6 +37,12 @@ STRENG VERBOTEN:
 - Beträge, Prozente oder Summen selbst berechnen oder ändern
 - Fakten widersprechen oder weglassen, die die Antwort tragen
 - Wissen „aus dem Gedächtnis“ zu Steuern/Recht hinzufügen
+- Buchungs- oder Kontierungsvorschläge („einfach auf Konto … buchen“, „als Aufwand verbuchen“), die nicht wörtlich in den Fakten stehen
+- Aufforderungen, ohne Beleg oder außerhalb der CRM-Belegkette zu buchen (GoBD)
+
+ERLAUBT:
+- Auf CRM-Menüs verweisen (z. B. Buchhaltung → Belege) und beschreiben, was das CRM dort tut
+- Zahlen und Pfade aus den Fakten unverändert wiedergeben
 
 Nutzerfrage: {$userQuery}
 
@@ -84,6 +90,11 @@ PROMPT;
             return null;
         }
 
+        // KH3 — GoBD: keine erfundenen Buchungsratschläge aus dem Modell
+        if (KichelGobdTone::isUnsafe($text)) {
+            return null;
+        }
+
         return $text;
     }
 
@@ -97,8 +108,9 @@ PROMPT;
         $facts = KichelRagFact::normalizeList($facts);
         $fallback = KichelRagFact::fallbackAnswer($facts, $baseAnswer);
         $phrased = self::phrase($userQuery, $fallback, $facts);
+        $answer = $phrased ?? $fallback;
 
-        return $phrased ?? $fallback;
+        return KichelGobdTone::filterAnswer($answer);
     }
 
     public static function isEnabled(): bool

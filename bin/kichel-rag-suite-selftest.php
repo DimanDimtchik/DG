@@ -25,6 +25,7 @@ $scripts = [
     'kichel-disclaimer-selftest.php',
     'kichel-quality-selftest.php',
     'kichel-role-view-selftest.php',
+    'kichel-gobd-tone-selftest.php',
 ];
 
 $failed = 0;

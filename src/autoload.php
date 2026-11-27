@@ -564,6 +564,7 @@ spl_autoload_register(static function (string $class): void {
         'KichelKnowledgeOverrides' => '/src/Kichel/KichelKnowledgeOverrides.php',
         'KichelQualityService' => '/src/Kichel/KichelQualityService.php',
         'KichelRoleView' => '/src/Kichel/KichelRoleView.php',
+        'KichelGobdTone' => '/src/Kichel/KichelGobdTone.php',
         'RecipeRepository' => '/src/Recipe/RecipeRepository.php',
         'WorkCenterRepository' => '/src/Recipe/WorkCenterRepository.php',
         'RecipeCostSettings' => '/src/Recipe/RecipeCostSettings.php',
