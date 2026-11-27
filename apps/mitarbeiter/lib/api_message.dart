@@ -106,7 +106,32 @@ bool apiIsSlotUnavailable(Object? source) {
 
 /// Sitzung abgelaufen (401 / unauthorized).
 bool apiIsSessionExpired(Object? source) {
-  return apiCodeOf(source) == 'unauthorized';
+  if (apiCodeOf(source) == 'unauthorized') return true;
+  final msg = (source is Map ? '${source['error'] ?? ''}' : '').toLowerCase();
+  return msg.contains('token ungültig') || msg.contains('token abgelaufen');
+}
+
+/// Rate-Limit (429 / rate_limited) — Auth oder API.
+bool apiIsRateLimited(Object? source) {
+  if (apiCodeOf(source) == 'rate_limited') return true;
+  final msg = apiUserMessage(source).toLowerCase();
+  return msg.contains('zu viele versuche');
+}
+
+/// Login / geschützte Screens: Rate-Limit und abgelaufene Sitzung immer klar.
+String apiAuthUserMessage(
+  Object? source, {
+  String fallback = 'Etwas ist schiefgelaufen. Bitte erneut versuchen.',
+}) {
+  if (apiIsRateLimited(source)) {
+    return apiCodeMessage('rate_limited') ??
+        apiUserMessage(source, fallback: fallback);
+  }
+  if (apiIsSessionExpired(source)) {
+    return apiCodeMessage('unauthorized') ??
+        apiUserMessage(source, fallback: fallback);
+  }
+  return apiUserMessage(source, fallback: fallback);
 }
 
 String _sanitizeException(String raw) {

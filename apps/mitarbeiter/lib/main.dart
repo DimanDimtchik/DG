@@ -489,7 +489,7 @@ class _LoginPageState extends State<LoginPage> {
       });
       if (!apiIsOk(res)) {
         setState(() {
-          _error = apiUserMessage(res, fallback: 'Anmeldung fehlgeschlagen.');
+          _error = apiAuthUserMessage(res, fallback: 'Anmeldung fehlgeschlagen.');
         });
         return;
       }
@@ -513,7 +513,7 @@ class _LoginPageState extends State<LoginPage> {
         (_) => false,
       );
     } catch (e) {
-      setState(() => _error = apiUserMessage(e));
+      setState(() => _error = apiAuthUserMessage(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -603,7 +603,11 @@ class _ShellPageState extends State<ShellPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sitzung abgelaufen. Bitte erneut anmelden.')),
+        SnackBar(
+          content: Text(
+            apiCodeMessage('unauthorized') ?? 'Sitzung abgelaufen. Bitte erneut anmelden.',
+          ),
+        ),
       );
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => LoginPage(baseUrl: widget.client.baseUrl)),

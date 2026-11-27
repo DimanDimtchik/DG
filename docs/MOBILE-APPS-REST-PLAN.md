@@ -150,10 +150,10 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 |----|---------|-------|--------|
 | **MA4a** | PHP: Selftest Auth + ein Customer- + ein Staff-Happy-Path (ohne echte Tenant-Daten hardcoden) | 🟢🟡 | [x] 2026-11-27 · `mobile-auth-happy-path-selftest.php` |
 | **MA4b** | Flutter: `flutter analyze` / Widget-Tests Mindeststand je App | 🟡 | [x] 2026-11-27 · analyze+Tests beide Apps · `mobile-flutter-minstand.sh` |
-| **MA4c** | Rate-Limit / ungültiges Token: UI zeigt verständliche Meldung | 🟢 | [ ] |
+| **MA4c** | Rate-Limit / ungültiges Token: UI zeigt verständliche Meldung | 🟢 | [x] 2026-11-27 · rate_limited Mapping + apiAuthUserMessage · Selftest |
 
-**Prompt MA4c:**  
-`Nur Mini-ID MA4c laut docs/MOBILE-APPS-REST-PLAN.md. Rate-Limit / ungültiges Token UI-Meldung. Kein Store-Upload.`
+**Prompt MA5a:**  
+`Nur Mini-ID MA5a laut docs/MOBILE-APPS-REST-PLAN.md. App-ID / Anzeigename / Icons prüfen. Kein Store-Upload.`
 
 ---
 
@@ -333,6 +333,7 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | `bin/mobile-auth-happy-path-selftest.php` | Guard MA4a Auth + Customer/Staff Happy-Path |
 | `bin/mobile-flutter-minstand.sh` | MA4b Flutter analyze + tests beide Apps |
 | `bin/mobile-flutter-minstand-selftest.php` | Guard MA4b |
+| `bin/mobile-rate-limit-token-selftest.php` | Guard MA4c Rate-Limit + ungültiges Token |
 | `bin/mobile-app-download-slug-selftest.php` | Guard MA0d |
 | [`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md) | Unterschrift ES6 (App-Upload) |
 
@@ -363,5 +364,6 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | 2026-11-27 | **MA3f ✅** Mitarbeiter Smoke: Flutter analyze/test · Web/Chrome Bootstrap→Login · §8 · `mobile-mitarbeiter-smoke.sh` · MA3-Block fertig |
 | 2026-11-27 | **MA4a ✅** PHP Auth + Customer-/Staff-Happy-Path · Temp-Konten · `mobile-auth-happy-path-selftest.php` |
 | 2026-11-27 | **MA4b ✅** Flutter Mindeststand: analyze + Bootstrap/Login/api_message-Tests je App · `mobile-flutter-minstand.sh` |
+| 2026-11-27 | **MA4c ✅** Rate-Limit→`rate_limited` · ungültiges Token UI · `mobile-rate-limit-token-selftest.php` · MA4-Block fertig |
 | 2026-11-27 | **MA1a ✅** `api_message.dart` identisch in beiden Apps · UI über `apiUserMessage`/`apiIsOk` · `php bin/mobile-api-message-selftest.php` |
 | 2026-11-27 | **MA0d ✅** CRM-Download-Slug `apps` → `app-download` · Legacy-Migration nur bei `page_kind=mobile_app_download` · `/apps` frei für Website |

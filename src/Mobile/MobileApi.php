@@ -34,10 +34,15 @@ final class MobileApi
             self::fail(400, $e->getMessage(), 'bad_request');
         } catch (RuntimeException $e) {
             $msg = $e->getMessage();
-            $code = str_contains(strtolower($msg), 'token') || str_contains(strtolower($msg), 'authorization')
+            $lower = strtolower($msg);
+            // MA4c: Auth-Throttle → rate_limited (nicht forbidden)
+            if (str_contains($lower, 'zu viele versuche') || str_contains($lower, 'rate limit')) {
+                self::fail(429, $msg, 'rate_limited');
+            }
+            $http = str_contains($lower, 'token') || str_contains($lower, 'authorization')
                 ? 401
                 : 403;
-            self::fail($code, $msg, $code === 401 ? 'unauthorized' : 'forbidden');
+            self::fail($http, $msg, $http === 401 ? 'unauthorized' : 'forbidden');
         } catch (Throwable $e) {
             self::fail(500, 'Interner Fehler.', 'server_error');
         }

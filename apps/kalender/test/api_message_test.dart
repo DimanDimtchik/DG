@@ -32,6 +32,23 @@ void main() {
       expect(apiIsBookingDisabled({'code': 'booking_disabled'}), isTrue);
       expect(apiIsSlotUnavailable({'code': 'slot_unavailable'}), isTrue);
     });
+
+    test('MA4c rate_limited + auth helpers', () {
+      expect(apiIsRateLimited({'ok': false, 'code': 'rate_limited', 'error': ''}), isTrue);
+      expect(
+        apiIsRateLimited({'ok': false, 'code': 'forbidden', 'error': 'Zu viele Versuche — bitte später erneut.'}),
+        isTrue,
+      );
+      expect(
+        apiAuthUserMessage({'ok': false, 'code': 'rate_limited', 'error': ''}),
+        contains('warten'),
+      );
+      expect(
+        apiAuthUserMessage({'ok': false, 'code': 'unauthorized', 'error': ''}),
+        contains('Sitzung'),
+      );
+      expect(apiCodeMessage('rate_limited'), contains('warten'));
+    });
   });
 
   group('api_base_url', () {

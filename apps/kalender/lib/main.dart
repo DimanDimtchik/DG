@@ -523,7 +523,7 @@ class _LoginPageState extends State<LoginPage> {
       final res = await client.post(path, body);
       if (!apiIsOk(res)) {
         setState(() {
-          _error = apiUserMessage(
+          _error = apiAuthUserMessage(
             res,
             fallback: _register ? 'Registrierung fehlgeschlagen.' : 'Anmeldung fehlgeschlagen.',
           );
@@ -550,7 +550,7 @@ class _LoginPageState extends State<LoginPage> {
         (_) => false,
       );
     } catch (e) {
-      setState(() => _error = apiUserMessage(e));
+      setState(() => _error = apiAuthUserMessage(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
