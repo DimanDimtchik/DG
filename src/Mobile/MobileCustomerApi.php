@@ -67,7 +67,7 @@ final class MobileCustomerApi
             if ($name === '') {
                 $name = trim((string) ($contact?->firstName ?? '') . ' ' . (string) ($contact?->lastName ?? ''));
             }
-            $bookingId = BookingRepository::save([
+            $bookingId = self::saveBookingOrFail([
                 'article_id' => (int) ($body['article_id'] ?? 0),
                 'employee_id' => (int) ($body['employee_id'] ?? 0),
                 'slot_datetime' => (string) ($body['slot_datetime'] ?? ''),
@@ -108,7 +108,7 @@ final class MobileCustomerApi
             if ($newSlot === '') {
                 throw new InvalidArgumentException('Neuer Termin (slot_datetime) erforderlich.');
             }
-            BookingRepository::save([
+            self::saveBookingOrFail([
                 'article_id' => $booking->articleId,
                 'employee_id' => (int) ($body['employee_id'] ?? $booking->employeeId),
                 'slot_datetime' => $newSlot,
@@ -131,7 +131,35 @@ final class MobileCustomerApi
     private static function assertBookingEnabled(): void
     {
         if (!CalendarEmbedSettings::isOnlineBookingEnabled()) {
-            throw new RuntimeException('Online-Terminbuchung ist deaktiviert.');
+            MobileApi::fail(
+                403,
+                'Online-Terminbuchung ist derzeit ausgeschaltet.',
+                'booking_disabled'
+            );
+        }
+    }
+
+    /**
+     * Speichert Buchung; Slot-Konflikte → klarer API-Code `slot_unavailable` (MA2d).
+     *
+     * @param array<string, mixed> $data
+     * @return never|int
+     */
+    private static function saveBookingOrFail(array $data, ?int $id = null): int
+    {
+        try {
+            return BookingRepository::save($data, $id);
+        } catch (InvalidArgumentException $e) {
+            $msg = $e->getMessage();
+            $lower = mb_strtolower($msg);
+            if (
+                str_contains($lower, 'nicht verfügbar')
+                || str_contains($lower, 'bereits belegt')
+                || str_contains($lower, 'außerhalb der arbeitszeiten')
+            ) {
+                MobileApi::fail(409, $msg, 'slot_unavailable');
+            }
+            throw $e;
         }
     }
 

@@ -42,6 +42,14 @@ bool apiIsNetworkException(Object error) {
       s.contains('failed to fetch');
 }
 
+/// API-`code` aus Fail-/Erfolgs-Map (leer wenn unbekannt).
+String apiCodeOf(Object? source) {
+  if (source is Map) {
+    return '${source['code'] ?? ''}'.trim();
+  }
+  return '';
+}
+
 /// Bekannte API-`code`-Werte → deutsche Fallback-Meldung (wenn `error` leer).
 String? apiCodeMessage(String code) {
   switch (code.trim()) {
@@ -51,6 +59,10 @@ String? apiCodeMessage(String code) {
       return 'Sitzung abgelaufen. Bitte erneut anmelden.';
     case 'forbidden':
       return 'Keine Berechtigung für diese Aktion.';
+    case 'booking_disabled':
+      return 'Online-Terminbuchung ist derzeit ausgeschaltet.';
+    case 'slot_unavailable':
+      return 'Dieser Termin ist nicht mehr frei. Bitte eine andere Zeit wählen.';
     case 'not_found':
       return 'Eintrag nicht gefunden.';
     case 'bad_request':
@@ -71,6 +83,28 @@ String? apiCodeMessage(String code) {
     default:
       return null;
   }
+}
+
+/// Online-Buchung aus (Code oder bekannte Server-Meldung).
+bool apiIsBookingDisabled(Object? source) {
+  if (apiCodeOf(source) == 'booking_disabled') return true;
+  final msg = apiUserMessage(source).toLowerCase();
+  return msg.contains('online-terminbuchung') &&
+      (msg.contains('ausgeschaltet') || msg.contains('deaktiviert'));
+}
+
+/// Slot weg / Konflikt (Code oder bekannte Server-Meldung).
+bool apiIsSlotUnavailable(Object? source) {
+  if (apiCodeOf(source) == 'slot_unavailable') return true;
+  final msg = apiUserMessage(source).toLowerCase();
+  return msg.contains('nicht verfügbar') ||
+      msg.contains('nicht mehr frei') ||
+      msg.contains('bereits belegt');
+}
+
+/// Sitzung abgelaufen (401 / unauthorized).
+bool apiIsSessionExpired(Object? source) {
+  return apiCodeOf(source) == 'unauthorized';
 }
 
 String _sanitizeException(String raw) {

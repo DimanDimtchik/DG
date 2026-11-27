@@ -32,7 +32,7 @@
 | **Kein Deploy außer „deploy“** | PHP-API nur bei Bedarf; Flutter-Builds separat |
 
 **Chat-Prompt-Vorlage:**  
-`Nur Mini-ID MA2c laut docs/MOBILE-APPS-REST-PLAN.md. Nur Kalender-App. Kein Mitarbeiter. Kein Refactor.`
+`Nur Mini-ID MA2d laut docs/MOBILE-APPS-REST-PLAN.md. Nur Kalender-App. Kein Mitarbeiter. Kein Refactor.`
 
 ---
 
@@ -120,14 +120,14 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | **MA2a** | Login + Register Ende-zu-Ende gegen Dev-API (Fehlermeldungen klar) | 🟡 | [x] 2026-11-27 · LoginPage Härte + Dev-E2E + Selftest |
 | **MA2b** | Katalog → Slot wählen → Buchen (Happy Path) | 🟡 | [x] 2026-11-27 · Staff-Filter + Dev-E2E + Selftest |
 | **MA2c** | Meine Termine: Liste + Storno + Umbuchen | 🟡 | [x] 2026-11-27 · Umbuchen via BookSlotPage · Dev-E2E + Selftest |
-| **MA2d** | Randfälle: Buchung aus, Slot weg, Session abgelaufen | 🟡 | [ ] |
+| **MA2d** | Randfälle: Buchung aus, Slot weg, Session abgelaufen | 🟡 | [x] 2026-11-27 · Codes + UI + Dev-E2E + Selftest |
 | **MA2e** | Smoke Emulator/Gerät + Kurznotiz §8 | 🔴 | [ ] |
-
-**Prompt MA2c:**  
-`Nur Mini-ID MA2c laut docs/MOBILE-APPS-REST-PLAN.md. Nur apps/kalender. Liste + Storno + Umbuchen. Kein Mitarbeiter.`
 
 **Prompt MA2d:**  
 `Nur Mini-ID MA2d laut docs/MOBILE-APPS-REST-PLAN.md. Nur apps/kalender. Randfälle Buchung/Slot/Session. Kein Mitarbeiter.`
+
+**Prompt MA2e:**  
+`Nur Mini-ID MA2e laut docs/MOBILE-APPS-REST-PLAN.md. Nur apps/kalender. Smoke Emulator/Gerät + Kurznotiz §8. Kein Mitarbeiter.`
 
 ---
 
@@ -219,8 +219,9 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | Buchen | ✅ `POST …/customer/bookings` | ✅ Bestätigungsdialog → POST |
 | Meine Termine | ✅ `GET …/customer/bookings` | ✅ HomePage Tab „Termine“ |
 | Storno | ✅ `POST …/bookings/{id}/cancel` | ✅ |
-| Umbuchen | ✅ `POST …/bookings/{id}/reschedule` | ❌ keine UI |
+| Umbuchen | ✅ `POST …/bookings/{id}/reschedule` | ✅ MA2c BookSlotPage Reschedule |
 | Mitarbeiter-Filter bei Slots | API: `employee_id` optional | ✅ MA2b (1 Staff auto, >1 Dropdown) |
+| Buchung aus / Slot weg / Session | ✅ `booking_disabled` · `slot_unavailable` · `unauthorized` | ✅ MA2d klare UI + Login |
 
 ### Mitarbeiter
 
@@ -251,7 +252,8 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | Fehlerformat / Offline-Hinweis vereinheitlichen | **MA1a** / **MA1d** |
 | Basis-URL QR / Deep-Link Kalender angleichen | **MA1c** (+ Kurz **MA0c** CRM-Seite) |
 | Umbuchen-UI Kalender | ✅ MA2c (`BookSlotPage` Reschedule + Liste Umbuchen/Stornieren) |
-| Slot `employee_id` optional | ✅ MA2b (Dropdown wenn >1 Staff) · Randfälle **MA2d** |
+| Slot `employee_id` optional | ✅ MA2b (Dropdown wenn >1 Staff) |
+| Randfälle Buchung/Slot/Session | ✅ MA2d |
 | Stempel/Abwesenheit Härte | **MA3b–e** |
 | Smoke Geräte | **MA2e** / **MA3f** |
 
@@ -285,6 +287,7 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | MA2a | 2026-11-27 | Dev API `ganz-om.de` | Register→Login→me→Logout ✅ · Konten bereinigt · UI-Validierung |
 | MA2b | 2026-11-27 | Dev API `ganz-om.de` | Online-Buchung an · Katalog→Slot→Buchen→Storno ✅ · Staff-Filter UI |
 | MA2c | 2026-11-27 | Dev API `ganz-om.de` | Liste→Umbuchen→Storno ✅ · Selftest `mobile-kalender-reschedule-selftest.php` |
+| MA2d | 2026-11-27 | Dev API `ganz-om.de` | Session/Slot-Konflikt/Buchung-aus ✅ · `mobile-kalender-edge-selftest.php` |
 | MA2e | | | |
 | MA3f | | | |
 
@@ -309,6 +312,7 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | `bin/mobile-kalender-auth-selftest.php` | Guard MA2a |
 | `bin/mobile-kalender-booking-selftest.php` | Guard MA2b |
 | `bin/mobile-kalender-reschedule-selftest.php` | Guard MA2c |
+| `bin/mobile-kalender-edge-selftest.php` | Guard MA2d |
 | `bin/mobile-app-download-slug-selftest.php` | Guard MA0d |
 | [`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md) | Unterschrift ES6 (App-Upload) |
 
@@ -329,5 +333,6 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | 2026-11-27 | **MA2a ✅** Kalender Login/Register Client-Validierung · Dev-E2E Auth · `mobile-kalender-auth-selftest.php` |
 | 2026-11-27 | **MA2b ✅** BookSlotPage Staff/`employee_id` · Buchungscode · Dev Katalog→Slot→Buchen |
 | 2026-11-27 | **MA2c ✅** Meine Termine Liste · Umbuchen (`/reschedule`) · Storno · `mobile-kalender-reschedule-selftest.php` |
+| 2026-11-27 | **MA2d ✅** Randfälle `booking_disabled`/`slot_unavailable`/Session · Kalender-UI · `mobile-kalender-edge-selftest.php` |
 | 2026-11-27 | **MA1a ✅** `api_message.dart` identisch in beiden Apps · UI über `apiUserMessage`/`apiIsOk` · `php bin/mobile-api-message-selftest.php` |
 | 2026-11-27 | **MA0d ✅** CRM-Download-Slug `apps` → `app-download` · Legacy-Migration nur bei `page_kind=mobile_app_download` · `/apps` frei für Website |

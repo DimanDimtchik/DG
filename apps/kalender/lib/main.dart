@@ -676,6 +676,7 @@ class _HomePageState extends State<HomePage> {
   List<Map<String, dynamic>> _staff = [];
   String? _bookingsError;
   String? _catalogError;
+  String? _catalogErrorCode;
   bool _loading = true;
   int? _cancellingId;
 
@@ -690,7 +691,7 @@ class _HomePageState extends State<HomePage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sitzung abgelaufen. Bitte erneut anmelden.')),
+        SnackBar(content: Text(apiCodeMessage('unauthorized') ?? 'Sitzung abgelaufen. Bitte erneut anmelden.')),
       );
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => LoginPage(baseUrl: widget.client.baseUrl)),
@@ -711,27 +712,41 @@ class _HomePageState extends State<HomePage> {
       _loading = true;
       _bookingsError = null;
       _catalogError = null;
+      _catalogErrorCode = null;
     });
     try {
       final b = await widget.client.get('/api/mobile/customer/bookings');
+      // Session abgelaufen → Login (Callback); keine Katalog-Fehleranzeige darüberlegen.
+      if (!mounted) return;
+      if (apiIsSessionExpired(b) && widget.client.token == null) {
+        setState(() => _loading = false);
+        return;
+      }
       final c = await widget.client.get('/api/mobile/customer/catalog');
       if (!mounted) return;
+      if (apiIsSessionExpired(c) && widget.client.token == null) {
+        setState(() => _loading = false);
+        return;
+      }
       final bData = _dataMap(b);
       final cData = _dataMap(c);
       final staffRaw = (cData?['staff'] as List?) ?? const [];
       setState(() {
-        _bookings = (bData?['bookings'] as List?) ?? [];
-        _articles = (cData?['articles'] as List?) ?? [];
-        _staff = staffRaw
-            .whereType<Map>()
-            .map((e) => Map<String, dynamic>.from(e))
-            .toList();
+        _bookings = apiIsOk(b) ? ((bData?['bookings'] as List?) ?? []) : _bookings;
+        _articles = apiIsOk(c) ? ((cData?['articles'] as List?) ?? []) : [];
+        _staff = apiIsOk(c)
+            ? staffRaw
+                .whereType<Map>()
+                .map((e) => Map<String, dynamic>.from(e))
+                .toList()
+            : <Map<String, dynamic>>[];
         _bookingsError = apiIsOk(b)
             ? null
             : apiUserMessage(b, fallback: 'Termine konnten nicht geladen werden.');
         _catalogError = apiIsOk(c)
             ? null
             : apiUserMessage(c, fallback: 'Katalog konnte nicht geladen werden.');
+        _catalogErrorCode = apiIsOk(c) ? null : apiCodeOf(c);
         _loading = false;
       });
     } catch (e) {
@@ -740,6 +755,7 @@ class _HomePageState extends State<HomePage> {
         final msg = apiUserMessage(e);
         _bookingsError = msg;
         _catalogError = msg;
+        _catalogErrorCode = apiCodeOf(e);
         _loading = false;
       });
     }
@@ -1030,7 +1046,18 @@ class _HomePageState extends State<HomePage> {
 
   Widget _catalogTab() {
     if (_catalogError != null) {
-      return EmptyState(icon: Icons.cloud_off_rounded, title: 'Buchen nicht möglich', detail: _catalogError!);
+      final bookingOff = apiIsBookingDisabled({
+            'ok': false,
+            'error': _catalogError,
+            'code': _catalogErrorCode ?? '',
+          });
+      return EmptyState(
+        icon: bookingOff ? Icons.event_busy_rounded : Icons.cloud_off_rounded,
+        title: bookingOff ? 'Online-Buchung ausgeschaltet' : 'Buchen nicht möglich',
+        detail: bookingOff
+            ? 'Die Online-Terminbuchung ist derzeit aus. Bitte später erneut versuchen oder telefonisch anfragen.'
+            : _catalogError!,
+      );
     }
     if (_articles.isEmpty) {
       return EmptyState(
@@ -1200,13 +1227,17 @@ class _BookSlotPageState extends State<BookSlotPage> {
   late DateTime _selectedDay;
   List<String> _slots = [];
   String? _error;
+  String? _errorCode;
   bool _loadingSlots = true;
   bool _bookingBusy = false;
   int? _employeeId;
+  VoidCallback? _prevSessionExpired;
 
   @override
   void initState() {
     super.initState();
+    _prevSessionExpired = widget.client.onSessionExpired;
+    widget.client.onSessionExpired = _onSessionExpired;
     final now = DateTime.now();
     _selectedDay = DateTime(now.year, now.month, now.day);
     final initial = widget.initialEmployeeId;
@@ -1216,6 +1247,25 @@ class _BookSlotPageState extends State<BookSlotPage> {
       _employeeId = int.tryParse('${widget.staff.first['id'] ?? ''}');
     }
     _loadSlots();
+  }
+
+  @override
+  void dispose() {
+    widget.client.onSessionExpired = _prevSessionExpired;
+    super.dispose();
+  }
+
+  void _onSessionExpired() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(apiCodeMessage('unauthorized') ?? 'Sitzung abgelaufen. Bitte erneut anmelden.')),
+      );
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => LoginPage(baseUrl: widget.client.baseUrl)),
+        (_) => false,
+      );
+    });
   }
 
   Map<String, dynamic>? _dataMap(Map<String, dynamic> res) {
@@ -1240,14 +1290,20 @@ class _BookSlotPageState extends State<BookSlotPage> {
     setState(() {
       _loadingSlots = true;
       _error = null;
+      _errorCode = null;
       _slots = [];
     });
     try {
       final res = await widget.client.get('/api/mobile/customer/slots', _slotQuery());
       if (!mounted) return;
+      if (apiIsSessionExpired(res) && widget.client.token == null) {
+        setState(() => _loadingSlots = false);
+        return;
+      }
       if (!apiIsOk(res)) {
         setState(() {
           _error = apiUserMessage(res, fallback: 'Zeiten nicht ladbar.');
+          _errorCode = apiCodeOf(res);
           _loadingSlots = false;
         });
         return;
@@ -1261,6 +1317,7 @@ class _BookSlotPageState extends State<BookSlotPage> {
       if (!mounted) return;
       setState(() {
         _error = apiUserMessage(e);
+        _errorCode = apiCodeOf(e);
         _loadingSlots = false;
       });
     }
@@ -1342,6 +1399,9 @@ class _BookSlotPageState extends State<BookSlotPage> {
         });
       }
       if (!mounted) return;
+      if (apiIsSessionExpired(res) && widget.client.token == null) {
+        return;
+      }
       if (apiIsOk(res)) {
         final booking = _dataMap(res)?['booking'];
         final code = booking is Map ? '${booking['booking_code'] ?? ''}'.trim() : '';
@@ -1356,14 +1416,36 @@ class _BookSlotPageState extends State<BookSlotPage> {
         Navigator.of(context).pop(true);
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(apiUserMessage(
-            res,
-            fallback: reschedule ? 'Umbuchen fehlgeschlagen.' : 'Buchung fehlgeschlagen.',
-          )),
-        ),
-      );
+      if (apiIsBookingDisabled(res)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(apiUserMessage(
+              res,
+              fallback: 'Online-Terminbuchung ist derzeit ausgeschaltet.',
+            )),
+          ),
+        );
+        setState(() {
+          _error = apiUserMessage(res, fallback: 'Online-Terminbuchung ist derzeit ausgeschaltet.');
+          _errorCode = apiCodeOf(res);
+          _slots = [];
+        });
+        return;
+      }
+      final slotGone = apiIsSlotUnavailable(res);
+      final failMsg = slotGone
+          ? apiUserMessage(
+              res,
+              fallback: 'Dieser Termin ist nicht mehr frei. Bitte eine andere Zeit wählen.',
+            )
+          : apiUserMessage(
+              res,
+              fallback: reschedule ? 'Umbuchen fehlgeschlagen.' : 'Buchung fehlgeschlagen.',
+            );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(failMsg)));
+      if (slotGone) {
+        setState(() => _slots = _slots.where((s) => s != slot).toList());
+      }
       await _loadSlots();
     } catch (e) {
       if (!mounted) return;
@@ -1521,7 +1603,23 @@ class _BookSlotPageState extends State<BookSlotPage> {
             child: _loadingSlots
                 ? const Center(child: CircularProgressIndicator())
                 : _error != null
-                    ? EmptyState(icon: Icons.cloud_off_rounded, title: 'Zeiten nicht ladbar', detail: _error!)
+                    ? EmptyState(
+                        icon: apiIsBookingDisabled({
+                              'ok': false,
+                              'error': _error,
+                              'code': _errorCode ?? '',
+                            })
+                            ? Icons.event_busy_rounded
+                            : Icons.cloud_off_rounded,
+                        title: apiIsBookingDisabled({
+                              'ok': false,
+                              'error': _error,
+                              'code': _errorCode ?? '',
+                            })
+                            ? 'Online-Buchung ausgeschaltet'
+                            : 'Zeiten nicht ladbar',
+                        detail: _error!,
+                      )
                     : _slots.isEmpty
                         ? const EmptyState(
                             icon: Icons.schedule_rounded,
