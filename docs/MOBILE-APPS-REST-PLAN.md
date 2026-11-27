@@ -161,10 +161,21 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| **MA5a** | App-ID / Anzeigename / Icons je App prüfen (kein `com.example`) | 🟡 | [ ] |
+| **MA5a** | App-ID / Anzeigename / Icons je App prüfen (kein `com.example`) | 🟡 | [x] 2026-11-27 · `de.ganzsoft.*` · Icons/Labels · Selftest |
 | **MA5b** | Privacy-Text / Datenfluss kurz dokumentieren (Login, Token, keine GPS) | 🟢 | [ ] |
 | **MA5c** | Release-Build-Checkliste (Android AAB / iOS Archive) — Doc only | 🟢 | [ ] |
 | **MA5d** | Optional: TestFlight / internes Track — nur nach explizitem Auftrag | 🔴 | [ ] |
+
+**Prompt MA5b:**  
+`Nur Mini-ID MA5b laut docs/MOBILE-APPS-REST-PLAN.md. Privacy-Text / Datenfluss dokumentieren. Kein Store-Upload.`
+
+### 5.1 App-IDs & Anzeigenamen (MA5a)
+
+| App | Android `applicationId` / `namespace` | Anzeigename | Icons |
+|-----|----------------------------------------|-------------|-------|
+| Kalender | `de.ganzsoft.dgkalender` | **DG Kalender** | `assets/branding/app_icon.png` → Android mipmap + Web |
+| Mitarbeiter | `de.ganzsoft.dgmitarbeiter` | **DG Mitarbeiter** | dito |
+| iOS | noch nicht im Repo | — | später analog Bundle-ID `de.ganzsoft.dgkalender` / `…dgmitarbeiter` |
 
 ---
 
@@ -334,6 +345,7 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | `bin/mobile-flutter-minstand.sh` | MA4b Flutter analyze + tests beide Apps |
 | `bin/mobile-flutter-minstand-selftest.php` | Guard MA4b |
 | `bin/mobile-rate-limit-token-selftest.php` | Guard MA4c Rate-Limit + ungültiges Token |
+| `bin/mobile-app-id-icons-selftest.php` | Guard MA5a App-ID/Icons |
 | `bin/mobile-app-download-slug-selftest.php` | Guard MA0d |
 | [`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md) | Unterschrift ES6 (App-Upload) |
 
@@ -365,5 +377,6 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | 2026-11-27 | **MA4a ✅** PHP Auth + Customer-/Staff-Happy-Path · Temp-Konten · `mobile-auth-happy-path-selftest.php` |
 | 2026-11-27 | **MA4b ✅** Flutter Mindeststand: analyze + Bootstrap/Login/api_message-Tests je App · `mobile-flutter-minstand.sh` |
 | 2026-11-27 | **MA4c ✅** Rate-Limit→`rate_limited` · ungültiges Token UI · `mobile-rate-limit-token-selftest.php` · MA4-Block fertig |
+| 2026-11-27 | **MA5a ✅** App-IDs `de.ganzsoft.dgkalender` / `…dgmitarbeiter` · Labels/Icons · kein `com.example` |
 | 2026-11-27 | **MA1a ✅** `api_message.dart` identisch in beiden Apps · UI über `apiUserMessage`/`apiIsOk` · `php bin/mobile-api-message-selftest.php` |
 | 2026-11-27 | **MA0d ✅** CRM-Download-Slug `apps` → `app-download` · Legacy-Migration nur bei `page_kind=mobile_app_download` · `/apps` frei für Website |

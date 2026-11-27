@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.dg_kalender"
+    namespace = "de.ganzsoft.dgkalender"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -15,8 +15,8 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.dg_kalender"
+        // Store-/APK-ID (MA5a, produktive Package-ID)
+        applicationId = "de.ganzsoft.dgkalender"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

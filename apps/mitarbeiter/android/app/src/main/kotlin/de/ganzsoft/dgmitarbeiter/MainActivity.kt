@@ -1,4 +1,4 @@
-package com.example.dg_kalender
+package de.ganzsoft.dgmitarbeiter
 
 import io.flutter.embedding.android.FlutterActivity
 
