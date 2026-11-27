@@ -41,6 +41,7 @@ $superkihelIsAdmin = $superkihelUser instanceof User && RoleResolver::isAdmin($s
 
     <section class="dg-panel" aria-labelledby="superkihel-help-title">
       <h2 id="superkihel-help-title" class="dg-section-title">Hilfe im CRM</h2>
+      <?php /* KR7: dieselbe Hilfe-API wie das Widget (dgKichel.apiUrl), kein eigener Prompt-Pfad. */ ?>
       <div class="dg-kichel-messages" data-superkihel-messages>
         <div class="dg-kichel-msg dg-kichel-msg--bot">Hallo! Schreiben Sie Ihre Frage unten und senden Sie ab.</div>
       </div>

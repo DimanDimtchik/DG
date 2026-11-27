@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 /**
  * HTTP-API für den Kichel-Assistenten (nur eingeloggte Mitarbeiter/Admins).
+ *
+ * KR7: einzige Hilfe-Pipeline für Widget und Super-Kichel (`POST /api/kichel` → Assistant).
+ * Kein zweites Prompt-/Ollama-System in der Super-Kichel-Seite (OpenHands = SKP, getrennt).
  */
 final class KichelApi
 {

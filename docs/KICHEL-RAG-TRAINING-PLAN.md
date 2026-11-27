@@ -58,7 +58,7 @@ Kein Fine-Tuning, kein Gesetzes-Vollimport außerhalb dieser ID.
 
 | Phase | Kürzel | Inhalt | Status |
 |-------|--------|--------|--------|
-| **A — RAG (jetzt)** | **KR0–KR9** | Verdrahtung Suche → Fakten → Qwen; CRM-Korpus; Quellen; Smoke | **KR0–6 ✅** · als Nächstes **KR7** |
+| **A — RAG (jetzt)** | **KR0–KR9** | Verdrahtung Suche → Fakten → Qwen; CRM-Korpus; Quellen; Smoke | **KR0–7 ✅** · als Nächstes **KR8** |
 | **B — Rechtskorpus** | **KL0–KL5** | Gesetze/Urteile importieren & indexieren (nach stabilem RAG) | geplant |
 | **C — Intent-LLM** | **KI0–KI3** | Qwen nur als Frage-Parser (JSON), Suche weiter PHP | geplant |
 | **D — Produkt/Haftung** | **KH0–KH3** | Disclaimer, Protokoll-Felder, Admin-Qualität | geplant |
@@ -84,7 +84,7 @@ Kein Fine-Tuning, kein Gesetzes-Vollimport außerhalb dieser ID.
 | **KR4** | CRM-Korpus v1 (Knowledge/Nav/Felder → einheitliche Chunks) | 🟡 | [x] 2026-11-27 · a–c ✅ |
 | **KR5** | Ranking / „kein Treffer“ / Mehrfachtreffer | 🟡 | [x] 2026-11-27 · a–b ✅ |
 | **KR6** | Quellenzeile in Antwort + Protokoll | 🟡 | [x] 2026-11-27 · a–b ✅ |
-| **KR7** | Super-Kichel/Widget: gleiche Pipeline (kein Parallelweg) | 🟡 | [ ] |
+| **KR7** | Super-Kichel/Widget: gleiche Pipeline (kein Parallelweg) | 🟡 | [x] 2026-11-27 |
 | **KR8** | Selftests + Dev-Smoke | 🔴🟡 | [ ] · Kinder a–b |
 | **KR9** | Docs-Haken / Abnahmekriterien „RAG stabil“ | 🟢 | [ ] |
 
@@ -330,9 +330,25 @@ Quelle Tax: Label **CRM-Steuerkurztext**, Ref `tax:{id}`, Body inkl. Normhinweis
 
 ---
 
-### 3.8 KR7 — Ein Pipeline-Pfad
+### 3.8 KR7 — Ein Pipeline-Pfad ✅ 2026-11-27
 
-Widget und Super-Kichel nutzen **dieselbe** Assistant/RAG-Kette. Kein zweites Prompt-System nur für Super-Kichel.
+Widget und Super-Kichel nutzen **dieselbe** Hilfe-Kette:
+
+```text
+window.dgKichel.apiUrl = /api/kichel
+  → KichelApi::handle
+  → KichelAssistant::answer
+  → Retriever / Ranker / Corpus / compose
+```
+
+| Prüfung | Ergebnis |
+|---------|----------|
+| Beide JS: `cfg.apiUrl` | ja |
+| Kein Direkt-Ollama in den UIs | ja |
+| Super-Kichel-View ohne eigene Help-API | ja |
+| OpenHands-Button | **SKP** (Programmieren) — absichtlich getrennt |
+
+**Selftest:** `php bin/kichel-pipeline-selftest.php` → ALL OK.
 
 ---
 
@@ -491,7 +507,7 @@ KR0 ✅
 
 ## 12. Nächster konkreter Schritt
 
-**KR7** (ein Pipeline-Pfad absichern) — Doc/Smoke Widget = Super-Kichel.  
+**KR8** (Selftests + Dev-Smoke) — Start **KR8a** (CLI-Fragen/Quellen).  
 Kein Gesetzes-Vollimport, kein Fine-Tuning.
 
 ---
@@ -507,3 +523,4 @@ Kein Gesetzes-Vollimport, kein Fine-Tuning.
 | 2026-11-27 | **KR4 ✅** `KichelCorpus` · Tax-Kurztexte · einheitliche Chunks |
 | 2026-11-27 | **KR5 ✅** `KichelRanker` · Leerfall · Top-K · nummerierte Mehrfachtreffer |
 | 2026-11-27 | **KR6 ✅** `sources[]` UI · Protokoll RAG/Refs ohne Migration |
+| 2026-11-27 | **KR7 ✅** eine Hilfe-Pipeline Widget=Super-Kichel · Selftest |
