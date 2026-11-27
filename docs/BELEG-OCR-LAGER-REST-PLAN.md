@@ -80,7 +80,7 @@ Datei (PDF/Bild/XML)
 | **BO2** | Extrakt-Schema (Kopf + Positionen) | [x] BO2a–d ✅ | 🟢🟡 |
 | **BO3** | Kichel-Strukturierung | [x] BO3a–e ✅ | 🟢🟡 |
 | **BO4** | FiBu-UI Positionen übernehmen | [x] BO4a–d ✅ | 🟢🟡 |
-| **BO5** | Lager-Anbindung | [~] BO5a–c ✅ | 🟡🔴 |
+| **BO5** | Lager-Anbindung | [x] BO5a–f ✅ | 🟡🔴 |
 | **BO6** | Docs/Haken Abschluss | [ ] | 🟢 |
 
 ---
@@ -174,7 +174,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | **BO5c** | Neuanlage-Vorschlag: product vs. service; **nur nach User-Klick** speichern | 🟢 | [x] 2026-11-27 · `article_create` |
 | **BO5d** | EK-Quelle am Artikel aus Beleg (Lieferant-Kontakt + Preis), Preferred optional | 🟢 | [x] 2026-11-27 · `article_purchase_source` |
 | **BO5e** | Wareneingang-**Vorschlag** (bestehender Lager-Service) nach gespeichertem Eingangsbeleg — kein Auto-Post ohne Klick | 🟢 | [x] 2026-11-27 · `stock_receipt` |
-| **BO5f** | Smoke: 1 Artikel-Match + 1 Neuanlage + EK sichtbar; Kurznotiz | 🔴 | [ ] |
+| **BO5f** | Smoke: 1 Artikel-Match + 1 Neuanlage + EK sichtbar; Kurznotiz | 🟢 | [x] 2026-11-27 · `beleg-ocr-bo5f-lager-smoke-selftest.php` · §14 |
 
 **Prompt BO5c:**  
 `Nur Mini-ID BO5c laut docs/BELEG-OCR-LAGER-REST-PLAN.md. Neuanlage Artikel/Leistung nur nach Bestätigung. Katalog-UI. Kein Auto-Wareneingang.`
@@ -184,6 +184,9 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 **Prompt BO5e:**  
 `Nur Mini-ID BO5e laut docs/BELEG-OCR-LAGER-REST-PLAN.md. Wareneingang-Vorschlag nach gespeichertem Beleg — nur nach Klick buchen, kein Auto-syncForVoucher.`
+
+**Prompt BO5f:**  
+`Nur Mini-ID BO5f laut docs/BELEG-OCR-LAGER-REST-PLAN.md. Smoke Match+Neuanlage+EK; Kurznotiz im Plan.`
 
 ---
 
@@ -259,6 +262,25 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | **BO5e** | **Nicht** still `syncForVoucher` aus OCR; `proposalFromExtractLines` + Klick → `processReceipt` (Path B) |
 
 **Verweise:** [`LAGER-WIRTSCHAFT.md`](LAGER-WIRTSCHAFT.md) · [`LAGER-EINKAUF-RESERVIERUNG-PLAN.md`](LAGER-EINKAUF-RESERVIERUNG-PLAN.md) · `StockMovementService` · `StockReceiptIssueService` · Plan §12 (Ausgabe ohne items)
+
+---
+
+## 14. BO5f — Smoke Kurznotiz (2026-11-27)
+
+**Selftest:** `php bin/beleg-ocr-bo5f-lager-smoke-selftest.php` (zieht BO5b–e mit).
+
+| Check | Ergebnis |
+|-------|----------|
+| Fixture OCR/CII | ≥1 `product` + ≥1 `service` Zeile |
+| Match-UI | „Zuordnen“ + `article_match` verdrahtet |
+| Neuanlage-UI | „Als Artikel/Leistung anlegen“ + `article_create` |
+| EK sichtbar | „Einkaufspreis speichern“ + Preferred-Checkbox + `article_purchase_source` |
+| WE-Vorschlag | Panel + Preview; Buchung nur mit `voucher_id` und Klick (`stock_receipt`) |
+| GoBD | Kein `syncForVoucher` in Match/Create/EK/WE-Preview/WE-Book-Handlern |
+
+**Grenze:** Offline-VM ohne Instanz-DB — kein Live-Katalog-Match/WE-Buchung hier. **UI-Smoke nach Deploy** auf Dev (`ganz-om.de`): 1 Position zuordnen, 1 neu anlegen, EK speichern, Beleg speichern, WE nur wenn `track_stock` an.
+
+**BO5-Block:** a–f erledigt → weiter **BO6**.
 
 ---
 
@@ -515,3 +537,4 @@ Parallel ok: BO1 und BO2a (Schema schon hier). **BO5 nicht vor BO4.**
 | 2026-11-27 | **BO5c ✅** Neuanlage Artikel/Leistung per Klick (`article_create`, track_stock aus, kein WE) |
 | 2026-11-27 | **BO5d ✅** EK-Quelle aus Beleg (`upsertFromBeleg` + `article_purchase_source`, Preferred optional, kein WE) |
 | 2026-11-27 | **BO5e ✅** WE-Vorschlag + Klick (`stock_receipt_preview` / `stock_receipt` → `processReceipt`, kein syncForVoucher) |
+| 2026-11-27 | **BO5f ✅** Smoke Match+Neuanlage+EK+WE · §14 · Selftest inkl. BO5b–e · BO5-Block fertig |

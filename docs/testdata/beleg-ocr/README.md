@@ -6,6 +6,7 @@ Demo-Dateien ohne echte Firmendaten. Nutzung:
 node bin/beleg-ocr-bo2-fixture-selftest.mjs
 php bin/beleg-ocr-bo3e-gobd-selftest.php
 node bin/beleg-ocr-bo4d-einvoice-apply-selftest.mjs
+php bin/beleg-ocr-bo5f-lager-smoke-selftest.php
 ```
 
 | Datei | Inhalt |
