@@ -59,7 +59,7 @@ Kein Fine-Tuning, kein Gesetzes-Vollimport außerhalb dieser ID.
 | Phase | Kürzel | Inhalt | Status |
 |-------|--------|--------|--------|
 | **A — RAG (jetzt)** | **KR0–KR9** | Verdrahtung Suche → Fakten → Qwen; CRM-Korpus; Quellen; Smoke | **KR0–9 ✅** Gate offen · als Nächstes **KL0** |
-| **B — Rechtskorpus** | **KL0–KL5** | Gesetze/Urteile importieren & indexieren (nach stabilem RAG) | geplant |
+| **B — Rechtskorpus** | **KL0–KL5** | Gesetze/Urteile importieren & indexieren (nach stabilem RAG) | **KL0 ✅** · als Nächstes **KL1** |
 | **C — Intent-LLM** | **KI0–KI3** | Qwen nur als Frage-Parser (JSON), Suche weiter PHP | geplant |
 | **D — Produkt/Haftung** | **KH0–KH3** | Disclaimer, Protokoll-Felder, Admin-Qualität | geplant |
 | **E — Fine-Tuning** | **KT0–KT5** | LoRA auf Q&A/Stil — **nur nach RAG-Stabil** | später, beschrieben |
@@ -412,22 +412,65 @@ RAG gilt als **stabil**, wenn:
 
 ---
 
-## 4. Phase B — Rechtskorpus (**KL** — nach RAG, geplant)
+## 4. Phase B — Rechtskorpus (**KL** — nach KR9)
 
 > Eigenes Indexieren freier Normen/Urteile. Weiterhin **kein** Fine-Tuning nötig.
 
-| ID | Inhalt (Beschreibung) | Wann |
-|----|----------------------|------|
-| **KL0** | Quellenentscheid: Primär [gesetze-im-internet.de](https://www.gesetze-im-internet.de/) (XML + `gii-toc.xml`); optional Bund-API [rechtsinformationen.bund.de](https://docs.rechtsinformationen.bund.de/); Urteile später `rii-toc.xml` / Open Legal Data | nach KR9 |
-| **KL1** | Import-Pipeline: TOC → gewählte Gesetze (Start: **AO, UStG, EStG**, ggf. HGB-Kern) → Abschnitte als Chunks (§/Abs.) + Metadaten (Gesetz, §, Abrufdatum) | |
-| **KL2** | Speicher: Tabelle oder Datei-Index **in Instanz/GEX** — suchbar (Volltext zuerst; Vektor optional später) | |
-| **KL3** | Retriever-Anbindung: Norm-Chunks als weiterer `facts[]`-Typ `statute` | |
-| **KL4** | Update-Job: periodisch TOC-Diff / geänderte Normen neu laden; alten Stand kennzeichnen | |
-| **KL5** | Pilot Urteile: nur BFH-Stichprobe oder Themenfilter — **kein** Vollbestand am Tag 1 | |
+| ID | Inhalt | Status |
+|----|--------|--------|
+| **KL0** | Quellenentscheid (Doc) | [x] 2026-11-27 · §4.1 |
+| **KL1** | Import-Pipeline: TOC → AO/UStG/EStG (+ ggf. HGB) → Chunks | [ ] |
+| **KL2** | Speicher Index (Volltext zuerst) | [ ] |
+| **KL3** | Retriever → `type=statute` | [ ] |
+| **KL4** | Update-Job TOC-Diff | [ ] |
+| **KL5** | Pilot Urteile (später, eng) | [ ] geparkt bis nach KL1–3 |
 
-**Rechtliches:** Normtexte/amtliche Entscheidungen typisch § 5 UrhG nutzbar; **keine** Beck-/Juris-Kommentare scrapen. Erläuterungen = weiter **eigene** Kurztexte (KR4c) oder lizenzierte Inhalte.
+### 4.1 KL0 — Quellenentscheid ✅ 2026-11-27
 
-**API vs. DB:** Live-API nur als Ergänzung/Refresh; **Antwortgrundlage** = indexierter Stand bei euch (Prüfbarkeit).
+#### Entscheidung (verbindlich)
+
+| Rolle | Quelle | Format / Einstieg | Nutzung in DG |
+|-------|--------|-------------------|---------------|
+| **Primär Normen** | [gesetze-im-internet.de](https://www.gesetze-im-internet.de/) (BMJV/BfJ) | XML + TOC [`gii-toc.xml`](https://www.gesetze-im-internet.de/gii-toc.xml) · DTD `gii-norm.dtd` | **KL1+** Import; Antwortgrundlage = **unser Index** |
+| **Optional Refresh/Suche** | Bund-API [docs.rechtsinformationen.bund.de](https://docs.rechtsinformationen.bund.de/) | JSON REST; Datensatz **noch unvollständig**; Bulk-XML geplant | ergänzend, **nicht** alleinige Wahrheitsquelle |
+| **Urteile (später KL5)** | [rechtsprechung-im-internet.de](https://www.rechtsprechung-im-internet.de/) | XML + [`rii-toc.xml`](https://www.rechtsprechung-im-internet.de/rii-toc.xml) | Pilot BFH/Themenfilter — kein Vollbestand |
+| **Community optional** | Open Legal Data | API / HuggingFace-Dumps (ODbL Sammlung) | nur Experiment; Qualität ≠ Juris |
+
+**Nicht als Quelle:** Beck/Juris/Kommentare; Scraping von Verlagsseiten; Live-API als einzige Antwortbasis ohne gespeicherten Stand.
+
+#### Warum GII primär
+
+- Freie Weiterverwertung der DE-Normtexte (Hinweise GII §6); maschinenlesbares XML.
+- Tagesaktuelles TOC (Erreichbarkeit 2026-11-27: `gii-toc.xml` HTTP 200).
+- Konsolidierte Fassungen — **nicht** die amtliche BGBl-Fassung (Hinweis in Antworten/Quellen: „konsolidiert GII, Stand …“).
+- Passt zur Produktregel: prüfbarer Indexstand bei uns (KR-Haftung).
+
+#### Pilot-Gesetze für KL1 (Festlegung)
+
+Start-Whitelist (Abkürzungen wie in GII üblich):
+
+1. **AO**  
+2. **UStG**  
+3. **EStG**  
+4. optional danach **HGB** (Kern, wenn Import stabil)
+
+Kein Massenimport aller Bundesgesetze in KL1.
+
+#### Recht / Produkt
+
+- Normen/amtliche Entscheidungen: typisch § 5 UrhG nutzbar.  
+- Erläuterungen weiter nur **eigene** Kurztexte (`tax-shorttexts` / Knowledge) oder lizenzierte Inhalte.  
+- Endnutzer: Orientierungshilfe, keine Rechtsberatung; Quelle + Abruf-/Index-Stand nennen (KL3/KR6).
+
+#### Abnahme KL0
+
+- [x] Primärquelle GII XML/TOC festgelegt  
+- [x] Bund-API = optional, nicht Primär  
+- [x] Urteile = später RII, eng  
+- [x] Pilot-Gesetze AO/UStG/EStG (+ optional HGB)  
+- [x] kein Code-Import in KL0  
+
+**Nächste Mini-ID:** **KL1** (Import-Pipeline nur Whitelist).
 
 ---
 
@@ -544,9 +587,8 @@ KR0 ✅
 
 ## 12. Nächster konkreter Schritt
 
-**KL0** (Rechtskorpus-Quellenentscheid) — nach Freigabe.  
-Optional parallel: KR8b Dev-Browser-Haken.  
-**Kein** KT/KP ohne neues Gate.
+**KL1** (Import-Pipeline Whitelist AO/UStG/EStG aus GII-XML).  
+Optional: KR8b Dev-Browser. **Kein** KT/KP ohne neues Gate.
 
 ---
 
@@ -564,3 +606,4 @@ Optional parallel: KR8b Dev-Browser-Haken.
 | 2026-11-27 | **KR7 ✅** eine Hilfe-Pipeline Widget=Super-Kichel · Selftest |
 | 2026-11-27 | **KR8a ✅** Smoke+Suite Selftests · **KR8b** Dev-UI-Checkliste offen |
 | 2026-11-27 | **KR9 ✅** RAG-Gate offen für **KL** · KT/KP gesperrt bis neuer Freigabe |
+| 2026-11-27 | **KL0 ✅** Quellenentscheid: GII primär · Bund-API optional · Pilot AO/UStG/EStG |
