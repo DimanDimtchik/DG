@@ -2,7 +2,8 @@
 
 > Agent-Regel: Pro Chat **eine** ID. Spec nur dieser Abschnitt + genannte Dateien.  
 > Kein Deploy außer „deploy“. Kalender und Mitarbeiter **nicht** in einem Chat mischen.  
-> **Rest-Arbeit (Microschritte):** [`MOBILE-APPS-REST-PLAN.md`](MOBILE-APPS-REST-PLAN.md) — Serie **MA0–MA6**.
+> **Rest-Arbeit (Microschritte):** [`MOBILE-APPS-REST-PLAN.md`](MOBILE-APPS-REST-PLAN.md) — Serie **MA0–MA6**.  
+> **Privacy / Datenfluss:** [`MOBILE-APPS-PRIVACY.md`](MOBILE-APPS-PRIVACY.md) (MA5b).
 
 Stand: **2026-11-27** — M0 API + M1/M2 Backend ✅ · Flutter unter `apps/kalender`, `apps/mitarbeiter` vorhanden · Ausbau/Härte → Rest-Plan MA.
 

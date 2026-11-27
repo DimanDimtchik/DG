@@ -159,12 +159,12 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
 | **MA5a** | App-ID / Anzeigename / Icons je App prüfen (kein `com.example`) | 🟡 | [x] 2026-11-27 · `de.ganzsoft.*` · Icons/Labels · Selftest |
-| **MA5b** | Privacy-Text / Datenfluss kurz dokumentieren (Login, Token, keine GPS) | 🟢 | [ ] |
+| **MA5b** | Privacy-Text / Datenfluss kurz dokumentieren (Login, Token, keine GPS) | 🟢 | [x] 2026-11-27 · [`MOBILE-APPS-PRIVACY.md`](MOBILE-APPS-PRIVACY.md) |
 | **MA5c** | Release-Build-Checkliste (Android AAB / iOS Archive) — Doc only | 🟢 | [ ] |
 | **MA5d** | Optional: TestFlight / internes Track — nur nach explizitem Auftrag | 🔴 | [ ] |
 
-**Prompt MA5b:**  
-`Nur Mini-ID MA5b laut docs/MOBILE-APPS-REST-PLAN.md. Privacy-Text / Datenfluss dokumentieren. Kein Store-Upload.`
+**Prompt MA5c:**  
+`Nur Mini-ID MA5c laut docs/MOBILE-APPS-REST-PLAN.md. Release-Build-Checkliste Doc only. Kein Store-Upload.`
 
 ### 5.1 App-IDs & Anzeigenamen (MA5a)
 
@@ -343,6 +343,8 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | `bin/mobile-flutter-minstand-selftest.php` | Guard MA4b |
 | `bin/mobile-rate-limit-token-selftest.php` | Guard MA4c Rate-Limit + ungültiges Token |
 | `bin/mobile-app-id-icons-selftest.php` | Guard MA5a App-ID/Icons |
+| [`MOBILE-APPS-PRIVACY.md`](MOBILE-APPS-PRIVACY.md) | MA5b Privacy / Datenfluss |
+| `bin/mobile-privacy-selftest.php` | Guard MA5b |
 | `bin/mobile-app-download-slug-selftest.php` | Guard MA0d |
 | [`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md) | Unterschrift ES6 (App-Upload) |
 
@@ -375,5 +377,6 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | 2026-11-27 | **MA4b ✅** Flutter Mindeststand: analyze + Bootstrap/Login/api_message-Tests je App · `mobile-flutter-minstand.sh` |
 | 2026-11-27 | **MA4c ✅** Rate-Limit→`rate_limited` · ungültiges Token UI · `mobile-rate-limit-token-selftest.php` · MA4-Block fertig |
 | 2026-11-27 | **MA5a ✅** App-IDs `de.ganzsoft.dgkalender` / `…dgmitarbeiter` · Labels/Icons · kein `com.example` |
+| 2026-11-27 | **MA5b ✅** Privacy/Datenfluss · Login/Token/kein GPS · `MOBILE-APPS-PRIVACY.md` |
 | 2026-11-27 | **MA1a ✅** `api_message.dart` identisch in beiden Apps · UI über `apiUserMessage`/`apiIsOk` · `php bin/mobile-api-message-selftest.php` |
 | 2026-11-27 | **MA0d ✅** CRM-Download-Slug `apps` → `app-download` · Legacy-Migration nur bei `page_kind=mobile_app_download` · `/apps` frei für Website |
