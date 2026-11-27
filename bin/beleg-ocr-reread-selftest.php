@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * BO1b — „Erneut auslesen“ für gespeicherte Beleganhänge.
+ * BO1b/BO1c — „Erneut auslesen“ + Mehrseiten-OCR Scan-PDF.
  * Usage: php bin/beleg-ocr-reread-selftest.php
  */
 
@@ -47,5 +47,15 @@ if (!str_contains($js, 'latestAnalyzableStoredFile')) {
     $fail('missing latestAnalyzableStoredFile');
 }
 
-fwrite(STDOUT, "OK BO1b beleg OCR reread selftest\n");
+if (!str_contains($js, 'OCR_PDF_MAX_PAGES')) {
+    $fail('missing OCR_PDF_MAX_PAGES (BO1c)');
+}
+if (!str_contains($js, 'ocrPdfPages')) {
+    $fail('missing ocrPdfPages (BO1c)');
+}
+if (!preg_match('/OCR_PDF_MAX_PAGES\s*=\s*(\d+)/', $js, $m) || (int) $m[1] < 2) {
+    $fail('OCR_PDF_MAX_PAGES must be >= 2');
+}
+
+fwrite(STDOUT, "OK BO1b/BO1c beleg OCR reread + multipage selftest\n");
 exit(0);

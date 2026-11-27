@@ -447,6 +447,38 @@ async function ocrCanvasOrImage(source) {
   return data && data.text ? data.text : '';
 }
 
+/** Max. Seiten für Scan-PDF-OCR (Tesseract ist langsam). */
+const OCR_PDF_MAX_PAGES = 5;
+
+/**
+ * OCR über mehrere PDF-Seiten; Statuszeile mit Fortschritt.
+ * @returns {Promise<{ text: string, pagesUsed: number, pagesTotal: number, truncated: boolean }>}
+ */
+async function ocrPdfPages(pdf) {
+  const pagesTotal = Math.max(1, Number(pdf.numPages) || 1);
+  const pagesUsed = Math.min(pagesTotal, OCR_PDF_MAX_PAGES);
+  const chunks = [];
+  for (let pageNo = 1; pageNo <= pagesUsed; pageNo += 1) {
+    setStatus(
+      'working',
+      `${spinner()} Scan-PDF OCR: Seite ${pageNo} von ${pagesUsed}`
+        + (pagesTotal > pagesUsed ? ` (von ${pagesTotal}, Limit ${OCR_PDF_MAX_PAGES})` : '')
+        + ' …',
+    );
+    const canvas = await renderPdfPageToCanvas(pdf, pageNo);
+    const pageText = await ocrCanvasOrImage(canvas);
+    if (pageText && pageText.trim()) {
+      chunks.push(pageText.trim());
+    }
+  }
+  return {
+    text: chunks.join('\n\n'),
+    pagesUsed,
+    pagesTotal,
+    truncated: pagesTotal > pagesUsed,
+  };
+}
+
 function isoFromLoose(value) {
   if (!value) return '';
   const iso = String(value).match(/(\d{4})-(\d{2})-(\d{2})/);
@@ -651,13 +683,17 @@ async function analyzeFile(file) {
       );
     }
 
-    setStatus('working', `${spinner()} Kein Textlayer gefunden – OCR läuft (kann etwas dauern) …`);
-    const canvas = await renderPdfPageToCanvas(pdf, 1);
-    const ocrText = await ocrCanvasOrImage(canvas);
+    setStatus('working', `${spinner()} Kein Textlayer gefunden – OCR über Seiten (kann etwas dauern) …`);
+    const ocr = await ocrPdfPages(pdf);
+    const sourceLabel = ocr.truncated
+      ? `Scan-PDF (OCR, ${ocr.pagesUsed}/${ocr.pagesTotal} Seiten)`
+      : (ocr.pagesUsed > 1
+        ? `Scan-PDF (OCR, ${ocr.pagesUsed} Seiten)`
+        : 'Scan-PDF (OCR)');
     return finalizeSuggestion(
-      suggestionFromAnalysis(analyzeInvoiceText(ocrText), 'ocr'),
-      'Scan-PDF (OCR)',
-      ocrText,
+      suggestionFromAnalysis(analyzeInvoiceText(ocr.text), 'ocr'),
+      sourceLabel,
+      ocr.text,
     );
   }
 
