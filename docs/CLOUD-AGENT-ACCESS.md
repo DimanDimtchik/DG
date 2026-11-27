@@ -176,7 +176,7 @@ OpenHands-UI nur lokal auf GEX **`:3000`** (UFW zu). Vom PC parallel zum Ollama-
 ssh -o IdentitiesOnly=yes -i $env:USERPROFILE\.ssh\id_ed25519_hetzner_agent -N -L 3000:127.0.0.1:3000 -L 11434:127.0.0.1:11434 deploy@2.29.242.28
 ```
 
-Browser: `http://127.0.0.1:3000` · Einstieg auch über Dev **`/superkihel`** → „Agent öffnen“. LLM in OpenHands: Base `http://127.0.0.1:11434/v1`, Modell z. B. `openai/qwen2.5-coder:14b`. Plan: [`SUPERKICHEL-SKP-PLAN.md`](SUPERKICHEL-SKP-PLAN.md).
+Primär ohne Tunnel: **`https://agent.ganz-soft.de/`** (Basic Auth) · CRM **`/superkihel`** → „Agent öffnen“ (**SKP1e**). Optional Tunnel wie oben → `http://127.0.0.1:3000`. LLM oft serverseitig; bei Tunnel-LLM: Base `http://127.0.0.1:11434/v1`, Modell z. B. `openai/qwen2.5-coder:14b`. Plan: [`SUPERKICHEL-SKP-PLAN.md`](SUPERKICHEL-SKP-PLAN.md).
 
 ---
 

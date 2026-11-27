@@ -28,15 +28,15 @@ PHP-Regel bleibt: **Beträge/Steuer = PHP**; der Agent schreibt Code/Docs, rechn
 | **SKP0c** | Erste Anbindung in `/superkihel` (Staff) laut SKP0b | 🔴🟡 | [x] 2026-11-12 · §5 |
 | **SKP0d** | Smoke: aus Super-Kichel (oder dokumentiertem Weg) kleine Repo-Änderung | 🔴 | [x] 2026-11-12 · §6 |
 | **SKP0e** | Docs/Haken TODOS + Produkt-Skizze | 🟢 | [x] 2026-11-12 · §7 |
-| **SKP1** | HTTPS-Zugang OpenHands ohne PC-Tunnel — Kind-IDs a–e | 🔴 | a–c ✅ · d–e offen |
+| **SKP1** | HTTPS-Zugang OpenHands ohne PC-Tunnel — Kind-IDs a–e | 🟢 | a–c+e ✅ · d offen |
 | **SKP1a** | Ist: `:3000` host-netz · UFW ohne 3000 · kein Agent-Host — **nur lesen** | 🟢 | [x] 2026-11-12 · §8 |
-| **SKP1b** | Hostname `agent.ganz-soft.de` + DNS A → GEX | 🔴 | [x] 2026-11-12 · Auth-NS A=GEX |
-| **SKP1c** | nginx Proxy → `127.0.0.1:3000` + certbot (+ Basic Auth Minimum) | 🔴 | [x] 2026-11-12 · §8 |
+| **SKP1b** | Hostname `agent.ganz-soft.de` + DNS A → GEX | 🟢 | [x] 2026-11-12 · Auth-NS A=GEX |
+| **SKP1c** | nginx Proxy → `127.0.0.1:3000` + certbot (+ Basic Auth Minimum) | 🟢 | [x] 2026-11-12 · §8 |
 | **SKP1d** | Zugangsschutz Feinschliff · Smoke HTTPS formal | 🔴 | [ ] Basic Auth schon in c |
-| **SKP1e** | `/superkihel` Button-URL + Docs | 🔴🟡 | [ ] |
+| **SKP1e** | `/superkihel` Button-URL + Docs | 🟢 | [x] 2026-11-27 · `https://agent.ganz-soft.de/` |
 | **SKP2** | Optional: Agent-API/Tools **in** der Chat-UI | 🔴 | [ ] geparkt |
 
-**SKP0 ✅.** **SKP1a–c ✅.** Nächste Freigabe: **SKP1d** (Smoke/Feinschliff) oder **SKP1e** (CRM-Button).
+**SKP0 ✅.** **SKP1a–c+e ✅.** Optional **SKP1d** (Smoke/Feinschliff).
 
 ---
 
@@ -109,7 +109,7 @@ Browser: `http://127.0.0.1:3000` — parallel zu Cursor nutzbar, **noch ohne** C
 
 | Punkt | Ist |
 |-------|-----|
-| View | `views/modules/superkihel.php` · Panel „Programmieren“ + Button „Agent öffnen“ → `http://127.0.0.1:3000/` · Hilfe-Chat darunter |
+| View | `views/modules/superkihel.php` · Panel „Programmieren“ + Button „Agent öffnen“ (ursprünglich Tunnel-URL; **SKP1e** → HTTPS) · Hilfe-Chat darunter |
 | UI | `.dg-stack` · `.dg-panel` · `.dg-section-title` · `.dg-button--primary` · `.dg-field-hint` · Guard ✅ |
 | Deploy | Dev `ganz-om.de` View ausgerollt |
 | Endnutzer | keine Plan-Codes in der UI |
@@ -156,7 +156,7 @@ Nachgezogen: dieser Plan · [`TODOS.md`](TODOS.md) · [`SUPERKICHEL-GEX-PLAN.md`
 | Hinweis | Curl von GEX zur eigenen Public-IP:3000 kann **200** zeigen (Hairpin) — zählt **nicht** als „Internet offen“ |
 | nginx | kein vHost für OpenHands · LE nur `llm…` / `crm-gex…` |
 | DNS | `agent.ganz-soft.de` / `openhands.ganz-soft.de` → noch All-Inkl-Catch-all |
-| CRM-Button | weiter `http://127.0.0.1:3000/` (SKP0c) |
+| CRM-Button | **SKP1e ✅** → `https://agent.ganz-soft.de/` |
 
 **Folge SKP1b:** KAS A `agent` → `2.29.242.28`. Apex/`*` lassen. **Nicht** Port 3000 in UFW öffnen — Zugang nur über 443+Proxy+Schutz (SKP1c/d).
 
@@ -178,7 +178,7 @@ Nachgezogen: dieser Plan · [`TODOS.md`](TODOS.md) · [`SUPERKICHEL-GEX-PLAN.md`
 | **Schutz** | **Basic Auth** Minimum (`/etc/nginx/.htpasswd-agent`) — Passwort **nicht** in Git; User `agent` |
 | **Smoke** | ohne Auth **401** · mit Auth **200** + OpenHands-HTML |
 | **UFW** | 3000 weiter **zu** |
-| **Nicht** | CRM-Button-URL (SKP1e) · Passwort in Docs |
+| **Nicht** | Passwort in Docs · SKP1e Button (erledigt 2026-11-27) |
 
 ### Sandbox-Fix (2026-11-12)
 
@@ -189,7 +189,16 @@ Nachgezogen: dieser Plan · [`TODOS.md`](TODOS.md) · [`SUPERKICHEL-GEX-PLAN.md`
 | Smoke | Start **READY** · VSCode-URL `:8444` · zweiter Start ersetzt ersten (kein 401) |
 | LLM | Qwen via Ollama: `native_tool_calling=false` (sonst Tool-Calls als Roh-JSON im Chat) |
 
-**Nächste ID:** **SKP1d** (formal Smoke/Feinschliff) oder **SKP1e** (Button auf `https://agent.ganz-soft.de/`).
+### SKP1e — CRM-Button HTTPS (2026-11-27) ✅
+
+| Punkt | Stand |
+|-------|--------|
+| **Button** | `/superkihel` „Agent öffnen“ → `https://agent.ganz-soft.de/` (`data-superkihel-agent`) |
+| **Text** | Kein Tunnel-Pflichttext mehr · Hinweis Basic-Auth / Ops-Tunnel optional |
+| **Selftest** | `php bin/superkihel-agent-url-selftest.php` |
+| **Nicht** | Passwort in Git/UI · SKP1d formal Smoke |
+
+**Nächste ID:** optional **SKP1d** (formal Smoke/Feinschliff).
 
 ---
 
@@ -206,3 +215,4 @@ Nachgezogen: dieser Plan · [`TODOS.md`](TODOS.md) · [`SUPERKICHEL-GEX-PLAN.md`
 | 2026-11-12 | **SKP1b ✅** KAS A `agent` → GEX · Auth-NS OK |
 | 2026-11-12 | **SKP1c ✅** HTTPS Proxy + LE + Basic Auth · UFW 3000 zu |
 | 2026-11-12 | Sandbox-Fix: Host-Netz max1 + HTTPS 8443/8444/… · VSCode-URL korrekt · 2. Start READY |
+| 2026-11-27 | **SKP1e ✅** Button → `https://agent.ganz-soft.de/` · Selftest · Docs |

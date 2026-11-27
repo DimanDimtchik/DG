@@ -25,17 +25,16 @@ $superkihelIsAdmin = $superkihelUser instanceof User && RoleResolver::isAdmin($s
         <h2 id="superkihel-program-title" class="dg-section-title">Programmieren</h2>
         <a
           class="dg-button dg-button--primary"
-          href="http://127.0.0.1:3000/"
+          href="https://agent.ganz-soft.de/"
           target="_blank"
           rel="noopener noreferrer"
+          data-superkihel-agent
         >Agent öffnen</a>
       </div>
-      <p class="dg-lead">Hier starten Sie den Programmier-Agenten auf Ihrem PC (wie eine lokale Entwicklungshilfe). Dafür muss der Tunnel zum Server laufen.</p>
+      <p class="dg-lead">Programmier-Agent im Browser — erreichbar über HTTPS, ohne Tunnel auf dem PC.</p>
       <p class="dg-field-hint">
-        Am PC in PowerShell (Fenster offen lassen):
-        <code>ssh -o IdentitiesOnly=yes -i $env:USERPROFILE\.ssh\id_ed25519_hetzner_agent -N -L 3000:127.0.0.1:3000 deploy@2.29.242.28</code>
-        Danach „Agent öffnen“. In den Agent-Einstellungen: Basis-URL <code>http://127.0.0.1:11434/v1</code>, Modell z. B. <code>openai/qwen2.5-coder:14b</code>, API-Schlüssel beliebig.
-        Ohne Tunnel bleibt die Seite unerreichbar — das ist Absicht.
+        „Agent öffnen“ führt zu <code>agent.ganz-soft.de</code>. Dort melden Sie sich mit den Agent-Zugangsdaten an (Browser-Login).
+        Passwort nicht im CRM hinterlegt. Optional bleibt ein SSH-Tunnel nur für Spezialfälle (Ops-Doku).
       </p>
     </section>
 
