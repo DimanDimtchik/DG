@@ -142,8 +142,8 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | **MA3e** | Unterschrift (bestehende `signature_page`) — nur Härte/Fehlerpfade | 🟡 | [ ] |
 | **MA3f** | Smoke Emulator/Gerät + Kurznotiz §8 | 🔴 | [ ] |
 
-**Prompt MA3b:**  
-`Nur Mini-ID MA3b laut docs/MOBILE-APPS-REST-PLAN.md. Nur apps/mitarbeiter. Stempel-UI. Kein Kalender.`
+**Prompt MA3c:**  
+`Nur Mini-ID MA3c laut docs/MOBILE-APPS-REST-PLAN.md. Nur apps/mitarbeiter. Abwesenheit + Schichten. Kein Kalender.`
 
 ---
 
