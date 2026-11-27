@@ -668,6 +668,7 @@ class ClockTab extends StatefulWidget {
 class _ClockTabState extends State<ClockTab> {
   Map<String, dynamic>? _data;
   String? _error;
+  bool _busy = false;
   Timer? _tick;
   Timer? _refresh;
   DateTime _now = DateTime.now();
@@ -680,7 +681,10 @@ class _ClockTabState extends State<ClockTab> {
       if (!mounted) return;
       setState(() => _now = DateTime.now());
     });
-    _refresh = Timer.periodic(const Duration(seconds: 30), (_) => _load(silent: true));
+    _refresh = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (_busy) return;
+      _load(silent: true);
+    });
   }
 
   @override
@@ -690,28 +694,88 @@ class _ClockTabState extends State<ClockTab> {
     super.dispose();
   }
 
+  Map<String, dynamic>? _dataMap(Map<String, dynamic> res) {
+    final d = res['data'];
+    if (d is Map<String, dynamic>) return d;
+    if (d is Map) return Map<String, dynamic>.from(d);
+    return null;
+  }
+
   Future<void> _load({bool silent = false}) async {
-    final res = await widget.client.get('/api/mobile/staff/clock');
-    if (!mounted) return;
-    setState(() {
-      if (apiIsOk(res)) {
-        _data = res['data'] as Map<String, dynamic>;
-        _error = null;
-      } else if (!silent) {
-        _error = apiUserMessage(res, fallback: 'Stempelstatus nicht ladbar.');
-      }
-    });
+    try {
+      final res = await widget.client.get('/api/mobile/staff/clock');
+      if (!mounted) return;
+      setState(() {
+        if (apiIsOk(res)) {
+          _data = _dataMap(res);
+          _error = _data == null ? 'Unerwartete Antwort vom Server.' : null;
+        } else if (!silent) {
+          _error = apiUserMessage(res, fallback: 'Stempelstatus nicht ladbar.');
+        }
+      });
+    } catch (e) {
+      if (!mounted || silent) return;
+      setState(() => _error = apiUserMessage(e, fallback: 'Stempelstatus nicht ladbar.'));
+    }
+  }
+
+  String _eventSuccessMessage(String type) {
+    switch (type) {
+      case 'clock_in':
+        return 'Eingestempelt.';
+      case 'clock_out':
+        return 'Ausgestempelt.';
+      case 'break_start':
+        return 'Pause gestartet.';
+      case 'break_end':
+        return 'Pause beendet.';
+      default:
+        return 'Stempel gespeichert.';
+    }
   }
 
   Future<void> _event(String type) async {
-    final res = await widget.client.post('/api/mobile/staff/clock', {'event_type': type});
-    if (!mounted) return;
-    if (apiIsOk(res)) {
-      setState(() => _data = res['data'] as Map<String, dynamic>);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(apiUserMessage(res, fallback: 'Stempel fehlgeschlagen.'))),
+    if (_busy) return;
+    if (type == 'clock_out') {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Ausstempeln?'),
+          content: const Text('Der Arbeitstag wird beendet. Fortsetzen?'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Abbrechen')),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Ausstempeln')),
+          ],
+        ),
       );
+      if (ok != true || !mounted) return;
+    }
+    setState(() => _busy = true);
+    try {
+      final res = await widget.client.post('/api/mobile/staff/clock', {'event_type': type});
+      if (!mounted) return;
+      if (apiIsOk(res)) {
+        final mapped = _dataMap(res);
+        setState(() {
+          if (mapped != null) _data = mapped;
+          _error = null;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_eventSuccessMessage(type))),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(apiUserMessage(res, fallback: 'Stempel fehlgeschlagen.'))),
+        );
+        await _load(silent: true);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(apiUserMessage(e, fallback: 'Stempel fehlgeschlagen.'))),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 
@@ -833,7 +897,7 @@ class _ClockTabState extends State<ClockTab> {
               ),
               IconButton(
                 tooltip: 'Aktualisieren',
-                onPressed: _load,
+                onPressed: _busy ? null : () => _load(),
                 icon: const Icon(Icons.refresh),
               ),
             ],
@@ -964,23 +1028,28 @@ class _ClockTabState extends State<ClockTab> {
                 )),
           ],
           const SizedBox(height: 18),
+          if (_busy)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 12),
+              child: LinearProgressIndicator(minHeight: 3),
+            ),
           if (state == 'off')
             FilledButton.icon(
-              onPressed: () => _event('clock_in'),
+              onPressed: _busy ? null : () => _event('clock_in'),
               icon: const Icon(Icons.login),
-              label: const Text('Einstempeln'),
+              label: Text(_busy ? 'Bitte warten …' : 'Einstempeln'),
               style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
             ),
           if (state == 'working') ...[
             FilledButton.icon(
-              onPressed: () => _event('break_start'),
+              onPressed: _busy ? null : () => _event('break_start'),
               icon: const Icon(Icons.coffee),
-              label: const Text('Pause starten'),
+              label: Text(_busy ? 'Bitte warten …' : 'Pause starten'),
               style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
             ),
             const SizedBox(height: 8),
             FilledButton.tonalIcon(
-              onPressed: () => _event('clock_out'),
+              onPressed: _busy ? null : () => _event('clock_out'),
               icon: const Icon(Icons.logout),
               label: const Text('Ausstempeln'),
               style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
@@ -988,9 +1057,9 @@ class _ClockTabState extends State<ClockTab> {
           ],
           if (state == 'break')
             FilledButton.icon(
-              onPressed: () => _event('break_end'),
+              onPressed: _busy ? null : () => _event('break_end'),
               icon: const Icon(Icons.play_arrow),
-              label: const Text('Pause beenden'),
+              label: Text(_busy ? 'Bitte warten …' : 'Pause beenden'),
               style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
             ),
           const SizedBox(height: 22),

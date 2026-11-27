@@ -29,6 +29,7 @@ final class TimeClockService
         $allowedSources = [
             TimeClockRepository::SOURCE_WEB,
             TimeClockRepository::SOURCE_KIOSK,
+            TimeClockRepository::SOURCE_MOBILE,
             TimeClockRepository::SOURCE_IMPORT,
         ];
         if (!in_array($source, $allowedSources, true)) {
@@ -650,6 +651,7 @@ final class TimeClockService
             TimeClockRepository::SOURCE_AUTO_CLOSE => 'Automatisches Ausstempeln',
             TimeClockRepository::SOURCE_IMPORT => 'Import',
             TimeClockRepository::SOURCE_KIOSK => 'Kiosk',
+            TimeClockRepository::SOURCE_MOBILE => 'App',
             default => $source !== '' ? $source : 'Web',
         };
     }
