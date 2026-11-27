@@ -111,7 +111,7 @@ final class KichelRetriever
             return $empty;
         }
 
-        $facts = self::applyBudget(self::factsFromCandidates($candidates));
+        $facts = self::applyBudget(KichelCorpus::factsFromCandidates($candidates));
 
         return array_merge($empty, [
             'path' => 'candidates',
@@ -242,60 +242,12 @@ final class KichelRetriever
     }
 
     /**
-     * @param list<array{kind: string, score: int, title: string, body: string, href: string, action_label: string, dedupe?: string}> $candidates
-     * @return list<array<string, mixed>>
-     */
-    private static function factsFromCandidates(array $candidates): array
-    {
-        $rows = [];
-        foreach ($candidates as $candidate) {
-            $kind = (string) ($candidate['kind'] ?? KichelRagFact::TYPE_OTHER);
-            $type = match ($kind) {
-                'navigation' => KichelRagFact::TYPE_NAVIGATION,
-                'topic' => KichelRagFact::TYPE_TOPIC,
-                'field_help' => KichelRagFact::TYPE_FIELD,
-                'media', 'academy_video', 'academy_course' => KichelRagFact::TYPE_MEDIA,
-                default => $kind !== '' ? $kind : KichelRagFact::TYPE_OTHER,
-            };
-            $title = trim((string) ($candidate['title'] ?? ''));
-            $body = trim((string) ($candidate['body'] ?? ''));
-            $href = trim((string) ($candidate['href'] ?? ''));
-            $dedupe = trim((string) ($candidate['dedupe'] ?? ''));
-            $score = (int) ($candidate['score'] ?? 0);
-            $sourceLabel = match ($type) {
-                KichelRagFact::TYPE_NAVIGATION => 'CRM-Menü',
-                KichelRagFact::TYPE_TOPIC => 'CRM-Hilfe',
-                KichelRagFact::TYPE_FIELD => 'CRM-Feldhilfe',
-                KichelRagFact::TYPE_MEDIA => 'CRM-Medien',
-                default => 'CRM',
-            };
-            $sourceRef = $dedupe !== '' ? $dedupe : ($type . ':' . mb_strtolower($title !== '' ? $title : 'item', 'UTF-8'));
-            $confidence = min(1.0, max(0.1, $score / 15.0));
-            $fact = KichelRagFact::normalize([
-                'type' => $type,
-                'title' => $title,
-                'body' => $body,
-                'source_label' => $sourceLabel,
-                'source_ref' => $sourceRef,
-                'href' => $href !== '' ? $href : null,
-                'confidence' => $confidence,
-                'numbers' => [],
-            ]);
-            if ($fact !== null) {
-                $rows[] = $fact;
-            }
-        }
-
-        return $rows;
-    }
-
-    /**
      * @param list<array{entry: array<string, mixed>, score: int}> $navMatches
      * @param list<array{topic: array<string, mixed>, score: int}> $topicMatches
      * @param array<string, mixed>|null $fieldAnswer
      * @param list<array{kind: string, score: int, title: string, body: string, href: string, action_label: string, dedupe: string}> $mediaMatches
      * @param list<string> $tokens
-     * @return list<array{kind: string, score: int, title: string, body: string, href: string, action_label: string, dedupe: string}>
+     * @return list<array{kind: string, score: int, title: string, body: string, href: string, action_label: string, dedupe: string, norm_label?: string}>
      */
     private static function collectCandidates(
         array $navMatches,
@@ -381,6 +333,19 @@ final class KichelRetriever
                 'action_label' => $actionLabel,
                 'dedupe' => 'topic:' . mb_strtolower($topicId, 'UTF-8'),
             ];
+        }
+
+        // KR4c — Steuerkurztexte
+        foreach (KichelCorpus::matchTaxShorttexts($tokens, 5) as $taxMatch) {
+            $score = (int) ($taxMatch['score'] ?? 0);
+            if ($score < 4) {
+                continue;
+            }
+            $entry = $taxMatch['entry'] ?? [];
+            if (!is_array($entry)) {
+                continue;
+            }
+            $raw[] = KichelCorpus::taxEntryToCandidate($entry, $score);
         }
 
         if ($fieldAnswer !== null && ($intent === KichelIntent::EXPLAIN || $raw === [])) {

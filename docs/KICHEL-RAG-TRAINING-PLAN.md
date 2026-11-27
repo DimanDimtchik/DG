@@ -58,7 +58,7 @@ Kein Fine-Tuning, kein Gesetzes-Vollimport außerhalb dieser ID.
 
 | Phase | Kürzel | Inhalt | Status |
 |-------|--------|--------|--------|
-| **A — RAG (jetzt)** | **KR0–KR9** | Verdrahtung Suche → Fakten → Qwen; CRM-Korpus; Quellen; Smoke | **KR0–3 ✅** · als Nächstes **KR4** |
+| **A — RAG (jetzt)** | **KR0–KR9** | Verdrahtung Suche → Fakten → Qwen; CRM-Korpus; Quellen; Smoke | **KR0–4 ✅** · als Nächstes **KR5** |
 | **B — Rechtskorpus** | **KL0–KL5** | Gesetze/Urteile importieren & indexieren (nach stabilem RAG) | geplant |
 | **C — Intent-LLM** | **KI0–KI3** | Qwen nur als Frage-Parser (JSON), Suche weiter PHP | geplant |
 | **D — Produkt/Haftung** | **KH0–KH3** | Disclaimer, Protokoll-Felder, Admin-Qualität | geplant |
@@ -81,7 +81,7 @@ Kein Fine-Tuning, kein Gesetzes-Vollimport außerhalb dieser ID.
 | **KR1** | Ist-Inventar Kichel-Pipeline (nur lesen) | 🟢 | [x] 2026-11-27 · §3.2 |
 | **KR2** | Fakten-Objekt + Prompt-Vertrag (`phrase` nur aus Fakten) | 🟡 | [x] 2026-11-27 · a–c ✅ |
 | **KR3** | Retrieval-Orchestrierung (Reihenfolge Sucher) | 🟡 | [x] 2026-11-27 · a–d ✅ |
-| **KR4** | CRM-Korpus v1 (Knowledge/Nav/Felder → einheitliche Chunks) | 🟡 | [ ] · Kinder a–c |
+| **KR4** | CRM-Korpus v1 (Knowledge/Nav/Felder → einheitliche Chunks) | 🟡 | [x] 2026-11-27 · a–c ✅ |
 | **KR5** | Ranking / „kein Treffer“ / Mehrfachtreffer | 🟡 | [ ] · Kinder a–b |
 | **KR6** | Quellenzeile in Antwort + Protokoll | 🟡 | [ ] · Kinder a–b |
 | **KR7** | Super-Kichel/Widget: gleiche Pipeline (kein Parallelweg) | 🟡 | [ ] |
@@ -272,15 +272,27 @@ Config (`config/kichel.local.php` / `.example`): `rag_enabled`, `rag_max_facts` 
 
 ---
 
-### 3.5 KR4 — CRM-Korpus v1 (ohne Gesetze)
+### 3.5 KR4 — CRM-Korpus v1 (ohne Gesetze) ✅ 2026-11-27
 
-| Kind | Aufgabe | Abnahme |
-|------|---------|---------|
-| **KR4a** | Bestehende `KichelKnowledge`-Topics → Chunks mit Quelle „CRM-Hilfe“ | Treffer als Fakten |
-| **KR4b** | Nav-/Feld-/Media-Treffer → dasselbe Chunk-Format | einheitlich |
-| **KR4c** | 5–15 **Steuer-Kurztexte** selbst gepflegt (Skonto, §19, Ist/Soll kurz, Belegkette) — nur eure Formulierungen + Verweis auf Norm **ohne** Verlagskommentar | Datei/Tabelle + Suche findet sie |
+| Kind | Aufgabe | Abnahme | Status |
+|------|---------|---------|--------|
+| **KR4a** | Knowledge → Chunks „CRM-Hilfe“ | `KichelCorpus::chunkFromTopic` | [x] |
+| **KR4b** | Nav/Feld/Media gleiches Format | `chunkFromCandidate` / `factsFromCandidates` | [x] |
+| **KR4c** | Steuer-Kurztexte (10) + Suche | `data/tax-shorttexts.php` · `matchTaxShorttexts` im Retriever | [x] |
 
 **Nicht in KR4:** GII-XML-Massenimport (→ **KL**).
+
+#### Dateien
+
+| Datei | Rolle |
+|-------|--------|
+| `src/Kichel/KichelCorpus.php` | Chunk-Builder + Tax-Match |
+| `src/Kichel/data/tax-shorttexts.php` | Skonto, §19, Ist/Soll, §13b, §14, Belegkette/GoBD, Vorsteuer, UStVA, Aufbewahrung, DATEV |
+| `KichelRetriever` | bindet Tax-Kandidaten in freie Suche ein |
+
+Quelle Tax: Label **CRM-Steuerkurztext**, Ref `tax:{id}`, Body inkl. Normhinweis. Texte: eigene Kurzform + CRM-Pfad, Disclaimer „keine Rechtsberatung“.
+
+**Selftest:** `php bin/kichel-corpus-selftest.php` → ALL OK.
 
 ---
 
@@ -463,7 +475,7 @@ KR0 ✅
 
 ## 12. Nächster konkreter Schritt
 
-**KR4** (CRM-Korpus v1) — Start **KR4a** (Knowledge → Chunks mit Quelle).  
+**KR5** (Ranking / Leerfall) — Start **KR5a**.  
 Kein Gesetzes-Vollimport, kein Fine-Tuning.
 
 ---
@@ -476,3 +488,4 @@ Kein Gesetzes-Vollimport, kein Fine-Tuning.
 | 2026-11-27 | **KR1 ✅** Ist-Inventar: Pipeline, phrase nur Money, CodeSearch unverdrahtet, Lücken |
 | 2026-11-27 | **KR2 ✅** `KichelRagFact` + Prompt-Vertrag + Fallback/`compose` · Money angebunden · Selftest |
 | 2026-11-27 | **KR3 ✅** `KichelRetriever` · Pflichtpfade · Budget · `rag_enabled` · Assistant compose |
+| 2026-11-27 | **KR4 ✅** `KichelCorpus` · Tax-Kurztexte · einheitliche Chunks |

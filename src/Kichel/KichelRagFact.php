@@ -16,6 +16,7 @@ final class KichelRagFact
     public const TYPE_LEGAL = 'legal_pages';
     public const TYPE_LEDGER = 'ledger_account';
     public const TYPE_CALCULATION = 'calculation';
+    public const TYPE_TAX_NOTE = 'tax_note';
     public const TYPE_STATUTE = 'statute';
     public const TYPE_CASELAW = 'caselaw';
     public const TYPE_OTHER = 'other';
