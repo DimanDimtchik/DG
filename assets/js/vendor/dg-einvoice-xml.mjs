@@ -251,6 +251,239 @@ function findVatPercentInXml(xml) {
   return '';
 }
 
+function moneyOrEmpty(value) {
+  if (value === '' || value == null) return '';
+  const n = typeof value === 'number' ? value : parseReceiptAmount(String(value));
+  return n === null ? '' : n.toFixed(2);
+}
+
+function quantityOrEmpty(value) {
+  if (value === '' || value == null) return '';
+  const n = parseFloat(String(value).replace(',', '.').replace(/[^\d.-]/g, ''));
+  if (!Number.isFinite(n) || n === 0) return '';
+  return String(n);
+}
+
+function unitFromCode(unitCode, fallback = 'Stück') {
+  const code = String(unitCode || '').toUpperCase();
+  const map = {
+    C62: 'Stück',
+    H87: 'Stück',
+    EA: 'Stück',
+    KGM: 'kg',
+    GRM: 'g',
+    LTR: 'l',
+    MTR: 'm',
+    MTK: 'm²',
+    MTQ: 'm³',
+    HUR: 'Stunden',
+    MIN: 'Minuten',
+    DAY: 'Tage',
+    MON: 'Monate',
+    SET: 'Set',
+    PR: 'Paar',
+  };
+  return map[code] || fallback;
+}
+
+/** Heuristik Artikel vs. Leistung (BO2 catalog_kind). */
+export function inferCatalogKind({ sku, title, unitCode, unit }) {
+  const text = `${title || ''} ${sku || ''}`.toLowerCase();
+  const code = String(unitCode || '').toUpperCase();
+  if (['HUR', 'MIN', 'DAY', 'MON'].includes(code)) return 'service';
+  if (/dienstleistung|arbeitszeit|stunde|beratung|montage|pauschale|honorar|service/.test(text)) {
+    return 'service';
+  }
+  if (sku || ['C62', 'H87', 'KGM', 'GRM', 'LTR', 'MTR', 'MTK', 'MTQ', 'SET', 'PR'].includes(code)) {
+    return 'product';
+  }
+  if (/artikel|material|ware|produkt|stück/.test(text)) return 'product';
+  if (unit && /stunde|tag|monat/i.test(unit)) return 'service';
+  return 'service';
+}
+
+function taxPercentFromLineSection(section) {
+  const raw =
+    getXmlFirstValue(section, ['RateApplicablePercent', 'Percent']) ||
+    getXmlFirstValue(getXmlSections(section, 'ApplicableTradeTax')[0] || '', ['RateApplicablePercent', 'Percent']) ||
+    getXmlFirstValue(getXmlSections(section, 'ClassifiedTaxCategory')[0] || '', ['Percent']);
+  if (!raw) return null;
+  const n = Math.round(parseFloat(String(raw).replace(',', '.')));
+  return Number.isFinite(n) ? n : null;
+}
+
+function parseQuantityWithUnit(section) {
+  const billedMatch = section.match(
+    /<(?:[A-Za-z0-9_-]+:)?(?:BilledQuantity|InvoicedQuantity)\b([^>]*)>([\s\S]*?)<\/(?:[A-Za-z0-9_-]+:)?(?:BilledQuantity|InvoicedQuantity)>/i,
+  );
+  let qty = '';
+  let unitCode = '';
+  if (billedMatch) {
+    const attrs = billedMatch[1] || '';
+    const unitAttr = attrs.match(/unitCode\s*=\s*["']([^"']+)["']/i);
+    unitCode = unitAttr ? unitAttr[1] : '';
+    qty = quantityOrEmpty(decodeXmlEntities(billedMatch[2]));
+  }
+  if (!qty) {
+    qty = quantityOrEmpty(getXmlFirstValue(section, ['BilledQuantity', 'InvoicedQuantity', 'BasisQuantity']));
+  }
+  if (!unitCode) {
+    const basis = section.match(
+      /<(?:[A-Za-z0-9_-]+:)?BasisQuantity\b([^>]*)>/i,
+    );
+    if (basis) {
+      const unitAttr = (basis[1] || '').match(/unitCode\s*=\s*["']([^"']+)["']/i);
+      if (unitAttr) unitCode = unitAttr[1];
+    }
+  }
+  return { quantity: qty || '1', unitCode };
+}
+
+/**
+ * Eine CII-/UBL-Positionssektion → BO2-Zeile.
+ * @returns {object|null}
+ */
+export function parseEInvoiceLineSection(section, index) {
+  const productSection =
+    getXmlSections(section, 'SpecifiedTradeProduct')[0] ||
+    getXmlSections(section, 'Item')[0] ||
+    section;
+  const title =
+    getXmlFirstValue(productSection, ['Name', 'Description']) ||
+    getXmlFirstValue(section, ['Name', 'Description']);
+  if (!title) return null;
+
+  const sku =
+    getXmlFirstValue(productSection, ['SellerAssignedID', 'BuyerAssignedID']) ||
+    getXmlFirstValue(getXmlSections(productSection, 'SellersItemIdentification')[0] || '', ['ID']) ||
+    getXmlFirstValue(getXmlSections(productSection, 'BuyersItemIdentification')[0] || '', ['ID']) ||
+    '';
+
+  const { quantity, unitCode } = parseQuantityWithUnit(section);
+  const unit = unitFromCode(unitCode);
+
+  const lineNetRaw =
+    parseReceiptAmount(getXmlFirstValue(section, ['LineTotalAmount', 'LineExtensionAmount']));
+  const unitPriceRaw =
+    parseReceiptAmount(getXmlFirstValue(section, ['ChargeAmount', 'PriceAmount']));
+  const taxPercent = taxPercentFromLineSection(section);
+  const lineNet = lineNetRaw !== null ? lineNetRaw : (unitPriceRaw !== null && quantity
+    ? unitPriceRaw * parseFloat(quantity)
+    : null);
+  let unitPriceNet = unitPriceRaw;
+  if (unitPriceNet === null && lineNet !== null && quantity) {
+    const q = parseFloat(quantity);
+    if (q) unitPriceNet = lineNet / q;
+  }
+
+  let lineGross = '';
+  if (lineNet !== null) {
+    const rate = taxPercent != null ? taxPercent : 19;
+    lineGross = (lineNet * (1 + rate / 100)).toFixed(2);
+  }
+
+  const catalogKind = inferCatalogKind({ sku, title, unitCode, unit });
+  const line = {
+    line_no: index + 1,
+    catalog_kind: catalogKind,
+    sku: sku || '',
+    title,
+    quantity: quantity || '1',
+    unit,
+    unit_price_net: moneyOrEmpty(unitPriceNet),
+    line_net: moneyOrEmpty(lineNet),
+    line_gross: lineGross,
+    tax_percent: taxPercent != null ? taxPercent : 19,
+    confidence: sku || lineNet !== null ? 0.9 : 0.7,
+    match_article_id: null,
+  };
+
+  if (!line.title) return null;
+  if (line.line_net === '' && line.unit_price_net === '') return null;
+  return line;
+}
+
+export function parseEInvoiceLines(xml) {
+  const compactXml = String(xml || '').replace(/\r/g, '');
+  const lineSections = [
+    ...getXmlSections(compactXml, 'IncludedSupplyChainTradeLineItem'),
+    ...getXmlSections(compactXml, 'InvoiceLine'),
+  ];
+  const lines = [];
+  lineSections.forEach((section, index) => {
+    const line = parseEInvoiceLineSection(section, index);
+    if (line) lines.push(line);
+  });
+  // line_no neu durchnummerieren (nach Filter)
+  return lines.map((line, idx) => ({ ...line, line_no: idx + 1 }));
+}
+
+function amountCheckForLines(lines, netTotal) {
+  const warnings = [];
+  const sumNet = lines.reduce((acc, line) => {
+    const n = parseReceiptAmount(String(line.line_net || ''));
+    return n === null ? acc : acc + n;
+  }, 0);
+  const headNet = parseReceiptAmount(String(netTotal || ''));
+  if (headNet === null || lines.length === 0) {
+    return { ok: true, detail: '', warnings };
+  }
+  const delta = Math.abs(sumNet - headNet);
+  if (delta > 0.05) {
+    const detail = `Zeilensumme Netto ${sumNet.toFixed(2)} weicht vom Kopf ${headNet.toFixed(2)} ab.`;
+    warnings.push(detail);
+    return { ok: false, detail, warnings };
+  }
+  return { ok: true, detail: '', warnings };
+}
+
+/**
+ * BO2-Extrakt aus geparster E-Rechnung (Kopf + lines[]).
+ * @param {object} parsed Ergebnis von parseEInvoiceXml
+ */
+export function mapEInvoiceToBo2Extract(parsed) {
+  const lines = Array.isArray(parsed?.lines) && parsed.lines.length
+    ? parsed.lines
+    : (Array.isArray(parsed?.items)
+      ? parsed.items.map((item, idx) => ({
+          line_no: idx + 1,
+          catalog_kind: inferCatalogKind({ title: item.description || item.title || '' }),
+          sku: item.sku || '',
+          title: item.description || item.title || '',
+          quantity: item.quantity || '1',
+          unit: item.unit || 'Stück',
+          unit_price_net: moneyOrEmpty(item.unit_price_net),
+          line_net: moneyOrEmpty(item.amount ?? item.line_net),
+          line_gross: moneyOrEmpty(item.line_gross),
+          tax_percent: Number(item.tax_percent) || Number(parsed.taxPercent) || 19,
+          confidence: 0.5,
+          match_article_id: null,
+        }))
+      : []);
+  const check = amountCheckForLines(lines, parsed?.netAmount || '');
+  return {
+    schema_version: 1,
+    source: 'einvoice_xml',
+    supplier_name: parsed?.supplier || '',
+    invoice_number: parsed?.invoiceNumber || '',
+    invoice_date: parsed?.invoiceDate || '',
+    currency: 'EUR',
+    gross_total: moneyOrEmpty(parsed?.grossAmount) || String(parsed?.grossAmount || ''),
+    net_total: moneyOrEmpty(parsed?.netAmount) || String(parsed?.netAmount || ''),
+    vat_total: moneyOrEmpty(parsed?.vatAmount) || String(parsed?.vatAmount || ''),
+    tax_rates: parsed?.taxPercent
+      ? [{ percent: Number(parsed.taxPercent) || 19, net: String(parsed.netAmount || ''), vat: String(parsed.vatAmount || '') }]
+      : [],
+    iban: parsed?.iban || '',
+    bic: parsed?.bic || '',
+    vat_id: parsed?.vatId || '',
+    tax_number: parsed?.taxNumber || '',
+    lines,
+    warnings: check.warnings || [],
+    amount_check: { ok: check.ok, detail: check.detail || '' },
+  };
+}
+
 export function parseEInvoiceXml(xml, fileName) {
   const compactXml = xml.replace(/\r/g, '');
   const exchangedDoc = getExchangedDocumentSection(compactXml);
@@ -287,20 +520,20 @@ export function parseEInvoiceXml(xml, fileName) {
   const vatAmount = getXmlAmount(monetarySection, ['TaxTotalAmount']) || getXmlAmount(compactXml, ['TaxTotalAmount', 'CalculatedAmount']);
   const taxPercent = findVatPercentInXml(compactXml);
 
-  const lineSections = [
-    ...getXmlSections(compactXml, 'IncludedSupplyChainTradeLineItem'),
-    ...getXmlSections(compactXml, 'InvoiceLine'),
-  ];
-  const recognizedItems = lineSections
-    .map((section, index) => {
-      const description = getXmlFirstValue(section, ['Name', 'Description']);
-      const amount =
-        parseReceiptAmount(getXmlFirstValue(section, ['LineTotalAmount', 'LineExtensionAmount'])) ??
-        parseReceiptAmount(getXmlFirstValue(section, ['ChargeAmount', 'PriceAmount']));
-      if (!description || amount === null) return null;
-      return { id: `einvoice-${index}`, description, amount };
-    })
-    .filter(Boolean);
+  const lines = parseEInvoiceLines(compactXml);
+  const recognizedItems = lines.map((line) => ({
+    id: `einvoice-${line.line_no}`,
+    description: line.title,
+    amount: parseReceiptAmount(line.line_net) ?? 0,
+    sku: line.sku,
+    quantity: line.quantity,
+    unit: line.unit,
+    unit_price_net: line.unit_price_net,
+    line_net: line.line_net,
+    line_gross: line.line_gross,
+    tax_percent: line.tax_percent,
+    catalog_kind: line.catalog_kind,
+  }));
 
   const normalizedLines = [
     `eRechnung: ${fileName}`,
@@ -324,12 +557,12 @@ export function parseEInvoiceXml(xml, fileName) {
     netAmount ? `Netto: ${netAmount}` : '',
     vatAmount ? `MwSt: ${vatAmount}` : '',
     grossAmount ? `Gesamt: ${grossAmount}` : '',
-    ...recognizedItems.map((item) => `${item.description} ${item.amount.toFixed(2)}`),
+    ...lines.map((line) => `${line.title} ${line.line_net || line.unit_price_net || ''}`.trim()),
   ].filter(Boolean);
 
   const analysis = analyzeInvoiceText(normalizedLines.join('\n'));
 
-  return {
+  const parsed = {
     source: 'einvoice',
     supplier: sellerName || analysis.supplier || '',
     invoiceNumber: invoiceNumber || analysis.invoiceNumber || '',
@@ -351,8 +584,12 @@ export function parseEInvoiceXml(xml, fileName) {
     commercialRegister: notesMaster.commercialRegister,
     weeeRegistration: notesMaster.weeeRegistration || findWeeeInText(compactXml),
     items: recognizedItems,
+    lines,
+    itemCount: lines.length,
     rawText: normalizedLines.join('\n'),
   };
+  parsed.extract = mapEInvoiceToBo2Extract(parsed);
+  return parsed;
 }
 
 function normalizeIsoDate(value) {

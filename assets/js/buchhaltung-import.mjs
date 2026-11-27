@@ -10,6 +10,7 @@ import {
   parseEInvoiceXml,
   looksLikeEInvoiceXml,
   extractContactMasterFromText,
+  mapEInvoiceToBo2Extract,
 } from './vendor/dg-einvoice-xml.mjs';
 
 const PDFJS_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.6.82/build/pdf.min.mjs';
@@ -615,7 +616,19 @@ function enrichSuggestion(suggestion, rawText) {
 }
 
 function finalizeSuggestion(suggestion, sourceLabel, rawText) {
-  return enrichSuggestion({ ...suggestion, sourceLabel }, rawText);
+  const next = enrichSuggestion({ ...suggestion, sourceLabel }, rawText);
+  if (next.source === 'einvoice' || (Array.isArray(next.lines) && next.lines.length > 0)) {
+    if (!next.extract || next.extract.schema_version !== 1) {
+      next.extract = mapEInvoiceToBo2Extract(next);
+    }
+    if (!Array.isArray(next.lines) && next.extract?.lines) {
+      next.lines = next.extract.lines;
+    }
+    if (!next.itemCount && Array.isArray(next.lines)) {
+      next.itemCount = next.lines.length;
+    }
+  }
+  return next;
 }
 
 /** analyzeInvoiceText-Ergebnis -> einheitliches Vorschlagsobjekt. */
@@ -731,6 +744,16 @@ function renderSuggestion(suggestion) {
   const actionsEl = $('dg-voucher-extract-actions');
   if (!fieldsEl) return;
 
+  const lines = Array.isArray(suggestion.lines) && suggestion.lines.length
+    ? suggestion.lines
+    : (Array.isArray(suggestion.extract?.lines) ? suggestion.extract.lines : []);
+  const linePreview = lines.slice(0, 8).map((line) => {
+    const kind = line.catalog_kind === 'product' ? 'Artikel' : 'Leistung';
+    const qty = line.quantity ? `${line.quantity} ${line.unit || ''}`.trim() : '';
+    const net = line.line_net ? `${line.line_net} €` : '';
+    return `${kind}: ${line.title || '—'}${qty ? ` · ${qty}` : ''}${net ? ` · ${net}` : ''}`;
+  }).join(' | ');
+  const amountCheck = suggestion.extract?.amount_check;
   const rows = [
     ['Lieferant', suggestion.supplier],
     ['Rechnungsnummer', suggestion.invoiceNumber],
@@ -750,7 +773,9 @@ function renderSuggestion(suggestion) {
     ['Straße', suggestion.street],
     ['Ort', suggestion.city ? [suggestion.postal, suggestion.city].filter(Boolean).join(' ') : suggestion.postal],
     ['Telefon', suggestion.phone],
-    ['Positionen', (suggestion.items && suggestion.items.length) || suggestion.itemCount ? String((suggestion.items && suggestion.items.length) || suggestion.itemCount) : ''],
+    ['Positionen', lines.length ? String(lines.length) : ((suggestion.items && suggestion.items.length) || suggestion.itemCount ? String((suggestion.items && suggestion.items.length) || suggestion.itemCount) : '')],
+    ['Positionsvorschau', linePreview],
+    ['Summenprüfung', amountCheck && amountCheck.ok === false ? (amountCheck.detail || 'Abweichung') : ''],
   ].filter(([, value]) => value);
 
   fieldsEl.innerHTML = rows

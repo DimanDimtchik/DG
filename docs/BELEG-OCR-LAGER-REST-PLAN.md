@@ -77,7 +77,7 @@ Datei (PDF/Bild/XML)
 |----|--------|--------|-------|
 | **BO0** | Inventar / Zielbild / Doc-Sync | [x] BO0a–c ✅ | 🟢 |
 | **BO1** | Rohpipeline Client härten | [~] BO1b–c ✅ · BO1d offen | 🟡🔴 |
-| **BO2** | Extrakt-Schema (Kopf + Positionen) | [ ] | 🟢🟡 |
+| **BO2** | Extrakt-Schema (Kopf + Positionen) | [~] BO2a–b ✅ | 🟢🟡 |
 | **BO3** | Kichel-Strukturierung | [ ] | 🟡🔴 |
 | **BO4** | FiBu-UI Positionen übernehmen | [ ] | 🟡 |
 | **BO5** | Lager-Anbindung | [ ] | 🟡🔴 |
@@ -123,7 +123,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
 | **BO2a** | JSON-Vertrag dokumentieren (unten §7) — Kopf + `lines[]` mit `catalog_kind` product\|service | 🟢 | [x] 2026-11-27 in diesem Plan §7 |
-| **BO2b** | Client: aus E-Rechnung-XML **Zeilen** ins Schema mappen (bevorzugter Pfad) | 🟡 | [ ] |
+| **BO2b** | Client: aus E-Rechnung-XML **Zeilen** ins Schema mappen (bevorzugter Pfad) | 🟡 | [x] 2026-11-27 · `mapEInvoiceToBo2Extract` · Selftest `bin/beleg-ocr-bo2-einvoice-lines-selftest.mjs` |
 | **BO2c** | Client: Regex-/receipt-parse **Zeilen-Hints** optional an Schema anreichern (ohne LLM) | 🟡 | [ ] |
 | **BO2d** | Selftest oder Fixture: XML-Rechnung → Schema-Felder (PHP oder Node, eine Datei) | 🟡 | [ ] |
 
@@ -289,3 +289,4 @@ Parallel ok: BO1 und BO2a (Schema schon hier). **BO5 nicht vor BO4.**
 | 2026-11-27 | **BO0a–c ✅** Verweise TODOS/IQ-STROM/Import · buchhaltung-todo §6 · Ist-Tabelle §6 |
 | 2026-11-27 | **BO1b ✅** „Erneut auslesen“ Toolbar + je Anhang · Selftest `beleg-ocr-reread-selftest.php` |
 | 2026-11-27 | **BO1c ✅** Scan-PDF OCR bis 5 Seiten · Fortschritt in Statuszeile · Selftest erweitert |
+| 2026-11-27 | **BO2b ✅** E-Rechnung-Zeilen → BO2-Schema (Artikel/Leistung, Menge, Netto) · Node-Selftest |
