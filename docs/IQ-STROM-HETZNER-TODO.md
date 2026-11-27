@@ -238,8 +238,10 @@ Ohne diese Punkte ersetzt DG Lex **nicht** vollständig für eine bilanzierungsp
 - [ ] **ZUGFeRD/Factur-X eingebettet** im Ausgangs-PDF (statt nur PDF + XML)  
   → Entscheidung/Ticket: [`ZUGFERD-AUSGANG-ENTSCHEIDUNG.md`](ZUGFERD-AUSGANG-ENTSCHEIDUNG.md)
 - [ ] §13b + E-Rechnung Ende Übergangsfrist (2027/2028) absichern
-- [ ] Beleg-OCR / Auto-Auslesen (FiBu-Positionen **und** Lager; Kichel ordnet Rohtext)  
-  → Microplan [`BELEG-OCR-LAGER-REST-PLAN.md`](BELEG-OCR-LAGER-REST-PLAN.md) (BO0–BO6) · Ist-Client-OCR: [`IMPORT-BELEGE-TODO.md`](IMPORT-BELEGE-TODO.md) · alt: [`buchhaltung-todo.html`](buchhaltung-todo.html) §6
+- [x] Beleg-OCR / Auto-Auslesen (FiBu-Positionen **und** Lager; Kichel ordnet Rohtext) — **2026-11-27**  
+  Code **BO0–BO5 ✅** (Extrakt/Kichel/Apply/Match/Neuanlage/EK/WE-Vorschlag, kein stilles Buchen). Abschluss-Docs **BO6**.  
+  → Microplan [`BELEG-OCR-LAGER-REST-PLAN.md`](BELEG-OCR-LAGER-REST-PLAN.md) · Ist: [`IMPORT-BELEGE-TODO.md`](IMPORT-BELEGE-TODO.md) · alt: [`buchhaltung-todo.html`](buchhaltung-todo.html) §6  
+  Rest (nicht blocker): **BO1d** Dev-Smoke PDF/Scan · UI-Smoke nach Deploy · **BO6b** Kurz in Lager-/Import-Docs
 - [ ] Bank **PSD2/API**-Sync (heute CAMT/MT940-Datei)
 - [ ] Auto-AB aus Angebots-Mail Feinschliff (Code teilweise da — Regression)
 
