@@ -120,6 +120,57 @@ PROMPT;
         return (bool) ($cfg['ollama_enabled'] ?? false);
     }
 
+    public static function configuredModel(): string
+    {
+        $cfg = self::config();
+
+        return (string) ($cfg['ollama_model'] ?? 'llama3.1:8b');
+    }
+
+    /**
+     * BO3c — freie Prompt-Antwort (z. B. JSON-Extrakt). null wenn aus/Fehler.
+     * Kein Zahlen-Abgleich wie bei phrase(); Caller validiert.
+     */
+    public static function generate(string $prompt): ?string
+    {
+        if (!self::isEnabled()) {
+            return null;
+        }
+
+        $cfg = self::config();
+        $url = rtrim((string) ($cfg['ollama_url'] ?? 'http://127.0.0.1:11434'), '/') . '/api/generate';
+        $model = self::configuredModel();
+        $payload = json_encode([
+            'model' => $model,
+            'prompt' => $prompt,
+            'stream' => false,
+        ], JSON_THROW_ON_ERROR);
+
+        $ctx = stream_context_create([
+            'http' => [
+                'method' => 'POST',
+                'header' => "Content-Type: application/json\r\n",
+                'content' => $payload,
+                'timeout' => (int) ($cfg['timeout_seconds'] ?? 60),
+                'ignore_errors' => true,
+            ],
+        ]);
+
+        $raw = @file_get_contents($url, false, $ctx);
+        if ($raw === false || $raw === '') {
+            return null;
+        }
+
+        $data = json_decode($raw, true);
+        if (!is_array($data)) {
+            return null;
+        }
+
+        $text = trim((string) ($data['response'] ?? ''));
+
+        return $text !== '' ? $text : null;
+    }
+
     /**
      * @return array<string, mixed>
      */

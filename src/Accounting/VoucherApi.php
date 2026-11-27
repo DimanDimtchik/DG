@@ -31,6 +31,10 @@ final class VoucherApi
                 self::handleFileUpload();
                 return;
             }
+            if ($action === 'voucher_extract') {
+                self::handleVoucherExtract();
+                return;
+            }
 
             http_response_code(405);
             echo json_encode(['success' => false, 'message' => 'Unbekannte POST-Aktion.'], JSON_UNESCAPED_UNICODE);
@@ -297,6 +301,45 @@ final class VoucherApi
     /**
      * Sofortiger Datei-Upload: legt bei Bedarf einen Entwurf an und hängt die Datei an.
      */
+    /**
+     * BO3c — Rohtext → BO2-Extrakt (optional Ollama).
+     */
+    private static function handleVoucherExtract(): void
+    {
+        $user = AuthService::user();
+        if ($user === null || !RoleResolver::canEdit($user)) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Keine Berechtigung.'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'CSRF ungültig.'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        try {
+            $result = VoucherExtractService::extract([
+                'raw_text' => (string) ($_POST['raw_text'] ?? ''),
+                'source' => (string) ($_POST['source'] ?? 'pdf_text'),
+                'voucher_id' => (int) ($_POST['voucher_id'] ?? 0),
+                'hint_extract' => $_POST['hint_extract'] ?? null,
+                'file_name' => (string) ($_POST['file_name'] ?? ''),
+            ]);
+            echo json_encode([
+                'success' => true,
+                'data' => $result,
+            ], JSON_UNESCAPED_UNICODE);
+        } catch (InvalidArgumentException $e) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+        } catch (Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+        }
+    }
+
     private static function handleFileUpload(): void
     {
         $user = AuthService::user();
