@@ -59,7 +59,7 @@ Kein Fine-Tuning, kein Gesetzes-Vollimport außerhalb dieser ID.
 | Phase | Kürzel | Inhalt | Status |
 |-------|--------|--------|--------|
 | **A — RAG (jetzt)** | **KR0–KR9** | Verdrahtung Suche → Fakten → Qwen; CRM-Korpus; Quellen; Smoke | **KR0–9 ✅** Gate offen |
-| **B — Rechtskorpus** | **KL0–KL5** | Gesetze/Urteile importieren & indexieren (nach stabilem RAG) | **KL0–1 ✅** · als Nächstes **KL2** |
+| **B — Rechtskorpus** | **KL0–KL5** | Gesetze/Urteile importieren & indexieren (nach stabilem RAG) | **KL0–2 ✅** · als Nächstes **KL3** |
 | **C — Intent-LLM** | **KI0–KI3** | Qwen nur als Frage-Parser (JSON), Suche weiter PHP | geplant |
 | **D — Produkt/Haftung** | **KH0–KH3** | Disclaimer, Protokoll-Felder, Admin-Qualität | geplant |
 | **E — Fine-Tuning** | **KT0–KT5** | LoRA auf Q&A/Stil — **nur nach RAG-Stabil** | später, beschrieben |
@@ -420,7 +420,7 @@ RAG gilt als **stabil**, wenn:
 |----|--------|--------|
 | **KL0** | Quellenentscheid (Doc) | [x] 2026-11-27 · §4.1 |
 | **KL1** | Import-Pipeline: TOC → AO/UStG/EStG (+ ggf. HGB) → Chunks | [x] 2026-11-27 · §4.2 |
-| **KL2** | Speicher Index (Volltext zuerst) | [ ] |
+| **KL2** | Speicher Index (Volltext zuerst) | [x] 2026-11-27 · §4.3 |
 | **KL3** | Retriever → `type=statute` | [ ] |
 | **KL4** | Update-Job TOC-Diff | [ ] |
 | **KL5** | Pilot Urteile (später, eng) | [ ] geparkt bis nach KL1–3 |
@@ -497,7 +497,31 @@ Kein Massenimport aller Bundesgesetze in KL1.
 - [x] Parser: §/Anlage, Abs.-Split, Standhinweis „konsolidiert GII“  
 - [x] Selftest grün ohne Netz  
 
-**Nächste Mini-ID:** **KL2** (Index lesen aus JSONL).
+**Nächste Mini-ID:** **KL2** ✅ → **KL3**.
+
+### 4.3 KL2 — Speicher-Index (Volltext) ✅ 2026-11-27
+
+| Teil | Inhalt | Status |
+|------|--------|--------|
+| **KL2a** | JSONL aus `storage/kichel/gii/` laden · Dedup `source_ref` · Manifests | [x] |
+| **KL2b** | Token-Volltext-Score (Gesetz/§-Boost) · `factsFromHits` → `type=statute` | [x] |
+| **KL2c** | Selftest offline (Temp-JSONL aus UStG-Mini-Fixture) | [x] |
+
+| Datei | Rolle |
+|-------|--------|
+| `src/Kichel/KichelStatuteIndex.php` | Load / Search / Facts |
+| `bin/kichel-statute-index-selftest.php` | Abnahme |
+
+**Nicht in KL2:** Verdrahtung in `KichelRetriever` (→ **KL3**).
+
+#### Abnahme KL2
+
+- [x] Leerer Ordner → 0 Chunks  
+- [x] `§ 19 UStG` → Top `enbez=§ 19`  
+- [x] Inhaltsquery „Fahrzeug / Erwerb“ → `§ 1b`  
+- [x] Bad JSONL / Dedup robust  
+
+**Nächste Mini-ID:** **KL3** (Retriever nutzt Statute-Index).
 
 ---
 
@@ -614,7 +638,7 @@ KR0 ✅
 
 ## 12. Nächster konkreter Schritt
 
-**KL2** (JSONL-Korpus laden / Volltext-Index für Retriever).  
+**KL3** (Retriever → `type=statute` aus `KichelStatuteIndex`).  
 Optional: KR8b Dev-Browser. **Kein** KT/KP ohne neues Gate.
 
 ---
@@ -635,3 +659,4 @@ Optional: KR8b Dev-Browser. **Kein** KT/KP ohne neues Gate.
 | 2026-11-27 | **KR9 ✅** RAG-Gate offen für **KL** · KT/KP gesperrt bis neuer Freigabe |
 | 2026-11-27 | **KL0 ✅** Quellenentscheid: GII primär · Bund-API optional · Pilot AO/UStG/EStG |
 | 2026-11-27 | **KL1 ✅** GII-Import Whitelist · XML→§/Abs.-Chunks · JSONL `storage/kichel/gii/` · Selftest |
+| 2026-11-27 | **KL2 ✅** `KichelStatuteIndex` Volltext über JSONL · Selftest · noch ohne Retriever |
