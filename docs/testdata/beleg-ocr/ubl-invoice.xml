@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- BO2d Fixture: UBL/XRechnung-ähnlich · Demo-Daten, kein Tenant -->
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
+ xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
+ xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
+  <cbc:ID>XR-77</cbc:ID>
+  <cbc:IssueDate>2026-11-20</cbc:IssueDate>
+  <cac:AccountingSupplierParty>
+    <cac:Party><cac:PartyName><cbc:Name>UBL Lieferant</cbc:Name></cac:PartyName></cac:Party>
+  </cac:AccountingSupplierParty>
+  <cac:InvoiceLine>
+    <cbc:ID>1</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="C62">3</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount>30.00</cbc:LineExtensionAmount>
+    <cac:Item>
+      <cbc:Name>Schrauben M6</cbc:Name>
+      <cac:SellersItemIdentification><cbc:ID>SK-6</cbc:ID></cac:SellersItemIdentification>
+      <cac:ClassifiedTaxCategory><cbc:Percent>19</cbc:Percent></cac:ClassifiedTaxCategory>
+    </cac:Item>
+    <cac:Price><cbc:PriceAmount>10.00</cbc:PriceAmount></cac:Price>
+  </cac:InvoiceLine>
+  <cac:LegalMonetaryTotal>
+    <cbc:TaxExclusiveAmount>30.00</cbc:TaxExclusiveAmount>
+    <cbc:TaxInclusiveAmount>35.70</cbc:TaxInclusiveAmount>
+    <cbc:PayableAmount>35.70</cbc:PayableAmount>
+  </cac:LegalMonetaryTotal>
+</Invoice>

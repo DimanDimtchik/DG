@@ -13,7 +13,7 @@ Beim Installationsimport (Schritt „Datenimport“) werden Belegdateien (PDF, J
 4. Hinweis + Filter „Nur Entwürfe“ unter **Buchhaltung → Belege**
 5. API `POST /api/voucher?action=file_upload` für Sofort-Upload im Belegformular
 
-OCR/Auslesen ist **clientseitig** (`assets/js/buchhaltung-import.mjs` / Tesseract / pdf.js / E-Rechnung-XML): Upload speichert die Datei, Analyse schlägt **FiBu-Kopfdaten** vor (Lieferant, Nr., Datum, Betrag/Steuer). **BO1b:** Button **„Erneut auslesen“** für bereits gespeicherte Anhänge (Install-Entwurf). **BO1c:** Scan-PDF-OCR bis max. 5 Seiten mit Fortschrittsstatus. **BO2b:** E-Rechnung-XML-Positionen → BO2-Extrakt (`lines[]`, Artikel/Leistung). **BO2c:** Textlayer/OCR-Regex-Hints → BO2-Schema (ohne LLM; XML hat Vorrang). Positionen werden nicht zuverlässig übernommen; **kein** Kichel und **kein** Lager-Anschluss (siehe BO-Plan).
+OCR/Auslesen ist **clientseitig** (`assets/js/buchhaltung-import.mjs` / Tesseract / pdf.js / E-Rechnung-XML): Upload speichert die Datei, Analyse schlägt **FiBu-Kopfdaten** vor (Lieferant, Nr., Datum, Betrag/Steuer). **BO1b:** Button **„Erneut auslesen“** für bereits gespeicherte Anhänge (Install-Entwurf). **BO1c:** Scan-PDF-OCR bis max. 5 Seiten mit Fortschrittsstatus. **BO2b:** E-Rechnung-XML-Positionen → BO2-Extrakt (`lines[]`, Artikel/Leistung). **BO2c:** Textlayer/OCR-Regex-Hints → BO2-Schema (ohne LLM; XML hat Vorrang). **BO2d:** Fixtures `docs/testdata/beleg-ocr/` + `bin/beleg-ocr-bo2-fixture-selftest.mjs`. Positionen werden nicht zuverlässig übernommen; **kein** Kichel und **kein** Lager-Anschluss (siehe BO-Plan).
 
 ## Status in Settings
 
