@@ -1,0 +1,4 @@
+-- MA0d: CRM-App-Download-Seite von Slug `apps` → `app-download`.
+-- Kein Schema — Marker, damit MigrationRunner::runPending auf Alt-Instanzen
+-- MobileAppDownloadService::ensureDraftWebsitePage() (inkl. Legacy-Migration) ausführt.
+-- Slug `apps` bleibt frei für Instanz-Website-Inhalte.

@@ -2,23 +2,38 @@
 declare(strict_types=1);
 
 /**
- * Vorinstallierte Website-Seite „Apps“ — Termin- und Mitarbeiter-App.
+ * Vorinstallierte Website-Seite für CRM-App-Downloads (Termin- + Mitarbeiter-App).
  * Je App: Android- und Apple-Button; ohne Store-Link bleibt der Button öffentlich unsichtbar.
- * Weitere Produkte (z. B. KlarWin, WG) nur als Instanz-Inhalt auf der Website-Seite, nicht hier.
+ *
+ * Slug bewusst **nicht** `apps` — der bleibt frei für Instanz-Website-Inhalte (Produkt-/Marketing-Seiten).
  */
 final class MobileAppDownloadService
 {
-    public const PAGE_SLUG = 'apps';
+    /** Öffentlicher Pfad / Slug der CRM-Download-Seite (nicht „apps“). */
+    public const PAGE_SLUG = 'app-download';
+
+    /** Historischer Slug (Konflikt mit Website-Seiten) — nur Migration. */
+    public const LEGACY_PAGE_SLUG = 'apps';
+
+    public const MENU_LABEL = 'App-Download';
+
+    public const PAGE_KIND = 'mobile_app_download';
 
     /** Relativ zum Web-Root (statische Auslieferung per .htaccess). */
     public const KALENDER_APK = 'downloads/dg-kalender.apk';
     public const MITARBEITER_APK = 'downloads/dg-mitarbeiter.apk';
+
+    public static function pagePath(): string
+    {
+        return '/' . self::PAGE_SLUG;
+    }
 
     public static function ensureDraftWebsitePage(?int $userId = null): void
     {
         if (!Database::isConfigured()) {
             return;
         }
+        self::migrateLegacyAppsSlug($userId);
         $existing = WebsitePageRepository::findBySlugAnyStatus(self::PAGE_SLUG);
         if ($existing === null) {
             WebsitePageRepository::save([
@@ -31,7 +46,115 @@ final class MobileAppDownloadService
         self::ensureMenuItem();
     }
 
-    /** Menüpunkt „Apps“ nachziehen (ohne Duplikat, auch wenn nur im Untermenü). */
+    /**
+     * Alte CRM-Download-Seite unter Slug `apps` → `app-download`.
+     * Instanz-Seiten unter `apps` ohne page_kind mobile_app_download bleiben unangetastet.
+     */
+    public static function migrateLegacyAppsSlug(?int $userId = null): void
+    {
+        if (!Database::isConfigured()) {
+            return;
+        }
+        $legacy = WebsitePageRepository::findBySlugAnyStatus(self::LEGACY_PAGE_SLUG);
+        if ($legacy === null) {
+            return;
+        }
+        if (!self::isMobileDownloadPage($legacy)) {
+            return;
+        }
+        $target = WebsitePageRepository::findBySlugAnyStatus(self::PAGE_SLUG);
+        if ($target !== null) {
+            // Ziel existiert schon — Legacy-CRM-Seite entfernen, damit Slug `apps` frei wird
+            WebsitePageRepository::delete((int) ($legacy['id'] ?? 0));
+            self::rewriteMenuUrls('/' . self::LEGACY_PAGE_SLUG, self::pagePath(), self::MENU_LABEL);
+
+            return;
+        }
+        WebsitePageRepository::save([
+            'title' => (string) ($legacy['title'] ?? 'Apps herunterladen'),
+            'slug' => self::PAGE_SLUG,
+            'status' => (string) ($legacy['status'] ?? WebsitePageRepository::STATUS_PUBLISHED),
+            'layout' => is_array($legacy['layout'] ?? null) ? $legacy['layout'] : self::pageLayout(),
+        ], (int) ($legacy['id'] ?? 0), $userId);
+        self::rewriteMenuUrls('/' . self::LEGACY_PAGE_SLUG, self::pagePath(), self::MENU_LABEL);
+    }
+
+    /**
+     * @param array<string, mixed> $page
+     */
+    public static function isMobileDownloadPage(array $page): bool
+    {
+        $layout = $page['layout'] ?? null;
+        if (!is_array($layout)) {
+            return false;
+        }
+
+        return (string) ($layout['page_kind'] ?? '') === self::PAGE_KIND;
+    }
+
+    /**
+     * Menü-URLs umschreiben (Top-Level + Kinder), z. B. nach Legacy-Migration.
+     */
+    public static function rewriteMenuUrls(string $fromUrl, string $toUrl, ?string $newLabel = null): void
+    {
+        if (!Database::isConfigured()) {
+            return;
+        }
+        $from = rtrim($fromUrl, '/') ?: '/';
+        $to = rtrim($toUrl, '/') ?: '/';
+        if ($from === $to) {
+            return;
+        }
+        $menu = SettingsStore::get('website.menu', []);
+        if (!is_array($menu)) {
+            return;
+        }
+        $items = is_array($menu['items'] ?? null) ? $menu['items'] : [];
+        if ($items === []) {
+            return;
+        }
+        $changed = false;
+        $items = self::rewriteMenuItems($items, $from, $to, $newLabel, $changed);
+        if (!$changed) {
+            return;
+        }
+        $menu['items'] = $items;
+        SettingsStore::set('website.menu', $menu);
+    }
+
+    /**
+     * @param list<array<string, mixed>> $items
+     * @return list<array<string, mixed>>
+     */
+    private static function rewriteMenuItems(
+        array $items,
+        string $from,
+        string $to,
+        ?string $newLabel,
+        bool &$changed
+    ): array {
+        foreach ($items as $i => $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $url = rtrim((string) ($item['url'] ?? ''), '/') ?: '/';
+            if ($url === $from) {
+                $items[$i]['url'] = $to;
+                if ($newLabel !== null && $newLabel !== '') {
+                    $items[$i]['label'] = $newLabel;
+                }
+                $changed = true;
+            }
+            $children = is_array($item['children'] ?? null) ? $item['children'] : [];
+            if ($children !== []) {
+                $items[$i]['children'] = self::rewriteMenuItems($children, $from, $to, $newLabel, $changed);
+            }
+        }
+
+        return $items;
+    }
+
+    /** Menüpunkt „App-Download“ nachziehen (ohne Duplikat, auch wenn nur im Untermenü). */
     public static function ensureMenuItem(): void
     {
         if (!Database::isConfigured()) {
@@ -42,13 +165,13 @@ final class MobileAppDownloadService
             $menu = [];
         }
         $items = is_array($menu['items'] ?? null) ? $menu['items'] : [];
-        if (WebsiteSettings::menuHasUrl('/apps', $items)) {
+        if (WebsiteSettings::menuHasUrl(self::pagePath(), $items)) {
             return;
         }
 
         $entry = [
-            'label' => 'Apps',
-            'url' => '/apps',
+            'label' => self::MENU_LABEL,
+            'url' => self::pagePath(),
             'auth_only' => false,
             'icon' => 'auto',
             'children' => [],
@@ -84,7 +207,7 @@ final class MobileAppDownloadService
     public static function pageLayout(): array
     {
         return [
-            'page_kind' => 'mobile_app_download',
+            'page_kind' => self::PAGE_KIND,
             'rows' => [
                 [
                     'id' => 'row-apps-intro',

@@ -66,7 +66,7 @@ App speichert: baseUrl + bearerToken (+ refresh-Flow)
 
 | ID | Thema | Status | Token |
 |----|--------|--------|-------|
-| **MA0** | Inventar / Ist / Docs | [x] MA0a–c ✅ | 🟢 |
+| **MA0** | Inventar / Ist / Docs | [x] MA0a–d ✅ | 🟢 |
 | **MA1** | Shared (beide Apps, gemeinsame Regeln) | [~] MA1a ✅ | 🟢🟡 |
 | **MA2** | Kalender nutzbar | [ ] | 🟡🔴 |
 | **MA3** | Mitarbeiter nutzbar | [ ] | 🟡🔴 |
@@ -90,9 +90,13 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | **MA0a** | Dieser Plan + Verweis in `MOBILE-APPS-PLAN.md` · `TODOS.md` · IQ-STROM §D3 | 🟢 | [x] 2026-11-27 |
 | **MA0b** | Ist-Tabelle: API-Endpunkte vs. Flutter-Screens (was schon da, was fehlt) — nur Doc hier §7 | 🟢 | [x] 2026-11-27 |
 | **MA0c** | QR/Basis-URL: wo im CRM erzeugt? Kurznotiz (Einstellungen) | 🟢 | [x] 2026-11-27 · §7.1 |
+| **MA0d** | Konflikt: CRM-Download-Slug `/apps` → `/app-download` (Website-`/apps` frei) | 🟡 | [x] 2026-11-27 · Migration 162 |
 
 **Prompt MA0a:**  
 `Nur Mini-ID MA0a laut docs/MOBILE-APPS-REST-PLAN.md. Nur Doc-Verweise. Kein Flutter-Code.`
+
+**Prompt MA0d:**  
+`Nur Mini-ID MA0d laut docs/MOBILE-APPS-REST-PLAN.md. CRM-Download-Slug von apps auf app-download. Kein Flutter.`
 
 ---
 
@@ -255,15 +259,17 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | Ort | Was der Nutzer sieht | Technik |
 |-----|----------------------|---------|
 | Öffentlich **`/app-connect`** | Seite „App verbinden“: APK-Links + Button „App öffnen / verbinden“ + Fallback-Text mit Basis-URL | `index.php` → `views/app-connect.php` · Scheme **`dg-mitarbeiter://setup?base=<publicBaseUrl>`** · Query `?base=` optional (sonst `publicBaseUrl`) |
-| Öffentlich **`/apps`** | Website-Seite „Apps herunterladen“ (Slug `apps`, Menüpunkt) | `MobileAppDownloadService` · APKs unter `downloads/dg-*.apk` · Text: CRM-Adresse **manuell** in der App tippen |
+| Öffentlich **`/app-download`** | CRM-Seite „Apps herunterladen“ (Slug `app-download`, Menü „App-Download“) | `MobileAppDownloadService` · APKs unter `downloads/dg-*.apk` · Text: CRM-Adresse **manuell** in der App tippen |
+| Öffentlich **`/apps`** | **Frei für Instanz-Website** (Produkt-/Marketing-Seiten) — **nicht** CRM-Download | Seit **MA0d**; Legacy CRM-Seiten mit `page_kind=mobile_app_download` werden nach `/app-download` umgezogen |
 | CRM **Kontakt → Mitarbeiter-Zugang** | Button „App-Einladung senden“ | `StaffAccessInviteService::sendAppInvite` · Partial `views/partials/staff-access-invite.php` · Mail-Link: `{base}/app-connect?base={base}` |
 | Einstellungen → **Kalender / Online-Buchung → QR** | QR/Flyer für **Terminbuchung** | `views/settings/tab-calendar-embed.php` · URL = öffentlicher **Buchungs-/Embed-Link** (`/terminkalender` o. Ä.) — **nicht** die Flutter-App-Basis-URL |
 
 **Wichtig (Abgrenzung):**
 
 - Der Kalender-QR in den Einstellungen verbindet **nicht** die Flutter-Apps mit dem CRM; er führt auf die **Web-Terminbuchung**.
-- Deep-Link-Scheme gibt es derzeit nur für die **Mitarbeiter-App** (`dg-mitarbeiter://…`). Die Kalender-App hat keinen Connect-Scheme-Listener (MA0b) → Kunden tippen die Adresse oder holen APK über `/apps`.
+- Deep-Link-Scheme gibt es derzeit nur für die **Mitarbeiter-App** (`dg-mitarbeiter://…`). Die Kalender-App hat keinen Connect-Scheme-Listener (MA0b) → Kunden tippen die Adresse oder holen APK über `/app-download`.
 - Es gibt **keinen** eigenen Einstellungs-Tab „Mobile App QR“ nur für die Basis-URL; Connect läuft über `/app-connect` + Einladungsmail.
+- **MA0d:** CRM-Download nicht mehr unter `/apps` (Slug-Konflikt mit Website-Inhalten). Guard: `php bin/mobile-app-download-slug-selftest.php`.
 
 **Folge:** MA1c (Shared Basis-URL/QR) kann `/app-connect` und Deep-Link nutzen; optional später Kalender-Scheme analog. Kein Duplikat des Buchungs-QR bauen.
 
@@ -289,6 +295,7 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | `apps/mitarbeiter/` | Flutter MA |
 | `apps/*/lib/api_message.dart` | MA1a Fehlerformat (byte-identisch) |
 | `bin/mobile-api-message-selftest.php` | Guard MA1a |
+| `bin/mobile-app-download-slug-selftest.php` | Guard MA0d |
 | [`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md) | Unterschrift ES6 (App-Upload) |
 
 ---
@@ -300,5 +307,7 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | 2026-11-27 | Plan angelegt · Micro-IDs MA0–MA6 für Kalender + Mitarbeiter · Ist API vs. Flutter-Rest |
 | 2026-11-27 | **MA0a ✅** Verweise Spec/TODOS/IQ-STROM |
 | 2026-11-27 | **MA0b ✅** Ist-Matrix §7 API vs. Flutter (Lücken → MA1–MA3) |
-| 2026-11-27 | **MA0c ✅** §7.1 CRM-Basis-URL: `/app-connect`, `/apps`, App-Einladung · Buchungs-QR ≠ App-Connect · MA0-Block fertig |
+| 2026-11-27 | **MA0c ✅** §7.1 CRM-Basis-URL: `/app-connect`, App-Einladung · Buchungs-QR ≠ App-Connect |
+| 2026-11-27 | **MA0d ✅** CRM-Download `apps` → `app-download` · `/apps` frei für Website · Migration 162 |
 | 2026-11-27 | **MA1a ✅** `api_message.dart` identisch in beiden Apps · UI über `apiUserMessage`/`apiIsOk` · `php bin/mobile-api-message-selftest.php` |
+| 2026-11-27 | **MA0d ✅** CRM-Download-Slug `apps` → `app-download` · Legacy-Migration nur bei `page_kind=mobile_app_download` · `/apps` frei für Website |

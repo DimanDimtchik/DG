@@ -6,9 +6,10 @@ MigrationRunner::runPending();
 MobileAppDownloadService::ensureDraftWebsitePage();
 MobileAppDownloadService::ensureDownloadsDir();
 
-$p = WebsitePageRepository::findBySlugAnyStatus('apps');
+$slug = MobileAppDownloadService::PAGE_SLUG;
+$p = WebsitePageRepository::findBySlugAnyStatus($slug);
 if ($p === null) {
-    fwrite(STDERR, "MISSING\n");
+    fwrite(STDERR, "MISSING slug={$slug}\n");
     exit(1);
 }
 

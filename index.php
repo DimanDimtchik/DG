@@ -42,7 +42,7 @@ if (preg_match('#^/downloads/(dg-kalender|dg-mitarbeiter)\.apk$#', $path, $apkMa
     echo '<!doctype html><html lang="de"><head><meta charset="utf-8"><title>App noch nicht hinterlegt</title></head><body style="font-family:system-ui,sans-serif;max-width:32rem;margin:3rem auto;padding:0 1rem;">'
         . '<h1>App noch nicht hinterlegt</h1>'
         . '<p>Die Installationsdatei liegt noch nicht auf dem Server. Bitte wenden Sie sich an Ihre Firma oder versuchen Sie es später erneut.</p>'
-        . '<p><a href="/apps">Zurück zur App-Download-Seite</a></p>'
+        . '<p><a href="/' . MobileAppDownloadService::PAGE_SLUG . '">Zurück zur App-Download-Seite</a></p>'
         . '</body></html>';
     exit;
 }

@@ -116,7 +116,7 @@ final class MigrationRunner
                 // Soft: Seite kann später per /stempeluhr nachgezogen werden
             }
 
-            // Mobile Apps: Download-Seite /apps (auch Alt-Installationen)
+            // Mobile Apps: Download-Seite /app-download (auch Alt-Installationen; Legacy /apps → migrate)
             try {
                 if (class_exists('MobileAppDownloadService')) {
                     MobileAppDownloadService::ensureDraftWebsitePage();
@@ -380,6 +380,7 @@ final class MigrationRunner
             '157_cash_ers_melde.sql' => self::tableExists($pdo, 'dg_cash_ers_taxpayer')
                 && self::tableExists($pdo, 'dg_cash_ers_clients'),
             '158_cash_tse_deferred.sql' => self::columnExists($pdo, 'dg_cash_receipts', 'tse_deferred_pending'),
+            '162_mobile_app_download_slug.sql' => true,
             default => false,
         };
     }
@@ -546,6 +547,7 @@ final class MigrationRunner
             '156_cash_journal_receipt.sql' => true,
             '157_cash_ers_melde.sql' => true,
             '158_cash_tse_deferred.sql' => true,
+            '162_mobile_app_download_slug.sql' => true,
         ];
     }
 

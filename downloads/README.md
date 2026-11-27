@@ -7,7 +7,8 @@ Hier die gebauten Flutter-APKs ablegen (Dateinamen fest):
 | `dg-kalender.apk` | Termin-App (Kunden) |
 | `dg-mitarbeiter.apk` | Mitarbeiter-App |
 
-Öffentliche Seite: `/apps` (bei Installation bzw. Migration angelegt).
+Öffentliche Seite: `/app-download` (bei Installation bzw. Migration angelegt).  
+Slug `/apps` bleibt frei für Instanz-Website-Inhalte (nicht CRM-Download).
 
 Build-Beispiel:
 

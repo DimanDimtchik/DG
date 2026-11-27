@@ -1,3 +1,4 @@
--- Mobile-Apps: Website-Seite „Apps“ (Download Kalender + Mitarbeiter) per PHP-Nachzug.
+-- Mobile-Apps: Website-Seite App-Download (früher Slug apps; seit MA0d: app-download).
 -- Kein Schema — Marker, damit MigrationRunner::runPending auf Alt-Instanzen
 -- MobileAppDownloadService::ensureDraftWebsitePage() ausführt (siehe MigrationRunner).
+-- Legacy-Umbenennung: 162_mobile_app_download_slug.sql.

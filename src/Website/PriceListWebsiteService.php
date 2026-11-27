@@ -56,7 +56,7 @@ final class PriceListWebsiteService
                 continue;
             }
             $url = rtrim((string) ($item['url'] ?? ''), '/');
-            if ($url === '/terminkalender' || $url === '/apps') {
+            if ($url === '/terminkalender' || $url === MobileAppDownloadService::pagePath()) {
                 $insertAt = $i + 1;
             }
         }
