@@ -468,10 +468,45 @@ class _LoginPageState extends State<LoginPage> {
   final _password = TextEditingController();
   final _name = TextEditingController();
   bool _register = false;
+  bool _obscure = true;
   String? _error;
   bool _busy = false;
 
+  static const int _minPassword = 8;
+
+  @override
+  void dispose() {
+    _email.dispose();
+    _password.dispose();
+    _name.dispose();
+    super.dispose();
+  }
+
+  /// Client-seitige Pflichtprüfung vor API-Aufruf (klare Meldungen).
+  String? _validateLocal() {
+    final email = _email.text.trim();
+    final password = _password.text;
+    if (email.isEmpty) {
+      return 'Bitte E-Mail eingeben.';
+    }
+    if (!email.contains('@') || email.startsWith('@') || email.endsWith('@')) {
+      return 'Bitte eine gültige E-Mail eingeben.';
+    }
+    if (password.isEmpty) {
+      return 'Bitte Passwort eingeben.';
+    }
+    if (_register && password.length < _minPassword) {
+      return 'Passwort mindestens $_minPassword Zeichen.';
+    }
+    return null;
+  }
+
   Future<void> _submit() async {
+    final localError = _validateLocal();
+    if (localError != null) {
+      setState(() => _error = localError);
+      return;
+    }
     setState(() {
       _busy = true;
       _error = null;
@@ -488,11 +523,24 @@ class _LoginPageState extends State<LoginPage> {
       };
       final res = await client.post(path, body);
       if (!apiIsOk(res)) {
-        setState(() => _error = apiUserMessage(res, fallback: 'Anmeldung fehlgeschlagen.'));
+        setState(() {
+          _error = apiUserMessage(
+            res,
+            fallback: _register ? 'Registrierung fehlgeschlagen.' : 'Anmeldung fehlgeschlagen.',
+          );
+        });
         return;
       }
-      final data = res['data'] as Map<String, dynamic>;
-      final token = data['token'] as String;
+      final data = res['data'];
+      if (data is! Map) {
+        setState(() => _error = 'Unerwartete Antwort vom Server.');
+        return;
+      }
+      final token = '${data['token'] ?? ''}'.trim();
+      if (token.isEmpty) {
+        setState(() => _error = 'Anmeldung ohne Sitzung — bitte erneut versuchen.');
+        return;
+      }
       await mobileSaveBaseUrl(client.baseUrl);
       await mobileSaveToken(token);
       if (!mounted) return;
@@ -507,6 +555,13 @@ class _LoginPageState extends State<LoginPage> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  void _toggleMode() {
+    setState(() {
+      _register = !_register;
+      _error = null;
+    });
   }
 
   @override
@@ -527,8 +582,10 @@ class _LoginPageState extends State<LoginPage> {
                 if (_register) ...[
                   TextField(
                     controller: _name,
+                    textInputAction: TextInputAction.next,
+                    autofillHints: const [AutofillHints.name],
                     decoration: const InputDecoration(
-                      labelText: 'Name',
+                      labelText: 'Name (optional)',
                       prefixIcon: Icon(Icons.person_outline_rounded),
                     ),
                   ),
@@ -541,15 +598,29 @@ class _LoginPageState extends State<LoginPage> {
                     prefixIcon: Icon(Icons.mail_outline_rounded),
                   ),
                   keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  autofillHints: const [AutofillHints.email],
+                  autocorrect: false,
+                  enableSuggestions: false,
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _password,
-                  decoration: const InputDecoration(
-                    labelText: 'Passwort',
-                    prefixIcon: Icon(Icons.lock_outline_rounded),
+                  decoration: InputDecoration(
+                    labelText: _register ? 'Passwort (min. $_minPassword Zeichen)' : 'Passwort',
+                    prefixIcon: const Icon(Icons.lock_outline_rounded),
+                    suffixIcon: IconButton(
+                      tooltip: _obscure ? 'Anzeigen' : 'Verbergen',
+                      onPressed: () => setState(() => _obscure = !_obscure),
+                      icon: Icon(_obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                    ),
                   ),
-                  obscureText: true,
+                  obscureText: _obscure,
+                  textInputAction: TextInputAction.done,
+                  autofillHints: _register
+                      ? const [AutofillHints.newPassword]
+                      : const [AutofillHints.password],
+                  onSubmitted: (_) => _busy ? null : _submit(),
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: 14),
@@ -578,7 +649,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 8),
                 TextButton(
-                  onPressed: () => setState(() => _register = !_register),
+                  onPressed: _busy ? null : _toggleMode,
                   child: Text(_register ? 'Bereits Konto? Anmelden' : 'Neu hier? Registrieren'),
                 ),
               ],

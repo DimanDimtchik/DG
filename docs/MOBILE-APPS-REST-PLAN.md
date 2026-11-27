@@ -68,7 +68,7 @@ App speichert: baseUrl + bearerToken (+ refresh-Flow)
 |----|--------|--------|-------|
 | **MA0** | Inventar / Ist / Docs | [x] MA0a–d ✅ | 🟢 |
 | **MA1** | Shared (beide Apps, gemeinsame Regeln) | [x] MA1a–d ✅ | 🟢🟡 |
-| **MA2** | Kalender nutzbar | [ ] | 🟡🔴 |
+| **MA2** | Kalender nutzbar | [~] MA2a ✅ | 🟡🔴 |
 | **MA3** | Mitarbeiter nutzbar | [ ] | 🟡🔴 |
 | **MA4** | Härte / Guards / API-Smoke | [ ] | 🟢🟡 |
 | **MA5** | Store-Vorbereitung | [ ] | 🟡🔴 |
@@ -117,7 +117,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| **MA2a** | Login + Register Ende-zu-Ende gegen Dev-API (Fehlermeldungen klar) | 🟡 | [ ] |
+| **MA2a** | Login + Register Ende-zu-Ende gegen Dev-API (Fehlermeldungen klar) | 🟡 | [x] 2026-11-27 · LoginPage Härte + Dev-E2E + Selftest |
 | **MA2b** | Katalog → Slot wählen → Buchen (Happy Path) | 🟡 | [ ] |
 | **MA2c** | Meine Termine: Liste + Storno + Umbuchen | 🟡 | [ ] |
 | **MA2d** | Randfälle: Buchung aus, Slot weg, Session abgelaufen | 🟡 | [ ] |
@@ -279,6 +279,7 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 
 | ID | Datum | Gerät | Ergebnis |
 |----|-------|-------|----------|
+| MA2a | 2026-11-27 | Dev API `ganz-om.de` | Register→Login→me→Logout ✅ · Konten bereinigt · UI-Validierung |
 | MA2e | | | |
 | MA3f | | | |
 
@@ -300,6 +301,7 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | `bin/mobile-api-auth-selftest.php` | Guard MA1b |
 | `bin/mobile-api-base-url-selftest.php` | Guard MA1c |
 | `bin/mobile-api-network-selftest.php` | Guard MA1d |
+| `bin/mobile-kalender-auth-selftest.php` | Guard MA2a |
 | `bin/mobile-app-download-slug-selftest.php` | Guard MA0d |
 | [`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md) | Unterschrift ES6 (App-Upload) |
 
@@ -317,5 +319,6 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | 2026-11-27 | **MA1b ✅** `api_auth.dart` Token speichern/Logout · 401→Refresh→Retry · Session-Expired → Login |
 | 2026-11-27 | **MA1c ✅** `api_base_url.dart` resolve/save · Connect-Link/`base=` · kein QR-Plugin (Hinweis UI) |
 | 2026-11-27 | **MA1d ✅** Netzfehler → `network_error` Fail-Map · kein Logout bei Offline-Refresh · MA1-Block fertig |
+| 2026-11-27 | **MA2a ✅** Kalender Login/Register Client-Validierung · Dev-E2E Auth · `mobile-kalender-auth-selftest.php` |
 | 2026-11-27 | **MA1a ✅** `api_message.dart` identisch in beiden Apps · UI über `apiUserMessage`/`apiIsOk` · `php bin/mobile-api-message-selftest.php` |
 | 2026-11-27 | **MA0d ✅** CRM-Download-Slug `apps` → `app-download` · Legacy-Migration nur bei `page_kind=mobile_app_download` · `/apps` frei für Website |
