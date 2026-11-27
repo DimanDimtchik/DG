@@ -1258,16 +1258,26 @@ class _AbsencesTabState extends State<AbsencesTab> {
       _loading = true;
       _error = null;
     });
-    final res = await widget.client.get('/api/mobile/staff/absences', {'month': _monthKey});
-    if (!mounted) return;
-    setState(() {
-      _loading = false;
-      if (apiIsOk(res)) {
-        _data = Map<String, dynamic>.from(res['data'] as Map? ?? {});
-      } else {
-        _error = apiUserMessage(res, fallback: 'Abwesenheiten nicht ladbar.');
-      }
-    });
+    try {
+      final res = await widget.client.get('/api/mobile/staff/absences', {'month': _monthKey});
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        if (apiIsOk(res)) {
+          final d = res['data'];
+          _data = d is Map ? Map<String, dynamic>.from(d) : <String, dynamic>{};
+          _error = null;
+        } else {
+          _error = apiUserMessage(res, fallback: 'Abwesenheiten nicht ladbar.');
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = apiUserMessage(e, fallback: 'Abwesenheiten nicht ladbar.');
+      });
+    }
   }
 
   void _shiftMonth(int delta) {
@@ -1391,6 +1401,18 @@ class _AbsencesTabState extends State<AbsencesTab> {
     if (fromDt == null || toDt == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Bitte Datum als TT.MM.JJJJ wählen.')),
+      );
+      return;
+    }
+    if (toDt.isBefore(fromDt)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Bis-Datum darf nicht vor Von-Datum liegen.')),
+      );
+      return;
+    }
+    if (_halfDay && toApiDate(fromDt) != toApiDate(toDt)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Halber Tag nur bei gleichem Von-/Bis-Datum.')),
       );
       return;
     }
@@ -1846,58 +1868,216 @@ class ShiftsTab extends StatefulWidget {
 }
 
 class _ShiftsTabState extends State<ShiftsTab> {
-  List<dynamic> _shifts = [];
+  late DateTime _weekMonday;
+  List<Map<String, dynamic>> _shifts = [];
+  String? _weekSunday;
   String? _error;
-  bool _loaded = false;
+  bool _loading = true;
+  double _dragDx = 0;
 
   @override
   void initState() {
     super.initState();
-    widget.client.get('/api/mobile/staff/shifts').then((res) {
+    _weekMonday = _mondayOf(DateTime.now());
+    _load();
+  }
+
+  DateTime _mondayOf(DateTime d) {
+    final day = DateTime(d.year, d.month, d.day);
+    return day.subtract(Duration(days: day.weekday - DateTime.monday));
+  }
+
+  String get _weekKey => toApiDate(_weekMonday);
+
+  String _weekLabel() {
+    final sun = _weekMonday.add(const Duration(days: 6));
+    return '${formatDeDate(_weekMonday)} – ${formatDeDate(sun)}';
+  }
+
+  String _fmtDuration(int minutes) {
+    if (minutes < 1) return '';
+    final h = minutes ~/ 60;
+    final m = minutes % 60;
+    if (m == 0) return '$h h';
+    return '$h:${m.toString().padLeft(2, '0')} h';
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final res = await widget.client.get('/api/mobile/staff/shifts', {'week': _weekKey});
       if (!mounted) return;
       setState(() {
-        _loaded = true;
+        _loading = false;
         if (apiIsOk(res)) {
-          _shifts = (res['data']?['shifts'] as List?) ?? [];
+          final data = res['data'];
+          final map = data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{};
+          final raw = (map['shifts'] as List?) ?? const [];
+          _shifts = raw
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList();
+          _weekSunday = map['week_sunday']?.toString();
+          final mon = map['week_monday']?.toString();
+          if (mon != null && RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(mon)) {
+            final p = DateTime.tryParse(mon);
+            if (p != null) _weekMonday = DateTime(p.year, p.month, p.day);
+          }
           _error = null;
         } else {
           _error = apiUserMessage(res, fallback: 'Schichten nicht ladbar.');
         }
       });
-    }).catchError((Object e) {
+    } catch (e) {
       if (!mounted) return;
       setState(() {
-        _loaded = true;
-        _error = apiUserMessage(e);
+        _loading = false;
+        _error = apiUserMessage(e, fallback: 'Schichten nicht ladbar.');
       });
+    }
+  }
+
+  void _shiftWeek(int deltaWeeks) {
+    setState(() {
+      _weekMonday = _weekMonday.add(Duration(days: 7 * deltaWeeks));
     });
+    _load();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!_loaded) {
+    final theme = Theme.of(context);
+    if (_loading && _shifts.isEmpty && _error == null) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (_error != null) {
+    if (_error != null && _shifts.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Text(_error!, textAlign: TextAlign.center),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(_error!, textAlign: TextAlign.center),
+              const SizedBox(height: 12),
+              FilledButton(onPressed: _load, child: const Text('Erneut laden')),
+            ],
+          ),
         ),
       );
     }
-    if (_shifts.isEmpty) {
-      return const Center(child: Text('Keine Schichten diese Woche.'));
-    }
-    return ListView.builder(
-      itemCount: _shifts.length,
-      itemBuilder: (_, i) {
-        final s = _shifts[i] as Map;
-        return ListTile(
-          title: Text('${formatDeDate(s['date'])} · ${s['template_name']}'),
-          subtitle: Text('${s['start_time']} – ${s['end_time']} Uhr'),
-        );
-      },
+
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+        children: [
+          GestureDetector(
+            onHorizontalDragUpdate: (d) => _dragDx += d.delta.dx,
+            onHorizontalDragEnd: (_) {
+              if (_dragDx > 60) {
+                _shiftWeek(-1);
+              } else if (_dragDx < -60) {
+                _shiftWeek(1);
+              }
+              _dragDx = 0;
+            },
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                child: Row(
+                  children: [
+                    IconButton(
+                      tooltip: 'Vorherige Woche',
+                      onPressed: _loading ? null : () => _shiftWeek(-1),
+                      icon: const Icon(Icons.chevron_left),
+                    ),
+                    Expanded(
+                      child: Column(
+                        children: [
+                          Text(
+                            'Woche',
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          Text(
+                            _weekLabel(),
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                          if (_weekSunday != null)
+                            Text(
+                              'Mo–So · Wischen oder Pfeile',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Nächste Woche',
+                      onPressed: _loading ? null : () => _shiftWeek(1),
+                      icon: const Icon(Icons.chevron_right),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          if (_loading)
+            const Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_shifts.isEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 32, 8, 8),
+              child: Column(
+                children: [
+                  Icon(Icons.calendar_view_week_outlined, size: 40, color: theme.colorScheme.outline),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Keine Schichten in dieser Woche.',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Wenn Ihr Plan freigegeben ist, erscheinen hier Start und Ende je Tag.',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  ),
+                ],
+              ),
+            )
+          else
+            ..._shifts.map((s) {
+              final mins = (s['duration_minutes'] as num?)?.toInt() ?? 0;
+              final dur = _fmtDuration(mins);
+              final name = '${s['template_name'] ?? ''}'.trim();
+              return Card(
+                margin: const EdgeInsets.only(top: 10),
+                child: ListTile(
+                  leading: const Icon(Icons.schedule),
+                  title: Text(
+                    name.isEmpty
+                        ? formatDeDate(s['date'])
+                        : '${formatDeDate(s['date'])} · $name',
+                  ),
+                  subtitle: Text(
+                    '${s['start_time'] ?? ''} – ${s['end_time'] ?? ''} Uhr'
+                    '${dur.isNotEmpty ? '  ·  $dur' : ''}',
+                  ),
+                ),
+              );
+            }),
+        ],
+      ),
     );
   }
 }

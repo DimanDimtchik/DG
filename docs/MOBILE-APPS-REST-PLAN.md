@@ -32,7 +32,7 @@
 | **Kein Deploy außer „deploy“** | PHP-API nur bei Bedarf; Flutter-Builds separat |
 
 **Chat-Prompt-Vorlage:**  
-`Nur Mini-ID MA3c laut docs/MOBILE-APPS-REST-PLAN.md. Nur Mitarbeiter-App. Abwesenheit + Schichten. Kein Kalender.`
+`Nur Mini-ID MA3d laut docs/MOBILE-APPS-REST-PLAN.md. Nur Mitarbeiter-App. Profil + Konto + Akte. Kein Kalender.`
 
 ---
 
@@ -137,13 +137,13 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 |----|---------|-------|--------|
 | **MA3a** | Login Kennung+PIN Ende-zu-Ende gegen Dev-API | 🟡 | [x] 2026-11-27 · LoginPage Härte + Dev-E2E + Selftest |
 | **MA3b** | Stempel: Ein/Aus/Pause + Tagesstatus | 🟡 | [x] 2026-11-27 · ClockTab Härte · source=mobile · Dev-E2E |
-| **MA3c** | Abwesenheit beantragen + Liste; Schichten Woche | 🟡 | [ ] |
+| **MA3c** | Abwesenheit beantragen + Liste; Schichten Woche | 🟡 | [x] 2026-11-27 · Absences/Shifts Härte · Dev-E2E |
 | **MA3d** | Profil + Konto-Saldo; Akte-Liste/Download wenn API da | 🟡 | [ ] |
 | **MA3e** | Unterschrift (bestehende `signature_page`) — nur Härte/Fehlerpfade | 🟡 | [ ] |
 | **MA3f** | Smoke Emulator/Gerät + Kurznotiz §8 | 🔴 | [ ] |
 
-**Prompt MA3c:**  
-`Nur Mini-ID MA3c laut docs/MOBILE-APPS-REST-PLAN.md. Nur apps/mitarbeiter. Abwesenheit + Schichten. Kein Kalender.`
+**Prompt MA3d:**  
+`Nur Mini-ID MA3d laut docs/MOBILE-APPS-REST-PLAN.md. Nur apps/mitarbeiter. Profil + Konto + Akte. Kein Kalender.`
 
 ---
 
@@ -229,8 +229,8 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 |-----------|-----|-----|
 | Stempel Status / Events | ✅ `GET/POST …/staff/clock` · source=`mobile` | ✅ MA3b ClockTab (Busy/Bestätigung/Tagesstatus) |
 | Zeitkonto | ✅ `GET …/staff/konto` | ✅ KontoTab |
-| Abwesenheiten Liste/Antrag | ✅ `GET/POST …/staff/absences` | ✅ AbsencesTab (+ Multipart Nachweis) |
-| Schichten | ✅ `GET …/staff/shifts` | ✅ ShiftsTab |
+| Abwesenheiten Liste/Antrag | ✅ `GET/POST …/staff/absences` | ✅ MA3c AbsencesTab (+ Validierung/Multipart) |
+| Schichten | ✅ `GET …/staff/shifts?week=` | ✅ MA3c ShiftsTab Wochen-Navigation |
 | Akte Liste/Download | ✅ `…/documents` (+ download) | ✅ DocsTab |
 | Profil | ✅ `GET …/staff/profile` | ✅ ProfileTab |
 | Unterschrift GET/POST | ✅ `…/staff/signature` | ✅ `signature_page.dart` |
@@ -254,7 +254,8 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | Umbuchen-UI Kalender | ✅ MA2c (`BookSlotPage` Reschedule + Liste Umbuchen/Stornieren) |
 | Slot `employee_id` optional | ✅ MA2b (Dropdown wenn >1 Staff) |
 | Randfälle Buchung/Slot/Session | ✅ MA2d |
-| Stempel Härte | ✅ MA3b · Abwesenheit/Profil **MA3c–e** |
+| Stempel Härte | ✅ MA3b |
+| Abwesenheit/Schichten | ✅ MA3c · Profil/Akte **MA3d–e** |
 | Smoke Geräte | ✅ MA2e (Web/Chrome + API-Kette; Android-Emulator optional) · **MA3f** |
 
 ### 7.1 MA0c — Wo kommt die CRM-Basis-URL her? (2026-11-27)
@@ -291,6 +292,7 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | MA2e | 2026-11-27 | Flutter Web/Chrome `127.0.0.1:7357` (kein Android-SDK im Cloud-Agent) | analyze+widget-test ✅ · UI Bootstrap→Login ✅ · Dev-API-Kette Register/me/Katalog ✅ · CORS Web↔API bewusst ungeprüft (nativ) · `bash bin/mobile-kalender-smoke.sh` |
 | MA3a | 2026-11-27 | Dev API `ganz-om.de` | Staff Kennung+PIN → me → Logout ✅ · Temp-MA bereinigt · UI-Validierung |
 | MA3b | 2026-11-27 | Dev API `ganz-om.de` | Ein→Pause→Ende→Aus ✅ · source=mobile/App · `mobile-mitarbeiter-clock-selftest.php` |
+| MA3c | 2026-11-27 | Dev API `ganz-om.de` | Urlaub beantragen+Liste ✅ · shifts week= ✅ · `mobile-mitarbeiter-absences-shifts-selftest.php` |
 | MA3f | | | |
 
 ---
@@ -319,6 +321,7 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | `bin/mobile-kalender-smoke-selftest.php` | Guard MA2e |
 | `bin/mobile-mitarbeiter-auth-selftest.php` | Guard MA3a |
 | `bin/mobile-mitarbeiter-clock-selftest.php` | Guard MA3b |
+| `bin/mobile-mitarbeiter-absences-shifts-selftest.php` | Guard MA3c |
 | `bin/mobile-app-download-slug-selftest.php` | Guard MA0d |
 | [`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md) | Unterschrift ES6 (App-Upload) |
 
@@ -343,5 +346,6 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | 2026-11-27 | **MA2e ✅** Kalender Smoke: Flutter analyze/test · Web/Chrome Bootstrap→Login · §8 · `mobile-kalender-smoke.sh` · MA2-Block fertig |
 | 2026-11-27 | **MA3a ✅** Mitarbeiter Login Kennung+PIN · Client-Validierung · Dev-E2E · `mobile-mitarbeiter-auth-selftest.php` |
 | 2026-11-27 | **MA3b ✅** Stempel ClockTab · SOURCE_MOBILE/App-Label · Busy/Aus-Bestätigung · Dev Ein/Pause/Aus |
+| 2026-11-27 | **MA3c ✅** AbsencesTab Validierung · ShiftsTab Wochen-Nav · Dev Antrag/Liste/shifts |
 | 2026-11-27 | **MA1a ✅** `api_message.dart` identisch in beiden Apps · UI über `apiUserMessage`/`apiIsOk` · `php bin/mobile-api-message-selftest.php` |
 | 2026-11-27 | **MA0d ✅** CRM-Download-Slug `apps` → `app-download` · Legacy-Migration nur bei `page_kind=mobile_app_download` · `/apps` frei für Website |
