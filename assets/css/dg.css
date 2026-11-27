@@ -3812,6 +3812,20 @@ body.dg-login-page {
   max-width: 6rem;
 }
 
+.dg-input--sm {
+  width: 8rem;
+  max-width: 100%;
+}
+
+.dg-input--mid {
+  min-width: min(100%, 14rem);
+}
+
+.dg-list {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
 .dg-finanzamt-panel {
   margin-top: var(--dg-space-3);
 }

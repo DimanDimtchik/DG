@@ -123,7 +123,7 @@ $base = '/app?page=lohn-elster&month=' . rawurlencode($month);
           <input type="hidden" name="month" value="<?= View::escape($month) ?>">
           <label class="dg-field">
             <span>Begründung (≥10)</span>
-            <input type="text" name="reason" required minlength="10" placeholder="Test-Payload LStA geprüft" style="min-width:14rem">
+            <input type="text" class="dg-input--mid" name="reason" required minlength="10" placeholder="Test-Payload LStA geprüft">
           </label>
           <button type="submit" class="dg-button"<?= !empty($lsta['can_send_structurally']) ? '' : ' disabled' ?>>
             Test-Payload speichern

@@ -90,6 +90,7 @@ Es gibt **keine** tausend CSS-Dateien pro Seite. Es gibt **eine** Quelle `dg.css
 | Badge / Status | `.dg-badge` + `--ok` `--pending` `--error` `--muted` `--accent` |
 | Definitionsliste | `.dg-dl` / `--compact` |
 | Feldhinweis | `.dg-field-hint` (+ `--warn` `--error`) |
+| Aufzählung | `.dg-list` |
 
 ---
 
@@ -138,6 +139,8 @@ Es gibt **keine** tausend CSS-Dateien pro Seite. Es gibt **eine** Quelle `dg.css
 | Nur-Anzeige | `.dg-readonly` (Snapshot/Firmendaten in Formularen — kein zweites Input) |
 | **Aktionszeile** | `.dg-form-actions` (+ `--split`) — **Pflicht** vor Submit |
 | Inline-Filter | `.dg-btn-row` |
+| Einzeilige Aktion in Toolbar/Zelle | `.dg-inline-form` (statt `style="display:inline"`) |
+| Input schmal / mittel | `.dg-input--narrow` · `.dg-input--sm` · `.dg-input--mid` |
 | Nur-GET-Filter neben Feld | `.dg-btn-row` / Stack, nicht nackter Button unter Textarea |
 
 Abstand: Tokens / `.dg-stack` / Utilities `.dg-mt-*` `.dg-mb-*` — **kein** Ad-hoc `style="margin…"`.  

@@ -172,13 +172,13 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
 
       <div class="dg-toolbar dg-mt-4 dg-mb-4">
         <?php if ($canEdit && $isDraft && !$isSuperseded) : ?>
-          <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>" style="display:inline">
+          <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>" class="dg-inline-form">
             <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
             <input type="hidden" name="run_action" value="calculate">
             <input type="hidden" name="run_id" value="<?= $runId ?>">
             <button type="submit" class="dg-button dg-button--primary">Berechnen</button>
           </form>
-          <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>" style="display:inline" onsubmit="return confirm('Entwurf löschen?');">
+          <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>" class="dg-inline-form" onsubmit="return confirm('Entwurf löschen?');">
             <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
             <input type="hidden" name="run_action" value="delete">
             <input type="hidden" name="run_id" value="<?= $runId ?>">
@@ -186,7 +186,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
           </form>
         <?php endif; ?>
         <?php if ($canEdit && $isCalculated && !$isSuperseded) : ?>
-          <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>" style="display:inline">
+          <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>" class="dg-inline-form">
             <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
             <input type="hidden" name="run_action" value="reopen">
             <input type="hidden" name="run_id" value="<?= $runId ?>">
@@ -200,7 +200,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
             <input type="hidden" name="run_id" value="<?= $runId ?>">
             <label class="dg-field">
               <span>Begründung Freigabe</span>
-              <input type="text" name="reason" required minlength="10" placeholder="mind. 10 Zeichen" style="min-width:14rem">
+              <input type="text" class="dg-input--mid" name="reason" required minlength="10" placeholder="mind. 10 Zeichen">
             </label>
             <button type="submit" class="dg-button dg-button--primary">Freigeben</button>
           </form>
@@ -212,7 +212,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
             <input type="hidden" name="run_id" value="<?= $runId ?>">
             <label class="dg-field">
               <span>Begründung Sperre</span>
-              <input type="text" name="reason" required minlength="10" style="min-width:14rem">
+              <input type="text" class="dg-input--mid" name="reason" required minlength="10">
             </label>
             <button type="submit" class="dg-button dg-button--primary">Sperren</button>
           </form>
@@ -224,7 +224,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
             <input type="hidden" name="month" value="<?= View::escape($month) ?>">
             <label class="dg-field">
               <span>Begründung Storno/Korrektur</span>
-              <input type="text" name="reason" required minlength="10" style="min-width:14rem">
+              <input type="text" class="dg-input--mid" name="reason" required minlength="10">
             </label>
             <button type="submit" name="run_action" value="storno" class="dg-button">Storno-Lauf</button>
             <button type="submit" name="run_action" value="correction" class="dg-button">Korrektur-Lauf</button>
@@ -299,7 +299,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
                     <?php if ($elines === []) : ?>
                       —
                     <?php else : ?>
-                      <ul class="dg-mt-0 dg-mb-0" style="padding-left:1.1rem">
+                      <ul class="dg-list dg-mt-0 dg-mb-0">
                         <?php foreach ($elines as $ln) : ?>
                           <li>
                             <?= View::escape((string) ($ln['code'] ?? '')) ?>
@@ -325,21 +325,23 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
                     <?php endif; ?>
                   </td>
                   <?php if ($canEdit && $isDraft) : ?>
-                    <td>
-                      <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>" style="display:inline">
-                        <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
-                        <input type="hidden" name="run_action" value="seed_assignments">
-                        <input type="hidden" name="run_id" value="<?= $runId ?>">
-                        <input type="hidden" name="contact_id" value="<?= $cid ?>">
-                        <button type="submit" class="dg-button dg-button--small">Stamm laden</button>
-                      </form>
-                      <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>" style="display:inline" onsubmit="return confirm('MA entfernen?');">
-                        <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
-                        <input type="hidden" name="run_action" value="remove_employee">
-                        <input type="hidden" name="run_id" value="<?= $runId ?>">
-                        <input type="hidden" name="contact_id" value="<?= $cid ?>">
-                        <button type="submit" class="dg-button dg-button--ghost dg-button--small">Entfernen</button>
-                      </form>
+                    <td class="dg-table__actions">
+                      <div class="dg-table__actions-group">
+                        <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>" class="dg-inline-form">
+                          <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                          <input type="hidden" name="run_action" value="seed_assignments">
+                          <input type="hidden" name="run_id" value="<?= $runId ?>">
+                          <input type="hidden" name="contact_id" value="<?= $cid ?>">
+                          <button type="submit" class="dg-button dg-button--small">Stamm laden</button>
+                        </form>
+                        <form method="post" action="/app?page=lohn-monatslauf&amp;month=<?= View::escape($month) ?>&amp;run=<?= $runId ?>" class="dg-inline-form" onsubmit="return confirm('MA entfernen?');">
+                          <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+                          <input type="hidden" name="run_action" value="remove_employee">
+                          <input type="hidden" name="run_id" value="<?= $runId ?>">
+                          <input type="hidden" name="contact_id" value="<?= $cid ?>">
+                          <button type="submit" class="dg-button dg-button--ghost dg-button--small">Entfernen</button>
+                        </form>
+                      </div>
                     </td>
                   <?php endif; ?>
                 </tr>
@@ -464,7 +466,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
               </label>
               <label class="dg-field">
                 <span>Begründung (≥10)</span>
-                <input type="text" name="reason" required minlength="10" placeholder="z. B. Monat übernommen nach Prüfung" style="min-width:16rem">
+                <input type="text" class="dg-input--mid" name="reason" required minlength="10" placeholder="z. B. Monat übernommen nach Prüfung">
               </label>
               <?php if (!$fibuLive && $isAdminUser) : ?>
                 <label class="dg-field dg-field--checkbox">
@@ -590,7 +592,7 @@ $money = static fn (float $v): string => number_format($v, 2, ',', '.');
               </label>
               <label class="dg-field">
                 <span>Begründung (≥10)</span>
-                <input type="text" name="reason" required minlength="10" placeholder="z. B. Nettoauszahlung nach Sperre geprüft" style="min-width:16rem">
+                <input type="text" class="dg-input--mid" name="reason" required minlength="10" placeholder="z. B. Nettoauszahlung nach Sperre geprüft">
               </label>
               <button type="submit" class="dg-button dg-button--primary">
                 <?= $sepaLive ? 'SEPA-Datei erzeugen' : 'Testdatei erzeugen' ?>

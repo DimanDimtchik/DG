@@ -86,7 +86,7 @@ $canEditRates = !empty($payrollRateCanEdit);
                       <input type="hidden" name="rate_action" value="patch">
                       <input type="hidden" name="rate_set_id" value="<?= $viewId ?>">
                       <input type="hidden" name="param_key" value="<?= View::escape((string) $pk) ?>">
-                      <input type="text" name="param_value" value="<?= View::escape((string) $pv) ?>" style="width:8rem">
+                      <input type="text" class="dg-input--sm" name="param_value" value="<?= View::escape((string) $pv) ?>">
                       <button type="submit" class="dg-button dg-button--small">Korrigieren</button>
                     </form>
                   </td>
