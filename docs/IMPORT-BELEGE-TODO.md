@@ -1,5 +1,8 @@
 # Belege-Import — Stand
 
+> **Ausbau:** FiBu-Positionen + Lager + Kichel-Strukturierung → tokenarm [`BELEG-OCR-LAGER-REST-PLAN.md`](BELEG-OCR-LAGER-REST-PLAN.md) (BO0–BO6).  
+> Stand-Notiz: **2026-11-27** — Client-OCR für Kopf-Vorschläge ist da; Positionen/Lager/Kichel noch offen.
+
 ## Implementiert
 
 Beim Installationsimport (Schritt „Datenimport“) werden Belegdateien (PDF, JPG, PNG, …) als **Beleg-Entwürfe** angelegt:
@@ -10,7 +13,7 @@ Beim Installationsimport (Schritt „Datenimport“) werden Belegdateien (PDF, J
 4. Hinweis + Filter „Nur Entwürfe“ unter **Buchhaltung → Belege**
 5. API `POST /api/voucher?action=file_upload` für Sofort-Upload im Belegformular
 
-OCR bleibt **clientseitig** (`assets/js/buchhaltung-import.mjs` / Tesseract) — beim Öffnen eines Entwurfs kann die angehängte Datei ausgewertet und das Formular vervollständigt werden.
+OCR/Auslesen ist **clientseitig** (`assets/js/buchhaltung-import.mjs` / Tesseract / pdf.js / E-Rechnung-XML): Upload speichert die Datei, Analyse schlägt **FiBu-Kopfdaten** vor (Lieferant, Nr., Datum, Betrag/Steuer). Positionen werden nicht zuverlässig übernommen; **kein** Kichel und **kein** Lager-Anschluss (siehe BO-Plan).
 
 ## Status in Settings
 
@@ -22,3 +25,4 @@ OCR bleibt **clientseitig** (`assets/js/buchhaltung-import.mjs` / Tesseract) —
 - `src/Accounting/VoucherRepository.php` (`createDraft`)
 - `src/Accounting/VoucherFileStorage.php` (`attachFromPath`)
 - `assets/js/buchhaltung-import.mjs`
+- [`BELEG-OCR-LAGER-REST-PLAN.md`](BELEG-OCR-LAGER-REST-PLAN.md)

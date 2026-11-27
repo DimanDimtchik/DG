@@ -4,7 +4,7 @@
 
 Stand: **2026-11-11** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)** (A→C FiBu/Hetzner · **D0 Lohn:** zuerst Lexware-Office-Niveau, dann SV-Automatik, dann Baulohn-Produkt · D1 Jahresblock). Lohn-Detailquelle: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md).
 
-**Nächste Session:** Kichel **KR0–9 ✅** · **KL0–5 ✅** · **KR8b ✅** · **KH0–3 ✅** · **KI0 ✅** (Intent-LLM geparkt) · Super-Kichel **SKP1a–e ✅**. Cutover/SC2 **geparkt**. **PB1–PB3 ✅**. AVV ✅.
+**Nächste Session:** Beleg-OCR **BO** [`BELEG-OCR-LAGER-REST-PLAN.md`](BELEG-OCR-LAGER-REST-PLAN.md) · Kichel KR/KL/KH/KI0 ✅ · SKP1a–e ✅ · Cutover/SC2 **geparkt**. **PB1–PB3 ✅**. AVV ✅.
 
 **Ops-Merkposten (GEX45):** Ollama **SKB1 ✅** + CRM-Proxy **SKC1 ✅** (`llm.ganz-soft.de`). OpenHands **SKP0 ✅** · **SKP1a–e ✅** (`/superkihel` → `https://agent.ganz-soft.de/`, MCP ohne Basic Auth). Details: [`SUPERKICHEL-SKP-PLAN.md`](SUPERKICHEL-SKP-PLAN.md) · [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md).
 
@@ -25,7 +25,7 @@ Stand: **2026-11-11** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZN
 | Super-Kichel / GEX | [`SUPERKICHEL-GEX-PLAN.md`](SUPERKICHEL-GEX-PLAN.md) · UI: [`SUPERKICHEL-UI-PLAN.md`](SUPERKICHEL-UI-PLAN.md) · Agent: [`SUPERKICHEL-SKP-PLAN.md`](SUPERKICHEL-SKP-PLAN.md) | **SKU/SKC/SKD/SKP0 ✅** · **SKP1a–e ✅** |
 | Kichel RAG → Training | [`KICHEL-RAG-TRAINING-PLAN.md`](KICHEL-RAG-TRAINING-PLAN.md) · Basis [`KICHEL-PHASE2.md`](KICHEL-PHASE2.md) | **KR0–9 ✅** · **KL0–5 ✅** · **KR8b ✅** · **KH0–3 ✅** · **KI0 ✅** · KI1–3/KT/KP gesperrt |
 
-**Nächster Block:** optional **SKP2** (geparkt) oder Roadmap außerhalb Agent. Cutover/SC2 geparkt. UI/CSS U0–U5 ✅.
+**Nächster Block:** **Beleg-OCR → FiBu+Lager** [`BELEG-OCR-LAGER-REST-PLAN.md`](BELEG-OCR-LAGER-REST-PLAN.md) (BO0–BO6) · optional SKP2 geparkt · Cutover/SC2 geparkt. UI/CSS U0–U5 ✅.
 
 **Backlog (nicht jetzt):** Recruiting in HR — Plan [`RECRUITING-HR-PLAN.md`](RECRUITING-HR-PLAN.md) (eigene `/rekrut`-Seite; Xing/LinkedIn nur Anzeigen-Link). · Fließlinie FL0–FL9 ✅ · optionale Verfeinerungen [`FLIESSLINIE-FL8-BACKLOG.md`](FLIESSLINIE-FL8-BACKLOG.md). · Registerkasse/TSE — [`REGISTERKASSE-TSE-PLAN.md`](REGISTERKASSE-TSE-PLAN.md) Kern weitgehend ✅; bewusst später: **K18b**, **K19c**.
 
@@ -59,6 +59,7 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 > Kurz: GoBD/Druck · FiBu-Tests · IQ-Instanz · Vor-Hetzner — danach Umzug, nicht vorher Live-ELSTER.
 
 - [x] **UI/CSS-Rest:** [`UI-CSS-REST-PLAN.md`](UI-CSS-REST-PLAN.md) — U0–U5 ✅ (2026-11-08; Guards/Scan grün) · optional später: U2b Sichtcheck, margin-left/Print
+- [ ] **Beleg-OCR → FiBu + Lager (BO):** [`BELEG-OCR-LAGER-REST-PLAN.md`](BELEG-OCR-LAGER-REST-PLAN.md) — Ziel: alles von der Rechnung (Artikel+DL), Kichel ordnet Rohtext, Lager-Anbindung; Ist = Client-OCR Kopfdaten
 - [~] **Phase A (tokenarm):** [`PHASE-A-REST-PLAN.md`](PHASE-A-REST-PLAN.md) — PA0–PA5 ✅ · **PA4a–i ✅** · **PA6a ✅** · **Hetzner-AVV ✅** · PA6b deferred · Fach: [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)
 - [x] **ERP-Maschinenblock M0–M5** — Kapazität, Zusatzmaterial, Wartung, Belegung/Kalender, Kalkulation/Snapshot (Branch gemergt 2026-10-29) → [`MASCHINENBLOCK-M0A-DATENMODELL.md`](MASCHINENBLOCK-M0A-DATENMODELL.md)
 - [x] **ERP-Rest E0–E2 (tokenarm):** [`ERP-REST-PLAN.md`](ERP-REST-PLAN.md) ✅ 2026-11-08 · E3–E5 🔴 Gates (G3/Hetzner/Baulohn)
@@ -211,6 +212,7 @@ Nur **1 Cloud-Chat** + **1 Lokal-Chat** behalten. Agent kann nicht archivieren �
 | Datei | Inhalt |
 |-------|--------|
 | `IQ-STROM-HETZNER-TODO.md` | **Haupt-ToDo** A/B/C/D — IQ Strom FiBu + Hetzner + GmbH-Jahresblock |
+| `BELEG-OCR-LAGER-REST-PLAN.md` | D2 Beleg-OCR: Positionen + Kichel-Struktur + Lager (BO0–BO6) |
 | `PHASE-A-REST-PLAN.md` | Phase A tokenarm Mini-IDs PA0–PA6 (1 Chat = 1 ID) |
 | `PHASE-B-REST-PLAN.md` | Phase B tokenarm · GEX45-1 / Ubuntu 26.04 LTS / HEL1 |
 | `SUPERKICHEL-GEX-PLAN.md` | Super-Kichel: SKB1–2/SKC0 ✅ · Inventar SKA0 offen · UI `superkihel` noch aus |
