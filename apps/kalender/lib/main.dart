@@ -775,11 +775,62 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  bool _isCancellable(Map<String, dynamic> b) {
+  bool _isActiveBooking(Map<String, dynamic> b) {
     final status = '${b['status'] ?? ''}'.toLowerCase();
     if (status.contains('storn') || status.contains('cancel')) return false;
-    final id = b['id'];
-    return id is int || (id != null && int.tryParse('$id') != null);
+    final id = int.tryParse('${b['id'] ?? ''}') ?? 0;
+    return id > 0;
+  }
+
+  String _articleTitleForBooking(Map<String, dynamic> b) {
+    final aid = int.tryParse('${b['article_id'] ?? ''}') ?? 0;
+    for (final raw in _articles) {
+      if (raw is! Map) continue;
+      final a = Map<String, dynamic>.from(raw);
+      if ((int.tryParse('${a['id'] ?? ''}') ?? 0) == aid) {
+        final t = '${a['title'] ?? ''}'.trim();
+        if (t.isNotEmpty) return t;
+      }
+    }
+    return aid > 0 ? 'Leistung #$aid' : 'Termin';
+  }
+
+  Map<String, dynamic> _articleForBooking(Map<String, dynamic> b) {
+    final aid = int.tryParse('${b['article_id'] ?? ''}') ?? 0;
+    for (final raw in _articles) {
+      if (raw is! Map) continue;
+      final a = Map<String, dynamic>.from(raw);
+      if ((int.tryParse('${a['id'] ?? ''}') ?? 0) == aid) {
+        return a;
+      }
+    }
+    return {
+      'id': aid,
+      'title': _articleTitleForBooking(b),
+      'duration_minutes': '',
+      'price_label': '',
+    };
+  }
+
+  Future<void> _openReschedule(Map<String, dynamic> b) async {
+    final bookingId = int.tryParse('${b['id'] ?? ''}') ?? 0;
+    if (bookingId < 1) return;
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => BookSlotPage(
+          client: widget.client,
+          article: _articleForBooking(b),
+          staff: _staff,
+          rescheduleBookingId: bookingId,
+          initialEmployeeId: int.tryParse('${b['employee_id'] ?? ''}'),
+        ),
+      ),
+    );
+    if (!mounted) return;
+    if (changed == true) {
+      await _reload();
+      setState(() => _tab = 0);
+    }
   }
 
   Future<void> _cancelBooking(Map<String, dynamic> b) async {
@@ -857,17 +908,25 @@ class _HomePageState extends State<HomePage> {
         detail: 'Unter „Buchen“ eine Leistung wählen und eine Uhrzeit bestätigen.',
       );
     }
+    final sorted = [..._bookings].whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList()
+      ..sort((a, b) {
+        final aActive = _isActiveBooking(a) ? 0 : 1;
+        final bActive = _isActiveBooking(b) ? 0 : 1;
+        if (aActive != bActive) return aActive.compareTo(bActive);
+        return '${b['slot_datetime']}'.compareTo('${a['slot_datetime']}');
+      });
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-      itemCount: _bookings.length,
+      itemCount: sorted.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (_, i) {
-        final b = _bookings[i] as Map<String, dynamic>;
+        final b = sorted[i];
         final status = '${b['status_label'] ?? b['status']}';
         final code = '${b['booking_code'] ?? ''}';
         final id = int.tryParse('${b['id']}') ?? 0;
-        final canCancel = _isCancellable(b);
+        final active = _isActiveBooking(b);
         final cancelling = _cancellingId == id;
+        final title = _articleTitleForBooking(b);
         return Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -881,10 +940,13 @@ class _HomePageState extends State<HomePage> {
                       width: 48,
                       height: 48,
                       decoration: BoxDecoration(
-                        color: _brandTeal.withValues(alpha: 0.12),
+                        color: _brandTeal.withValues(alpha: active ? 0.12 : 0.06),
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: const Icon(Icons.event_rounded, color: _brandTeal),
+                      child: Icon(
+                        active ? Icons.event_rounded : Icons.event_busy_rounded,
+                        color: active ? _brandTeal : const Color(0xFF94A3B8),
+                      ),
                     ),
                     const SizedBox(width: 14),
                     Expanded(
@@ -892,11 +954,20 @@ class _HomePageState extends State<HomePage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            formatSlotFull('${b['slot_datetime']}'),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w700,
+                            title,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
                               fontSize: 16,
-                              color: Color(0xFF134E4A),
+                              color: active ? const Color(0xFF134E4A) : const Color(0xFF64748B),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            formatSlotFull('${b['slot_datetime']}'),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                              color: active ? const Color(0xFF134E4A) : const Color(0xFF94A3B8),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -921,24 +992,32 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ],
                 ),
-                if (canCancel) ...[
+                if (active) ...[
                   const SizedBox(height: 14),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton.icon(
-                      onPressed: (_cancellingId != null) ? null : () => _cancelBooking(b),
-                      icon: cancelling
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.event_busy_rounded, size: 18),
-                      label: Text(cancelling ? 'Storniere …' : 'Stornieren'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: const Color(0xFFB91C1C),
+                  Wrap(
+                    alignment: WrapAlignment.end,
+                    spacing: 4,
+                    children: [
+                      TextButton.icon(
+                        onPressed: (_cancellingId != null) ? null : () => _openReschedule(b),
+                        icon: const Icon(Icons.edit_calendar_rounded, size: 18),
+                        label: const Text('Umbuchen'),
                       ),
-                    ),
+                      TextButton.icon(
+                        onPressed: (_cancellingId != null) ? null : () => _cancelBooking(b),
+                        icon: cancelling
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.event_busy_rounded, size: 18),
+                        label: Text(cancelling ? 'Storniere …' : 'Stornieren'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFFB91C1C),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ],
@@ -1101,11 +1180,17 @@ class BookSlotPage extends StatefulWidget {
     required this.client,
     required this.article,
     this.staff = const [],
+    this.rescheduleBookingId,
+    this.initialEmployeeId,
   });
 
   final ApiClient client;
   final Map<String, dynamic> article;
   final List<Map<String, dynamic>> staff;
+  final int? rescheduleBookingId;
+  final int? initialEmployeeId;
+
+  bool get isReschedule => (rescheduleBookingId ?? 0) > 0;
 
   @override
   State<BookSlotPage> createState() => _BookSlotPageState();
@@ -1124,7 +1209,10 @@ class _BookSlotPageState extends State<BookSlotPage> {
     super.initState();
     final now = DateTime.now();
     _selectedDay = DateTime(now.year, now.month, now.day);
-    if (widget.staff.length == 1) {
+    final initial = widget.initialEmployeeId;
+    if (initial != null && initial > 0) {
+      _employeeId = initial;
+    } else if (widget.staff.length == 1) {
       _employeeId = int.tryParse('${widget.staff.first['id'] ?? ''}');
     }
     _loadSlots();
@@ -1198,10 +1286,11 @@ class _BookSlotPageState extends State<BookSlotPage> {
         }
       }
     }
+    final reschedule = widget.isReschedule;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Termin verbindlich buchen?'),
+        title: Text(reschedule ? 'Termin umbuchen?' : 'Termin verbindlich buchen?'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1215,7 +1304,9 @@ class _BookSlotPageState extends State<BookSlotPage> {
             ],
             const SizedBox(height: 14),
             Text(
-              'Erst nach „Jetzt buchen“ wird der Termin angelegt.',
+              reschedule
+                  ? 'Der bisherige Termin wird auf diese Zeit verschoben.'
+                  : 'Erst nach „Jetzt buchen“ wird der Termin angelegt.',
               style: TextStyle(color: Colors.grey.shade700, height: 1.35),
             ),
           ],
@@ -1225,7 +1316,7 @@ class _BookSlotPageState extends State<BookSlotPage> {
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(minimumSize: const Size(0, 44)),
-            child: const Text('Jetzt buchen'),
+            child: Text(reschedule ? 'Umbuchen' : 'Jetzt buchen'),
           ),
         ],
       ),
@@ -1234,25 +1325,44 @@ class _BookSlotPageState extends State<BookSlotPage> {
 
     setState(() => _bookingBusy = true);
     try {
-      final body = <String, dynamic>{
-        'article_id': articleId,
-        'slot_datetime': slot,
-        if (_employeeId != null && _employeeId! > 0) 'employee_id': _employeeId,
-      };
-      final book = await widget.client.post('/api/mobile/customer/bookings', body);
+      final Map<String, dynamic> res;
+      if (reschedule) {
+        res = await widget.client.post(
+          '/api/mobile/customer/bookings/${widget.rescheduleBookingId}/reschedule',
+          {
+            'slot_datetime': slot,
+            if (_employeeId != null && _employeeId! > 0) 'employee_id': _employeeId,
+          },
+        );
+      } else {
+        res = await widget.client.post('/api/mobile/customer/bookings', {
+          'article_id': articleId,
+          'slot_datetime': slot,
+          if (_employeeId != null && _employeeId! > 0) 'employee_id': _employeeId,
+        });
+      }
       if (!mounted) return;
-      if (apiIsOk(book)) {
-        final booking = _dataMap(book)?['booking'];
+      if (apiIsOk(res)) {
+        final booking = _dataMap(res)?['booking'];
         final code = booking is Map ? '${booking['booking_code'] ?? ''}'.trim() : '';
-        final msg = code.isNotEmpty
-            ? 'Termin gebucht ($code): ${formatSlotFull(slot)}'
-            : 'Termin gebucht: ${formatSlotFull(slot)}';
+        final msg = reschedule
+            ? (code.isNotEmpty
+                ? 'Termin umgebucht ($code): ${formatSlotFull(slot)}'
+                : 'Termin umgebucht: ${formatSlotFull(slot)}')
+            : (code.isNotEmpty
+                ? 'Termin gebucht ($code): ${formatSlotFull(slot)}'
+                : 'Termin gebucht: ${formatSlotFull(slot)}');
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
         Navigator.of(context).pop(true);
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(apiUserMessage(book, fallback: 'Buchung fehlgeschlagen.'))),
+        SnackBar(
+          content: Text(apiUserMessage(
+            res,
+            fallback: reschedule ? 'Umbuchen fehlgeschlagen.' : 'Buchung fehlgeschlagen.',
+          )),
+        ),
       );
       await _loadSlots();
     } catch (e) {
@@ -1273,7 +1383,7 @@ class _BookSlotPageState extends State<BookSlotPage> {
         '${widget.article['duration_minutes']} Min.${price.isNotEmpty ? '  ·  $price' : ''}';
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Zeit wählen')),
+      appBar: AppBar(title: Text(widget.isReschedule ? 'Termin umbuchen' : 'Zeit wählen')),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
