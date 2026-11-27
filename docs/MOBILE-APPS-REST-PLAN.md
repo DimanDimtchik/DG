@@ -32,7 +32,7 @@
 | **Kein Deploy außer „deploy“** | PHP-API nur bei Bedarf; Flutter-Builds separat |
 
 **Chat-Prompt-Vorlage:**  
-`Nur Mini-ID MA3a laut docs/MOBILE-APPS-REST-PLAN.md. Nur Mitarbeiter-App. Kein Kalender. Kein Refactor.`
+`Nur Mini-ID MA3b laut docs/MOBILE-APPS-REST-PLAN.md. Nur Mitarbeiter-App. Stempel-UI. Kein Kalender.`
 
 ---
 
@@ -135,7 +135,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| **MA3a** | Login Kennung+PIN Ende-zu-Ende gegen Dev-API | 🟡 | [ ] |
+| **MA3a** | Login Kennung+PIN Ende-zu-Ende gegen Dev-API | 🟡 | [x] 2026-11-27 · LoginPage Härte + Dev-E2E + Selftest |
 | **MA3b** | Stempel: Ein/Aus/Pause + Tagesstatus | 🟡 | [ ] |
 | **MA3c** | Abwesenheit beantragen + Liste; Schichten Woche | 🟡 | [ ] |
 | **MA3d** | Profil + Konto-Saldo; Akte-Liste/Download wenn API da | 🟡 | [ ] |
@@ -202,7 +202,7 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | Fähigkeit | API | Kalender | Mitarbeiter |
 |-----------|-----|----------|-------------|
 | Customer Register/Login | ✅ `POST …/auth/customer/*` | ✅ LoginPage (Toggle Register) | — |
-| Staff Login (Kennung+PIN) | ✅ `POST …/auth/staff/login` | — | ✅ LoginPage |
+| Staff Login (Kennung+PIN) | ✅ `POST …/auth/staff/login` | — | ✅ MA3a LoginPage (Validierung + Dev-E2E) |
 | Logout | ✅ `POST …/auth/logout` | ✅ | ✅ |
 | Token Refresh | ✅ `POST …/auth/refresh` | ✅ MA1b bei 401 (+ Retry) | ✅ MA1b bei 401 (+ Retry, inkl. Binary) |
 | Session `me` | ✅ `GET …/auth/me` | ❌ | ❌ |
@@ -289,6 +289,7 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | MA2c | 2026-11-27 | Dev API `ganz-om.de` | Liste→Umbuchen→Storno ✅ · Selftest `mobile-kalender-reschedule-selftest.php` |
 | MA2d | 2026-11-27 | Dev API `ganz-om.de` | Session/Slot-Konflikt/Buchung-aus ✅ · `mobile-kalender-edge-selftest.php` |
 | MA2e | 2026-11-27 | Flutter Web/Chrome `127.0.0.1:7357` (kein Android-SDK im Cloud-Agent) | analyze+widget-test ✅ · UI Bootstrap→Login ✅ · Dev-API-Kette Register/me/Katalog ✅ · CORS Web↔API bewusst ungeprüft (nativ) · `bash bin/mobile-kalender-smoke.sh` |
+| MA3a | 2026-11-27 | Dev API `ganz-om.de` | Staff Kennung+PIN → me → Logout ✅ · Temp-MA bereinigt · UI-Validierung |
 | MA3f | | | |
 
 ---
@@ -315,6 +316,7 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | `bin/mobile-kalender-edge-selftest.php` | Guard MA2d |
 | `bin/mobile-kalender-smoke.sh` | MA2e Flutter analyze + test |
 | `bin/mobile-kalender-smoke-selftest.php` | Guard MA2e |
+| `bin/mobile-mitarbeiter-auth-selftest.php` | Guard MA3a |
 | `bin/mobile-app-download-slug-selftest.php` | Guard MA0d |
 | [`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md) | Unterschrift ES6 (App-Upload) |
 
@@ -337,5 +339,6 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | 2026-11-27 | **MA2c ✅** Meine Termine Liste · Umbuchen (`/reschedule`) · Storno · `mobile-kalender-reschedule-selftest.php` |
 | 2026-11-27 | **MA2d ✅** Randfälle `booking_disabled`/`slot_unavailable`/Session · Kalender-UI · `mobile-kalender-edge-selftest.php` |
 | 2026-11-27 | **MA2e ✅** Kalender Smoke: Flutter analyze/test · Web/Chrome Bootstrap→Login · §8 · `mobile-kalender-smoke.sh` · MA2-Block fertig |
+| 2026-11-27 | **MA3a ✅** Mitarbeiter Login Kennung+PIN · Client-Validierung · Dev-E2E · `mobile-mitarbeiter-auth-selftest.php` |
 | 2026-11-27 | **MA1a ✅** `api_message.dart` identisch in beiden Apps · UI über `apiUserMessage`/`apiIsOk` · `php bin/mobile-api-message-selftest.php` |
 | 2026-11-27 | **MA0d ✅** CRM-Download-Slug `apps` → `app-download` · Legacy-Migration nur bei `page_kind=mobile_app_download` · `/apps` frei für Website |

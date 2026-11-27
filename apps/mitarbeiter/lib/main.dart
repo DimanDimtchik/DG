@@ -441,8 +441,43 @@ class _LoginPageState extends State<LoginPage> {
   final _pin = TextEditingController();
   String? _error;
   bool _busy = false;
+  bool _obscurePin = true;
+
+  static const int _minPinLen = 4;
+  static const int _maxPinLen = 8;
+
+  @override
+  void dispose() {
+    _id.dispose();
+    _pin.dispose();
+    super.dispose();
+  }
+
+  /// Client-seitige Pflichtprüfung vor API-Aufruf (klare Meldungen).
+  String? _validateLocal() {
+    final id = _id.text.trim();
+    final pin = _pin.text.trim();
+    if (id.isEmpty) {
+      return 'Bitte Kennung eingeben.';
+    }
+    if (pin.isEmpty) {
+      return 'Bitte PIN eingeben.';
+    }
+    if (pin.length < _minPinLen || pin.length > _maxPinLen) {
+      return 'PIN muss $_minPinLen–$_maxPinLen Ziffern haben.';
+    }
+    if (!RegExp(r'^\d+$').hasMatch(pin)) {
+      return 'PIN darf nur Ziffern enthalten.';
+    }
+    return null;
+  }
 
   Future<void> _login() async {
+    final localError = _validateLocal();
+    if (localError != null) {
+      setState(() => _error = localError);
+      return;
+    }
     setState(() {
       _busy = true;
       _error = null;
@@ -454,10 +489,21 @@ class _LoginPageState extends State<LoginPage> {
         'pin': _pin.text.trim(),
       });
       if (!apiIsOk(res)) {
-        setState(() => _error = apiUserMessage(res, fallback: 'Anmeldung fehlgeschlagen.'));
+        setState(() {
+          _error = apiUserMessage(res, fallback: 'Anmeldung fehlgeschlagen.');
+        });
         return;
       }
-      final token = (res['data'] as Map)['token'] as String;
+      final data = res['data'];
+      if (data is! Map) {
+        setState(() => _error = 'Unerwartete Antwort vom Server.');
+        return;
+      }
+      final token = '${data['token'] ?? ''}'.trim();
+      if (token.isEmpty) {
+        setState(() => _error = 'Anmeldung ohne Sitzung — bitte erneut versuchen.');
+        return;
+      }
       await mobileSaveBaseUrl(client.baseUrl);
       await mobileSaveToken(token);
       if (!mounted) return;
@@ -476,26 +522,62 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: const Text('Anmelden')),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
+          Text(
+            'Mitarbeiter-App',
+            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Melden Sie sich mit Kennung und Stempeluhr-PIN an.',
+            style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: 20),
           TextField(
             controller: _id,
+            textInputAction: TextInputAction.next,
+            autocorrect: false,
+            enableSuggestions: false,
             decoration: const InputDecoration(
               labelText: 'Kennung / E-Mail / Nachname / Nr.',
+              helperText: 'Wie am Stempeluhr-Kiosk.',
             ),
           ),
+          const SizedBox(height: 12),
           TextField(
             controller: _pin,
-            decoration: const InputDecoration(labelText: 'PIN'),
-            obscureText: true,
+            decoration: InputDecoration(
+              labelText: 'PIN ($_minPinLen–$_maxPinLen Ziffern)',
+              suffixIcon: IconButton(
+                tooltip: _obscurePin ? 'PIN anzeigen' : 'PIN verbergen',
+                onPressed: () => setState(() => _obscurePin = !_obscurePin),
+                icon: Icon(_obscurePin ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+              ),
+            ),
+            obscureText: _obscurePin,
             keyboardType: TextInputType.number,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) {
+              if (!_busy) _login();
+            },
           ),
-          if (_error != null) Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+          if (_error != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              _error!,
+              style: TextStyle(color: theme.colorScheme.error, fontWeight: FontWeight.w600),
+            ),
+          ],
           const SizedBox(height: 16),
-          FilledButton(onPressed: _busy ? null : _login, child: Text(_busy ? '…' : 'Anmelden')),
+          FilledButton(
+            onPressed: _busy ? null : _login,
+            child: Text(_busy ? 'Anmelden …' : 'Anmelden'),
+          ),
         ],
       ),
     );
