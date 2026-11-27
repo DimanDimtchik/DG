@@ -31,8 +31,7 @@ assertMa6a(preg_match('/\|\s*\*\*MA6a\*\*.*\|\s*\[x\]/u', $planSrc) === 1, 'Plan
 assertMa6a(str_contains($planSrc, 'MA6a ✅') || str_contains($planSrc, '**MA6a ✅**'), 'Historie MA6a');
 
 assertMa6a(
-    preg_match('/\[\s*x\s*\].*Mobile Apps \(Flutter\)/u', $todosSrc) === 1
-        || preg_match('/- \[x\] \*\*Mobile Apps \(Flutter\)/u', $todosSrc) === 1,
+    preg_match('/- \[x\] \*\*Mobile Apps \(Flutter\)/u', $todosSrc) === 1,
     'TODOS Mobile Apps abgehakt'
 );
 assertMa6a(str_contains($todosSrc, 'MA6a ✅'), 'TODOS nennt MA6a ✅');
@@ -42,9 +41,11 @@ assertMa6a(
     preg_match('/- \[x\] \*\*Mobile Apps\*\*/u', $iqSrc) === 1,
     'IQ-STROM §D3 Mobile Apps [x]'
 );
-assertMa6a(str_contains($iqSrc, 'MA0–MA5') || str_contains($iqSrc, 'MA0-MA5') || str_contains($iqSrc, 'MA6a'), 'IQ §D3 Rest-Stand');
+assertMa6a(
+    str_contains($iqSrc, 'MA0–MA5') || str_contains($iqSrc, 'MA0-MA5') || str_contains($iqSrc, 'MA6a'),
+    'IQ §D3 Rest-Stand'
+);
 assertMa6a(str_contains($iqSrc, 'MOBILE-APPS-REST-PLAN'), 'IQ verweist Rest-Plan');
 
 echo "MA6a Selftest bestanden.\n";
 exit(0);
-}
