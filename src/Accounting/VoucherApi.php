@@ -75,6 +75,11 @@ final class VoucherApi
                 return;
             }
 
+            if ($action === 'article_match') {
+                self::handleArticleMatch();
+                return;
+            }
+
             if ($action === 'gift_voucher_search') {
                 self::handleGiftVoucherSearch();
                 return;
@@ -88,7 +93,7 @@ final class VoucherApi
             http_response_code(400);
             echo json_encode([
                 'success' => false,
-                'message' => 'Parameter action erforderlich (contacts, account, account_search, invoice_number_preview, article_search, gift_voucher_search, ledger_preview).',
+                'message' => 'Parameter action erforderlich (contacts, account, account_search, invoice_number_preview, article_search, article_match, gift_voucher_search, ledger_preview).',
             ], JSON_UNESCAPED_UNICODE);
         } catch (Throwable $e) {
             http_response_code(500);
@@ -271,6 +276,41 @@ final class VoucherApi
         echo json_encode([
             'success' => true,
             'data' => ['items' => VoucherIncomePositions::searchArticles($query, 15)],
+        ], JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * BO5b — Match-Vorschläge für Extrakt-Zeilen (kein Speichern).
+     */
+    private static function handleArticleMatch(): void
+    {
+        $linesRaw = $_GET['lines'] ?? '';
+        if (is_string($linesRaw) && trim($linesRaw) !== '') {
+            $decoded = json_decode($linesRaw, true);
+            if (is_array($decoded)) {
+                echo json_encode([
+                    'success' => true,
+                    'data' => [
+                        'matches' => VoucherArticleMatchService::candidatesForLines($decoded, 5),
+                    ],
+                ], JSON_UNESCAPED_UNICODE);
+
+                return;
+            }
+        }
+
+        $title = trim((string) ($_GET['title'] ?? $_GET['q'] ?? ''));
+        $sku = trim((string) ($_GET['sku'] ?? ''));
+        $kind = trim((string) ($_GET['catalog_kind'] ?? ''));
+        echo json_encode([
+            'success' => true,
+            'data' => [
+                'candidates' => VoucherArticleMatchService::candidatesForLine([
+                    'title' => $title,
+                    'sku' => $sku,
+                    'catalog_kind' => $kind,
+                ], 5),
+            ],
         ], JSON_UNESCAPED_UNICODE);
     }
 

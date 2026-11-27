@@ -482,6 +482,13 @@ $paymentTermsPreview = PaymentTermsService::composeText(
           </div>
           <div class="dg-voucher-extract__data">
             <div class="dg-voucher-extract__fields" id="dg-voucher-extract-fields"></div>
+            <div class="dg-voucher-extract__matches" id="dg-voucher-extract-matches" hidden>
+              <h3 class="dg-subsection-title">Katalog-Vorschläge</h3>
+              <p class="dg-field-hint" id="dg-voucher-extract-matches-hint">
+                Bestehende Artikel/Leistungen zuordnen — erst nach Ihrer Bestätigung. Nichts wird automatisch gespeichert.
+              </p>
+              <div id="dg-voucher-extract-matches-body"></div>
+            </div>
             <div class="dg-voucher-extract__actions" id="dg-voucher-extract-actions" hidden>
               <label class="dg-voucher-extract__contact-sync" id="dg-voucher-extract-contact-sync-wrap" hidden>
                 <input type="checkbox" id="dg-voucher-extract-contact-sync" checked>

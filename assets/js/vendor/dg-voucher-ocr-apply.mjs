@@ -78,6 +78,9 @@ export function normalizeOcrExtractLines(rawLines) {
       if (skippedTitles.length < 5) skippedTitles.push(title);
       continue;
     }
+    const matchId = line.match_article_id != null && line.match_article_id !== ''
+      ? Number(line.match_article_id)
+      : null;
     out.push({
       title,
       catalog_kind: kind,
@@ -87,6 +90,8 @@ export function normalizeOcrExtractLines(rawLines) {
       gross_amount: gross,
       tax_rate: taxRate,
       sku: String(line.sku || '').trim(),
+      match_article_id: Number.isFinite(matchId) && matchId > 0 ? matchId : null,
+      match_label: String(line.match_label || '').trim(),
     });
   }
 

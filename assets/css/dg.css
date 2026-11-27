@@ -6638,6 +6638,53 @@ body.dg-login-page {
   letter-spacing: 0.02em;
 }
 
+.dg-voucher-extract__matches {
+  margin-top: var(--dg-space-4);
+}
+
+.dg-voucher-extract__match-block {
+  margin-top: var(--dg-space-3);
+  padding-top: var(--dg-space-3);
+  border-top: 1px solid var(--dg-border);
+}
+
+.dg-voucher-extract__match-block:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.dg-voucher-extract__match-title {
+  font-weight: 600;
+  margin: 0 0 var(--dg-space-2);
+}
+
+.dg-voucher-extract__match-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dg-space-2);
+}
+
+.dg-voucher-extract__match-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--dg-space-2);
+  justify-content: space-between;
+}
+
+.dg-voucher-extract__match-meta {
+  flex: 1 1 12rem;
+  font-size: 0.92rem;
+}
+
+.dg-voucher-extract__match-chosen {
+  color: #148f47;
+  font-weight: 600;
+}
+
 .dg-voucher-extract__actions {
   margin-top: var(--dg-space-3);
   display: flex;

@@ -3210,7 +3210,7 @@
       var taxField = row.querySelector('.dg-voucher-items-tax');
       var grossField = row.querySelector('.dg-voucher-items-gross');
       if (idField) {
-        idField.value = '';
+        idField.value = line.match_article_id ? String(line.match_article_id) : '';
       }
       if (kindField) {
         kindField.value = line.catalog_kind;
@@ -3223,7 +3223,11 @@
       }
       if (queryField) {
         var kindLabel = line.catalog_kind === 'product' ? 'Artikel' : 'Leistung';
-        queryField.value = (line.sku ? line.sku + ' — ' : '') + line.title + ' (' + kindLabel + ', aus Beleg)';
+        if (line.match_article_id && line.match_label) {
+          queryField.value = line.match_label;
+        } else {
+          queryField.value = (line.sku ? line.sku + ' — ' : '') + line.title + ' (' + kindLabel + ', aus Beleg)';
+        }
       }
       if (qtyField) {
         qtyField.value = formatAmount(line.quantity).replace(/,00$/, '') || '1';

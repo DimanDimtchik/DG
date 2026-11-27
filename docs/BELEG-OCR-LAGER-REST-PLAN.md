@@ -80,7 +80,7 @@ Datei (PDF/Bild/XML)
 | **BO2** | Extrakt-Schema (Kopf + Positionen) | [x] BO2a–d ✅ | 🟢🟡 |
 | **BO3** | Kichel-Strukturierung | [x] BO3a–e ✅ | 🟢🟡 |
 | **BO4** | FiBu-UI Positionen übernehmen | [x] BO4a–d ✅ | 🟢🟡 |
-| **BO5** | Lager-Anbindung | [~] BO5a ✅ | 🟡🔴 |
+| **BO5** | Lager-Anbindung | [~] BO5a–b ✅ | 🟡🔴 |
 | **BO6** | Docs/Haken Abschluss | [ ] | 🟢 |
 
 ---
@@ -170,7 +170,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
 | **BO5a** | Ist: `CalendarArticleRepository` / `catalog_kind` product\|service · `ArticlePurchaseSourceRepository` · Wareneingang — nur Doc | 🟢 | [x] 2026-11-27 · §13 |
-| **BO5b** | Match-Vorschläge: bestehende Artikel/Leistungen (Nummer/Titel); UI-Liste zur Bestätigung | 🟡 | [ ] |
+| **BO5b** | Match-Vorschläge: bestehende Artikel/Leistungen (Nummer/Titel); UI-Liste zur Bestätigung | 🟢 | [x] 2026-11-27 · `article_match` + UI |
 | **BO5c** | Neuanlage-Vorschlag: product vs. service; **nur nach User-Klick** speichern | 🟡 | [ ] |
 | **BO5d** | EK-Quelle am Artikel aus Beleg (Lieferant-Kontakt + Preis), Preferred optional | 🟡 | [ ] |
 | **BO5e** | Wareneingang-**Vorschlag** (bestehender Lager-Service) nach gespeichertem Eingangsbeleg — kein Auto-Post ohne Klick | 🟡🔴 | [ ] |
@@ -505,3 +505,4 @@ Parallel ok: BO1 und BO2a (Schema schon hier). **BO5 nicht vor BO4.**
 | 2026-11-27 | **BO4c ✅** Kopf zuerst; Status: übersprungene Zeilen, Summenprüfung, Extract-Warnings |
 | 2026-11-27 | **BO4d ✅** Guard+Smoke CII→Apply-Normalisierung · shared `dg-voucher-ocr-apply.mjs` · BO4-Block fertig |
 | 2026-11-27 | **BO5a ✅** Ist Katalog/EK/WE §13 — Match-APIs vorhanden, OCR noch unverdrahtet; WE Auto vs. Klick |
+| 2026-11-27 | **BO5b ✅** `VoucherArticleMatchService` + `article_match` · UI Katalog-Vorschläge mit Zuordnen (kein Auto-Save) |

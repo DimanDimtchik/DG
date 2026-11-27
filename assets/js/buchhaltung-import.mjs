@@ -874,6 +874,171 @@ function persistSuggestion(suggestion) {
   }
 }
 
+function suggestionExtractLines(suggestion) {
+  if (Array.isArray(suggestion?.extract?.lines) && suggestion.extract.lines.length) {
+    return suggestion.extract.lines;
+  }
+  if (Array.isArray(suggestion?.lines)) return suggestion.lines;
+  return [];
+}
+
+function ensureExtractLines(suggestion) {
+  if (!suggestion.extract || typeof suggestion.extract !== 'object') {
+    suggestion.extract = { schema_version: 1, lines: [], warnings: [] };
+  }
+  if (!Array.isArray(suggestion.extract.lines)) {
+    suggestion.extract.lines = [];
+  }
+  if ((!suggestion.extract.lines.length) && Array.isArray(suggestion.lines)) {
+    suggestion.extract.lines = suggestion.lines;
+  }
+  return suggestion.extract.lines;
+}
+
+function confirmArticleMatch(lineIndex, article) {
+  if (!currentSuggestion || !article) return;
+  const lines = ensureExtractLines(currentSuggestion);
+  if (!lines[lineIndex]) return;
+  const label = article.article_number
+    ? `${article.article_number} — ${article.title}`
+    : String(article.title || '');
+  lines[lineIndex].match_article_id = Number(article.id) || null;
+  lines[lineIndex].match_label = label;
+  lines[lineIndex].match_reason = article.match_reason || '';
+  if (article.catalog_kind) {
+    lines[lineIndex].catalog_kind = article.catalog_kind;
+  }
+  if (article.article_number && !lines[lineIndex].sku) {
+    lines[lineIndex].sku = article.article_number;
+  }
+  currentSuggestion.lines = lines;
+  persistSuggestion(currentSuggestion);
+  renderMatchPanel(currentSuggestion, currentSuggestion._matchRows || []);
+}
+
+function clearArticleMatch(lineIndex) {
+  if (!currentSuggestion) return;
+  const lines = ensureExtractLines(currentSuggestion);
+  if (!lines[lineIndex]) return;
+  lines[lineIndex].match_article_id = null;
+  lines[lineIndex].match_label = '';
+  lines[lineIndex].match_reason = '';
+  currentSuggestion.lines = lines;
+  persistSuggestion(currentSuggestion);
+  renderMatchPanel(currentSuggestion, currentSuggestion._matchRows || []);
+}
+
+function renderMatchPanel(suggestion, matchRows) {
+  const wrap = $('dg-voucher-extract-matches');
+  const body = $('dg-voucher-extract-matches-body');
+  if (!wrap || !body) return;
+  suggestion._matchRows = matchRows;
+  const lines = suggestionExtractLines(suggestion);
+  if (!lines.length) {
+    wrap.hidden = true;
+    body.innerHTML = '';
+    return;
+  }
+  wrap.hidden = false;
+  if (!Array.isArray(matchRows) || matchRows.length === 0) {
+    body.innerHTML = '<p class="dg-field-hint">Keine Katalog-Treffer zu den Positionen.</p>';
+    return;
+  }
+
+  body.innerHTML = matchRows.map((row, idx) => {
+    const line = lines.find((l) => Number(l.line_no) === Number(row.line_no)) || lines[idx] || {};
+    const kind = (row.catalog_kind || line.catalog_kind) === 'product' ? 'Artikel' : 'Leistung';
+    const chosenId = Number(line.match_article_id || 0);
+    const chosenLabel = line.match_label
+      ? `<p class="dg-voucher-extract__match-chosen">Zugeordnet: ${escapeHtml(line.match_label)}</p>`
+      : '';
+    const candidates = Array.isArray(row.candidates) ? row.candidates : [];
+    let listHtml;
+    if (!candidates.length) {
+      listHtml = '<p class="dg-muted">Kein Treffer — Zuordnung später oder neu anlegen.</p>';
+    } else {
+      listHtml = `<ul class="dg-voucher-extract__match-list">${candidates.map((c) => {
+        const label = c.article_number ? `${c.article_number} — ${c.title}` : c.title;
+        const meta = `${c.kind_label || kind}`
+          + (c.match_reason ? ` · ${c.match_reason}` : '')
+          + (c.score != null ? ` · ${Math.round(Number(c.score) * 100)} %` : '');
+        const isChosen = chosenId > 0 && chosenId === Number(c.id);
+        const btn = isChosen
+          ? `<button type="button" class="dg-button dg-button--small dg-button--ghost" data-match-clear="${idx}">Entfernen</button>`
+          : `<button type="button" class="dg-button dg-button--small" data-match-confirm="${idx}" data-article-id="${Number(c.id)}">Zuordnen</button>`;
+        return `<li class="dg-voucher-extract__match-item"><div class="dg-voucher-extract__match-meta"><strong>${escapeHtml(label)}</strong><br><span class="dg-muted">${escapeHtml(meta)}</span></div><span class="dg-table__actions-group">${btn}</span></li>`;
+      }).join('')}</ul>`;
+    }
+    return `<div class="dg-voucher-extract__match-block" data-match-line="${idx}">
+      <p class="dg-voucher-extract__match-title">${escapeHtml(kind)}: ${escapeHtml(row.title || line.title || '—')}</p>
+      ${chosenLabel}
+      ${listHtml}
+    </div>`;
+  }).join('');
+
+  body.querySelectorAll('[data-match-confirm]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const lineIdx = Number(btn.getAttribute('data-match-confirm'));
+      const articleId = Number(btn.getAttribute('data-article-id'));
+      const row = matchRows[lineIdx];
+      const article = (row?.candidates || []).find((c) => Number(c.id) === articleId);
+      if (!article) return;
+      const extractIdx = ensureExtractLines(suggestion).findIndex(
+        (l) => Number(l.line_no) === Number(row.line_no),
+      );
+      confirmArticleMatch(extractIdx >= 0 ? extractIdx : lineIdx, article);
+    });
+  });
+  body.querySelectorAll('[data-match-clear]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const lineIdx = Number(btn.getAttribute('data-match-clear'));
+      const row = matchRows[lineIdx];
+      const extractIdx = ensureExtractLines(suggestion).findIndex(
+        (l) => Number(l.line_no) === Number(row?.line_no),
+      );
+      clearArticleMatch(extractIdx >= 0 ? extractIdx : lineIdx);
+    });
+  });
+}
+
+async function loadArticleMatches(suggestion) {
+  const lines = suggestionExtractLines(suggestion);
+  const wrap = $('dg-voucher-extract-matches');
+  const body = $('dg-voucher-extract-matches-body');
+  if (!lines.length) {
+    if (wrap) wrap.hidden = true;
+    if (body) body.innerHTML = '';
+    return;
+  }
+  if (wrap) wrap.hidden = false;
+  if (body) {
+    body.innerHTML = `<p class="dg-field-hint">${spinner()} Katalog wird durchsucht …</p>`;
+  }
+  const payload = lines.map((line, i) => ({
+    line_no: line.line_no || i + 1,
+    title: line.title || '',
+    sku: line.sku || '',
+    catalog_kind: line.catalog_kind || 'service',
+  }));
+  try {
+    const url = '/api/voucher?action=article_match&lines=' + encodeURIComponent(JSON.stringify(payload));
+    const response = await fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' } });
+    const json = await response.json().catch(() => ({}));
+    const matches = json?.data?.matches;
+    if (!response.ok || !json.success || !Array.isArray(matches)) {
+      if (body) {
+        body.innerHTML = '<p class="dg-field-hint">Katalog-Vorschläge nicht geladen — Zuordnung später möglich.</p>';
+      }
+      return;
+    }
+    renderMatchPanel(suggestion, matches);
+  } catch {
+    if (body) {
+      body.innerHTML = '<p class="dg-field-hint">Katalog-Vorschläge nicht geladen — Zuordnung später möglich.</p>';
+    }
+  }
+}
+
 function renderSuggestion(suggestion) {
   currentSuggestion = suggestion;
   persistSuggestion(suggestion);
@@ -881,14 +1046,13 @@ function renderSuggestion(suggestion) {
   const actionsEl = $('dg-voucher-extract-actions');
   if (!fieldsEl) return;
 
-  const lines = Array.isArray(suggestion.lines) && suggestion.lines.length
-    ? suggestion.lines
-    : (Array.isArray(suggestion.extract?.lines) ? suggestion.extract.lines : []);
+  const lines = suggestionExtractLines(suggestion);
   const linePreview = lines.slice(0, 8).map((line) => {
     const kind = line.catalog_kind === 'product' ? 'Artikel' : 'Leistung';
     const qty = line.quantity ? `${line.quantity} ${line.unit || ''}`.trim() : '';
     const net = line.line_net ? `${line.line_net} €` : '';
-    return `${kind}: ${line.title || '—'}${qty ? ` · ${qty}` : ''}${net ? ` · ${net}` : ''}`;
+    const match = line.match_label ? ` → ${line.match_label}` : '';
+    return `${kind}: ${line.title || '—'}${qty ? ` · ${qty}` : ''}${net ? ` · ${net}` : ''}${match}`;
   }).join(' | ');
   const amountCheck = suggestion.extract?.amount_check;
   const rows = [
@@ -935,6 +1099,7 @@ function renderSuggestion(suggestion) {
   setStatus(found ? 'ok' : 'warn', statusHtml);
   if (actionsEl) actionsEl.hidden = !found;
   updateContactSyncVisibility();
+  loadArticleMatches(suggestion);
 }
 
 function updateContactSyncVisibility() {
@@ -1192,6 +1357,12 @@ function init() {
       clearPreview();
       const panel = $('dg-voucher-extract');
       if (panel) panel.hidden = true;
+      const matches = $('dg-voucher-extract-matches');
+      if (matches) {
+        matches.hidden = true;
+        const body = $('dg-voucher-extract-matches-body');
+        if (body) body.innerHTML = '';
+      }
     });
   }
 
