@@ -616,11 +616,119 @@ function enrichSuggestion(suggestion, rawText) {
   return suggestion;
 }
 
-function finalizeSuggestion(suggestion, sourceLabel, rawText) {
+function hasCompleteEInvoiceLines(suggestion) {
+  return suggestion?.source === 'einvoice'
+    && ((Array.isArray(suggestion.lines) && suggestion.lines.length > 0)
+      || (Array.isArray(suggestion.extract?.lines) && suggestion.extract.lines.length > 0));
+}
+
+function syncSuggestionFromExtract(suggestion) {
+  const extract = suggestion.extract;
+  if (!extract || typeof extract !== 'object') return suggestion;
+  if (extract.supplier_name) suggestion.supplier = extract.supplier_name;
+  if (extract.invoice_number) suggestion.invoiceNumber = extract.invoice_number;
+  if (extract.invoice_date) suggestion.invoiceDate = extract.invoice_date;
+  if (extract.gross_total) suggestion.grossAmount = extract.gross_total;
+  if (extract.net_total) suggestion.netAmount = extract.net_total;
+  if (extract.vat_total) suggestion.vatAmount = extract.vat_total;
+  if (extract.iban) suggestion.iban = extract.iban;
+  if (extract.bic) suggestion.bic = extract.bic;
+  if (extract.vat_id) suggestion.vatId = extract.vat_id;
+  if (extract.tax_number) suggestion.taxNumber = extract.tax_number;
+  if (Array.isArray(extract.lines)) {
+    suggestion.lines = extract.lines;
+    suggestion.itemCount = extract.lines.length;
+    suggestion.items = extract.lines.map((line) => ({
+      id: `line-${line.line_no}`,
+      description: line.title,
+      amount: Number(String(line.line_net || '').replace(',', '.')) || 0,
+    }));
+  }
+  return suggestion;
+}
+
+/**
+ * BO3d — optional Server-Extrakt nach Textlayer/OCR (kein Chat).
+ * Soft-Fail / Netzwerkfehler: Client-Hints behalten.
+ */
+async function enrichWithAssistenz(suggestion, rawText, fileName) {
+  const text = String(rawText || '').trim();
+  if (!text || hasCompleteEInvoiceLines(suggestion)) {
+    return suggestion;
+  }
+
+  const csrf = importConfig.csrf
+    || document.querySelector('#dg-voucher-form input[name="_csrf"]')?.value
+    || '';
+  if (!csrf) {
+    return suggestion;
+  }
+
+  setStatus('working', `${spinner()} Assistenz ordnet den Text …`);
+
+  const body = new FormData();
+  body.set('_csrf', csrf);
+  body.set('raw_text', text.slice(0, 100000));
+  const extractSource = suggestion.source === 'ocr'
+    ? 'ocr'
+    : (suggestion.source === 'einvoice' ? 'einvoice_xml' : 'pdf_text');
+  body.set('source', extractSource);
+  if (fileName) body.set('file_name', fileName);
+  const voucherId = getVoucherId();
+  if (voucherId > 0) body.set('voucher_id', String(voucherId));
+  if (suggestion.extract && suggestion.extract.schema_version === 1) {
+    body.set('hint_extract', JSON.stringify(suggestion.extract));
+  }
+
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timer = controller ? setTimeout(() => controller.abort(), 90000) : null;
+  try {
+    const response = await fetch('/api/voucher?action=voucher_extract', {
+      method: 'POST',
+      body,
+      credentials: 'same-origin',
+      signal: controller ? controller.signal : undefined,
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || !payload.success || !payload.data) {
+      suggestion.assistenz = {
+        ollama_used: false,
+        soft_fail: true,
+        soft_fail_reason: payload.message || 'Assistenz nicht erreichbar',
+      };
+      return suggestion;
+    }
+    const data = payload.data;
+    const meta = data.meta && typeof data.meta === 'object' ? data.meta : {};
+    suggestion.assistenz = {
+      ollama_used: !!meta.ollama_used,
+      soft_fail: !!meta.soft_fail,
+      soft_fail_reason: String(meta.soft_fail_reason || ''),
+      model: String(meta.model || ''),
+    };
+    if (data.extract && typeof data.extract === 'object' && data.extract.schema_version === 1) {
+      suggestion.extract = data.extract;
+      syncSuggestionFromExtract(suggestion);
+      if (meta.ollama_used) {
+        suggestion.sourceLabel = `${suggestion.sourceLabel || 'Beleg'} · geordnet durch Assistenz`;
+      }
+    }
+    return suggestion;
+  } catch {
+    suggestion.assistenz = {
+      ollama_used: false,
+      soft_fail: true,
+      soft_fail_reason: 'Assistenz nicht erreichbar — Text-Hinweise behalten.',
+    };
+    return suggestion;
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
+async function finalizeSuggestion(suggestion, sourceLabel, rawText, fileName = '') {
   const next = enrichSuggestion({ ...suggestion, sourceLabel }, rawText);
-  const hasEInvoiceLines = next.source === 'einvoice'
-    && ((Array.isArray(next.lines) && next.lines.length > 0)
-      || (Array.isArray(next.extract?.lines) && next.extract.lines.length > 0));
+  const hasEInvoiceLines = hasCompleteEInvoiceLines(next);
 
   if (hasEInvoiceLines) {
     if (!next.extract || next.extract.schema_version !== 1) {
@@ -651,7 +759,8 @@ function finalizeSuggestion(suggestion, sourceLabel, rawText) {
       }));
     }
   }
-  return next;
+
+  return enrichWithAssistenz(next, rawText, fileName || '');
 }
 
 /** analyzeInvoiceText-Ergebnis -> einheitliches Vorschlagsobjekt. */
@@ -690,7 +799,7 @@ async function analyzeFile(file) {
   if (ext === 'xml' || type.includes('xml')) {
     const text = await file.text();
     if (looksLikeEInvoiceXml(text)) {
-      return finalizeSuggestion(parseEInvoiceXml(text, name), 'E-Rechnung (XML)', text);
+      return finalizeSuggestion(parseEInvoiceXml(text, name), 'E-Rechnung (XML)', text, name);
     }
     throw new Error('XML ist keine erkennbare E-Rechnung.');
   }
@@ -707,6 +816,7 @@ async function analyzeFile(file) {
         parseEInvoiceXml(xml, name),
         'E-Rechnung (ZUGFeRD/XRechnung im PDF)',
         `${xml}\n${pdfText}`,
+        name,
       );
     }
 
@@ -716,6 +826,7 @@ async function analyzeFile(file) {
         suggestionFromAnalysis(analyzeInvoiceText(text), 'textlayer'),
         'Digitales PDF (Textebene)',
         text,
+        name,
       );
     }
 
@@ -730,6 +841,7 @@ async function analyzeFile(file) {
       suggestionFromAnalysis(analyzeInvoiceText(ocr.text), 'ocr'),
       sourceLabel,
       ocr.text,
+      name,
     );
   }
 
@@ -742,6 +854,7 @@ async function analyzeFile(file) {
         suggestionFromAnalysis(analyzeInvoiceText(ocrText), 'ocr'),
         'Foto (OCR)',
         ocrText,
+        name,
       );
     } finally {
       URL.revokeObjectURL(url);
@@ -806,9 +919,19 @@ function renderSuggestion(suggestion) {
     .join('');
 
   const found = rows.length > 0;
-  setStatus(found ? 'ok' : 'warn', found
-    ? `Erkannt aus <em>${escapeHtml(suggestion.sourceLabel)}</em> — bitte prüfen.`
-    : `Aus <em>${escapeHtml(suggestion.sourceLabel)}</em> konnten keine Felder sicher erkannt werden.`);
+  const assistenz = suggestion.assistenz || null;
+  let statusHtml;
+  if (!found) {
+    statusHtml = `Aus <em>${escapeHtml(suggestion.sourceLabel)}</em> konnten keine Felder sicher erkannt werden.`;
+  } else if (assistenz?.ollama_used) {
+    statusHtml = `Erkannt aus <em>${escapeHtml(suggestion.sourceLabel)}</em> — Text geordnet durch Assistenz, bitte prüfen.`;
+  } else {
+    statusHtml = `Erkannt aus <em>${escapeHtml(suggestion.sourceLabel)}</em> — bitte prüfen.`;
+    if (assistenz?.soft_fail && assistenz.soft_fail_reason) {
+      statusHtml += ` ${escapeHtml(assistenz.soft_fail_reason)}`;
+    }
+  }
+  setStatus(found ? 'ok' : 'warn', statusHtml);
   if (actionsEl) actionsEl.hidden = !found;
   updateContactSyncVisibility();
 }
