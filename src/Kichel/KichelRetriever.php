@@ -15,6 +15,9 @@ final class KichelRetriever
     /** KL3 — Mindest-Score aus Statute-Index, bevor Norm-Kandidat mitläuft. */
     private const STATUTE_MIN_SCORE = 8;
 
+    /** KL5 — Mindest-Score aus Caselaw-Index. */
+    private const CASELAW_MIN_SCORE = 8;
+
     /**
      * @return array{
      *   path: 'empty'|'legal'|'ledger'|'money'|'candidates',
@@ -161,6 +164,17 @@ final class KichelRetriever
         }
 
         return (bool) $cfg['rag_statute_enabled'];
+    }
+
+    /** KL5 — RII-Urteile (Pilot BFH) aus JSONL-Index. */
+    public static function isCaselawEnabled(): bool
+    {
+        $cfg = self::config();
+        if (!array_key_exists('rag_caselaw_enabled', $cfg)) {
+            return true;
+        }
+
+        return (bool) $cfg['rag_caselaw_enabled'];
     }
 
     public static function maxFacts(): int
@@ -387,6 +401,13 @@ final class KichelRetriever
             }
         }
 
+        // KL5 — RII-Urteile (Pilot)
+        if (self::isCaselawEnabled()) {
+            foreach (self::caselawCandidates($query, $tokens) as $caseRow) {
+                $raw[] = $caseRow;
+            }
+        }
+
         if ($fieldAnswer !== null && ($intent === KichelIntent::EXPLAIN || $raw === [])) {
             $links = is_array($fieldAnswer['action_links'] ?? null) ? $fieldAnswer['action_links'] : [];
             $href = '';
@@ -497,6 +518,59 @@ final class KichelRetriever
                 'action_label' => 'Norm bei GII öffnen',
                 'dedupe' => $ref,
                 'source_label' => trim((string) ($chunk['source_label'] ?? 'GII')) ?: 'GII',
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * KL5 — Caselaw-Index → Kandidaten (kind=caselaw).
+     *
+     * @param list<string> $tokens
+     * @return list<array{kind: string, score: int, title: string, body: string, href: string, action_label: string, dedupe: string, source_label?: string}>
+     */
+    private static function caselawCandidates(string $query, array $tokens): array
+    {
+        $cfg = self::config();
+        $limit = (int) ($cfg['rag_caselaw_limit'] ?? 5);
+        if ($limit < 1) {
+            $limit = 5;
+        }
+        $dir = null;
+        if (isset($cfg['rag_caselaw_dir']) && is_string($cfg['rag_caselaw_dir']) && trim($cfg['rag_caselaw_dir']) !== '') {
+            $dir = trim($cfg['rag_caselaw_dir']);
+        }
+
+        $hits = KichelCaselawIndex::searchQuery($query, $limit, $dir);
+        if ($hits === [] && $tokens !== []) {
+            $hits = KichelCaselawIndex::search($tokens, $limit, $dir);
+        }
+
+        $out = [];
+        foreach ($hits as $hit) {
+            $score = (int) ($hit['score'] ?? 0);
+            if ($score < self::CASELAW_MIN_SCORE) {
+                continue;
+            }
+            $chunk = $hit['chunk'] ?? null;
+            if (!is_array($chunk)) {
+                continue;
+            }
+            $ref = trim((string) ($chunk['source_ref'] ?? ''));
+            if ($ref === '') {
+                continue;
+            }
+            $href = trim((string) ($chunk['href'] ?? ''));
+            $out[] = [
+                'kind' => 'caselaw',
+                'score' => $score,
+                'title' => trim((string) ($chunk['title'] ?? $ref)),
+                'body' => trim((string) ($chunk['body'] ?? '')),
+                'href' => $href,
+                'action_label' => 'Entscheidung bei RII öffnen',
+                'dedupe' => $ref,
+                'source_label' => trim((string) ($chunk['source_label'] ?? 'RII')) ?: 'RII',
             ];
         }
 

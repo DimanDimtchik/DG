@@ -19,4 +19,8 @@ return [
     'rag_statute_enabled' => true,
     'rag_statute_limit' => 5,
     // 'rag_statute_dir' => null, // optional anderer JSONL-Ordner
+    // KL5 — Urteile aus storage/kichel/rii/*.jsonl (BFH-Pilot nach RII-Import)
+    'rag_caselaw_enabled' => true,
+    'rag_caselaw_limit' => 5,
+    // 'rag_caselaw_dir' => null,
 ];

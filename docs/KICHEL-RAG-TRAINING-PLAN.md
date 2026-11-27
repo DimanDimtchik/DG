@@ -59,7 +59,7 @@ Kein Fine-Tuning, kein Gesetzes-Vollimport außerhalb dieser ID.
 | Phase | Kürzel | Inhalt | Status |
 |-------|--------|--------|--------|
 | **A — RAG (jetzt)** | **KR0–KR9** | Verdrahtung Suche → Fakten → Qwen; CRM-Korpus; Quellen; Smoke | **KR0–9 ✅** Gate offen |
-| **B — Rechtskorpus** | **KL0–KL5** | Gesetze/Urteile importieren & indexieren (nach stabilem RAG) | **KL0–4 ✅** · als Nächstes **KL5** (geparkt) / optional KR8b |
+| **B — Rechtskorpus** | **KL0–KL5** | Gesetze/Urteile importieren & indexieren (nach stabilem RAG) | **KL0–5 ✅** · optional KR8b / KH0 |
 | **C — Intent-LLM** | **KI0–KI3** | Qwen nur als Frage-Parser (JSON), Suche weiter PHP | geplant |
 | **D — Produkt/Haftung** | **KH0–KH3** | Disclaimer, Protokoll-Felder, Admin-Qualität | geplant |
 | **E — Fine-Tuning** | **KT0–KT5** | LoRA auf Q&A/Stil — **nur nach RAG-Stabil** | später, beschrieben |
@@ -423,7 +423,7 @@ RAG gilt als **stabil**, wenn:
 | **KL2** | Speicher Index (Volltext zuerst) | [x] 2026-11-27 · §4.3 |
 | **KL3** | Retriever → `type=statute` | [x] 2026-11-27 · §4.4 |
 | **KL4** | Update-Job TOC-Diff | [x] 2026-11-27 · §4.5 |
-| **KL5** | Pilot Urteile (später, eng) | [ ] geparkt |
+| **KL5** | Pilot Urteile (später, eng) | [x] 2026-11-27 · §4.6 · BFH+Themenfilter |
 
 ### 4.1 KL0 — Quellenentscheid ✅ 2026-11-27
 
@@ -574,7 +574,35 @@ Nach `--apply` mit Download: `KichelStatuteIndex::reset()`. Snapshot ist Instanz
 - [x] `removed` wenn Snapshot-Gesetz fehlt  
 - [x] `--force` reimportiert  
 
-**Nächste Mini-ID:** **KL5** (Urteile, geparkt) oder Produkt-Feinschliff KR8b/KH.
+**Nächste Mini-ID:** **KL5** ✅ → optional KR8b / KH0.
+
+### 4.6 KL5 — Pilot Urteile (RII / BFH) ✅ 2026-11-27
+
+| Teil | Inhalt | Status |
+|------|--------|--------|
+| **KL5a** | TOC `rii-toc.xml` → nur `gericht` BFH · Cap · Themenfilter (EStG/UStG/AO/…) | [x] |
+| **KL5b** | XML → `type=caselaw` (Leitsatz/Tenor) · JSONL `storage/kichel/rii/` | [x] |
+| **KL5c** | `KichelCaselawIndex` + Retriever · Selftest offline | [x] |
+
+| Datei | Rolle |
+|-------|--------|
+| `src/Kichel/KichelRiiImporter.php` | TOC/Filter/Import |
+| `src/Kichel/KichelRiiXmlParser.php` | Entscheidungs-XML |
+| `src/Kichel/KichelCaselawIndex.php` | Volltext-Index |
+| `bin/kichel-rii-import.php` | CLI |
+| `bin/kichel-rii-import-selftest.php` | Abnahme |
+| `tests/fixtures/kichel/rii-*` | Mini-TOC + BFH-XML |
+
+**Kein Vollbestand** — Default `--max=15`. Themenfilter nach Download (TOC hat keine Normen).
+
+#### Abnahme KL5
+
+- [x] TOC filtert BVerwG weg  
+- [x] EStG-Entscheidung bleibt, BGB-only nicht  
+- [x] Retriever → `type=caselaw`  
+- [x] KR3-Retriever-Selftest weiter grün  
+
+**Nächste Mini-ID:** optional **KR8b** / **KH0** (Hinweistext). **KT/KP** weiter gesperrt.
 
 ---
 
@@ -691,7 +719,7 @@ KR0 ✅
 
 ## 12. Nächster konkreter Schritt
 
-**KL5** geparkt (Urteile RII) · optional **KR8b** Dev-UI · **KH0** Hinweistext.  
+Optional **KR8b** Dev-UI · **KH0** Hinweistext. Phase B (KL) Pilot fertig.  
 **Kein** KT/KP ohne neues Gate.
 
 ---
@@ -715,3 +743,4 @@ KR0 ✅
 | 2026-11-27 | **KL2 ✅** `KichelStatuteIndex` Volltext über JSONL · Selftest · noch ohne Retriever |
 | 2026-11-27 | **KL3 ✅** Retriever ← Statute-Index · `type=statute` in facts/sources · Suite |
 | 2026-11-27 | **KL4 ✅** TOC-Diff Update · Snapshot · CLI check/apply/force · Selftest |
+| 2026-11-27 | **KL5 ✅** RII BFH-Pilot · Themenfilter · Caselaw-Index · Retriever |

@@ -41,6 +41,8 @@ secrets/
 storage/kichel/gii/*.jsonl
 storage/kichel/gii/*.manifest.json
 storage/kichel/gii/toc-snapshot.json
+storage/kichel/rii/*.jsonl
+storage/kichel/rii/*.manifest.json
 
 # Flutter
 apps/**/.dart_tool/

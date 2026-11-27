@@ -58,6 +58,8 @@ Nutzerfrage
 | `src/Kichel/KichelStatuteIndex.php` | KL2: JSONL-Volltext-Index |
 | `src/Kichel/KichelRetriever.php` | KR3 + **KL3:** Statute-Kandidaten aus Index |
 | `src/Kichel/KichelGiiUpdater.php` | KL4: TOC-Snapshot/Diff → gezielter Re-Import |
+| `src/Kichel/KichelRiiImporter.php` | KL5: RII BFH-Pilot + Themenfilter |
+| `src/Kichel/KichelCaselawIndex.php` | KL5: Urteils-Volltext-Index |
 | `src/Kichel/data/tax-shorttexts.php` | KR4c: eigene Steuer-Kurztexte (ohne Verlagskommentar) |
 | `src/Kichel/KichelRanker.php` | KR5: Score-Minimum, Top-K, Leerfall-Hinweis |
 | `src/Kichel/KichelAssistant.php` | Orchestrierung |

@@ -21,6 +21,7 @@ $scripts = [
     'kichel-statute-index-selftest.php',
     'kichel-statute-retriever-selftest.php',
     'kichel-gii-update-selftest.php',
+    'kichel-rii-import-selftest.php',
 ];
 
 $failed = 0;

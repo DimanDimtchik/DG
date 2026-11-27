@@ -70,6 +70,7 @@ final class KichelCorpus
             'field_help' => KichelRagFact::TYPE_FIELD,
             'tax_note' => KichelRagFact::TYPE_TAX_NOTE,
             'statute' => KichelRagFact::TYPE_STATUTE,
+            'caselaw' => KichelRagFact::TYPE_CASELAW,
             'media', 'academy_video', 'academy_course' => KichelRagFact::TYPE_MEDIA,
             default => $kind !== '' ? $kind : KichelRagFact::TYPE_OTHER,
         };
@@ -93,6 +94,7 @@ final class KichelCorpus
             KichelRagFact::TYPE_MEDIA => 'CRM-Medien',
             KichelRagFact::TYPE_TAX_NOTE => 'CRM-Steuerkurztext',
             KichelRagFact::TYPE_STATUTE => $labelOverride !== '' ? $labelOverride : 'GII',
+            KichelRagFact::TYPE_CASELAW => $labelOverride !== '' ? $labelOverride : 'RII',
             default => $labelOverride !== '' ? $labelOverride : 'CRM',
         };
 
