@@ -58,8 +58,8 @@ Kein Fine-Tuning, kein Gesetzes-Vollimport außerhalb dieser ID.
 
 | Phase | Kürzel | Inhalt | Status |
 |-------|--------|--------|--------|
-| **A — RAG (jetzt)** | **KR0–KR9** | Verdrahtung Suche → Fakten → Qwen; CRM-Korpus; Quellen; Smoke | **KR0–9 ✅** Gate offen · als Nächstes **KL0** |
-| **B — Rechtskorpus** | **KL0–KL5** | Gesetze/Urteile importieren & indexieren (nach stabilem RAG) | **KL0 ✅** · als Nächstes **KL1** |
+| **A — RAG (jetzt)** | **KR0–KR9** | Verdrahtung Suche → Fakten → Qwen; CRM-Korpus; Quellen; Smoke | **KR0–9 ✅** Gate offen |
+| **B — Rechtskorpus** | **KL0–KL5** | Gesetze/Urteile importieren & indexieren (nach stabilem RAG) | **KL0–1 ✅** · als Nächstes **KL2** |
 | **C — Intent-LLM** | **KI0–KI3** | Qwen nur als Frage-Parser (JSON), Suche weiter PHP | geplant |
 | **D — Produkt/Haftung** | **KH0–KH3** | Disclaimer, Protokoll-Felder, Admin-Qualität | geplant |
 | **E — Fine-Tuning** | **KT0–KT5** | LoRA auf Q&A/Stil — **nur nach RAG-Stabil** | später, beschrieben |
@@ -419,7 +419,7 @@ RAG gilt als **stabil**, wenn:
 | ID | Inhalt | Status |
 |----|--------|--------|
 | **KL0** | Quellenentscheid (Doc) | [x] 2026-11-27 · §4.1 |
-| **KL1** | Import-Pipeline: TOC → AO/UStG/EStG (+ ggf. HGB) → Chunks | [ ] |
+| **KL1** | Import-Pipeline: TOC → AO/UStG/EStG (+ ggf. HGB) → Chunks | [x] 2026-11-27 · §4.2 |
 | **KL2** | Speicher Index (Volltext zuerst) | [ ] |
 | **KL3** | Retriever → `type=statute` | [ ] |
 | **KL4** | Update-Job TOC-Diff | [ ] |
@@ -470,7 +470,34 @@ Kein Massenimport aller Bundesgesetze in KL1.
 - [x] Pilot-Gesetze AO/UStG/EStG (+ optional HGB)  
 - [x] kein Code-Import in KL0  
 
-**Nächste Mini-ID:** **KL1** (Import-Pipeline nur Whitelist).
+**Nächste Mini-ID:** **KL1** ✅ → **KL2**.
+
+### 4.2 KL1 — Import-Pipeline (Whitelist) ✅ 2026-11-27
+
+| Teil | Inhalt | Status |
+|------|--------|--------|
+| **KL1a** | TOC `gii-toc.xml` → Slug-Whitelist AO/`ao_1977`, UStG/`ustg_1980`, EStG/`estg` (+ HGB/`hgb`) · https-Links | [x] |
+| **KL1b** | GII-XML `<norm>` → Plaintext · Chunks `type=statute` · § mit ≥2 Abs. → Abs.-Chunks · Href `…/{slug}/__….html` | [x] |
+| **KL1c** | CLI + JSONL unter `storage/kichel/gii/` + Selftest (Fixtures offline) | [x] |
+
+| Datei | Rolle |
+|-------|--------|
+| `src/Kichel/KichelGiiImporter.php` | Whitelist, TOC, Download/ZIP, `writeChunks` |
+| `src/Kichel/KichelGiiXmlParser.php` | XML → §/Abs.-Chunks |
+| `bin/kichel-gii-import.php` | CLI (`--dry-run`, `--laws`, `--toc`, `--xml`) |
+| `bin/kichel-gii-import-selftest.php` | Offline-Abnahme |
+| `tests/fixtures/kichel/gii-*.xml` | Mini-TOC + UStG-Mini |
+
+**Nicht in KL1:** Retriever-Anbindung (→ **KL3**), Update-Diff (→ **KL4**), Urteile.
+
+#### Abnahme KL1
+
+- [x] TOC löst nur Whitelist-Slugs (Titel-Nadel)  
+- [x] Unbekanntes Gesetz → Fehler  
+- [x] Parser: §/Anlage, Abs.-Split, Standhinweis „konsolidiert GII“  
+- [x] Selftest grün ohne Netz  
+
+**Nächste Mini-ID:** **KL2** (Index lesen aus JSONL).
 
 ---
 
@@ -587,7 +614,7 @@ KR0 ✅
 
 ## 12. Nächster konkreter Schritt
 
-**KL1** (Import-Pipeline Whitelist AO/UStG/EStG aus GII-XML).  
+**KL2** (JSONL-Korpus laden / Volltext-Index für Retriever).  
 Optional: KR8b Dev-Browser. **Kein** KT/KP ohne neues Gate.
 
 ---
@@ -607,3 +634,4 @@ Optional: KR8b Dev-Browser. **Kein** KT/KP ohne neues Gate.
 | 2026-11-27 | **KR8a ✅** Smoke+Suite Selftests · **KR8b** Dev-UI-Checkliste offen |
 | 2026-11-27 | **KR9 ✅** RAG-Gate offen für **KL** · KT/KP gesperrt bis neuer Freigabe |
 | 2026-11-27 | **KL0 ✅** Quellenentscheid: GII primär · Bund-API optional · Pilot AO/UStG/EStG |
+| 2026-11-27 | **KL1 ✅** GII-Import Whitelist · XML→§/Abs.-Chunks · JSONL `storage/kichel/gii/` · Selftest |

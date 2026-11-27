@@ -37,6 +37,10 @@ docs/Kontur-Cosmetics-Zugangsdaten.pdf
 # Local credential paste files (never commit)
 secrets/
 
+# Kichel GII-Import (KL1+) — Instanz-Korpus, nicht committen
+storage/kichel/gii/*.jsonl
+storage/kichel/gii/*.manifest.json
+
 # Flutter
 apps/**/.dart_tool/
 apps/**/build/
