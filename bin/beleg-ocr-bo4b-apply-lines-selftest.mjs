@@ -39,9 +39,13 @@ if (!belege.includes("kindField.value = line.catalog_kind")) {
 if (!importJs.includes('applyOcrExtractLines')) {
   fail('import applySuggestion must call applyOcrExtractLines');
 }
-if (!importJs.includes('Positionen als Buchungszeilen übernommen')
-  && !importJs.includes('Positionen in die Rechnungspositionen übernommen')) {
-  fail('missing user status for applied lines');
+const applyVendor = readFileSync(join(root, 'assets/js/vendor/dg-voucher-ocr-apply.mjs'), 'utf8');
+if (!applyVendor.includes('Positionen als Buchungszeilen übernommen')
+  && !applyVendor.includes('als Buchungszeilen übernommen')) {
+  fail('missing user status for applied split lines');
+}
+if (!applyVendor.includes('Rechnungspositionen übernommen')) {
+  fail('missing user status for applied item lines');
 }
 if (/BO4b|Gate G3|Stufe C/.test(view)) {
   fail('plan codes must not appear in end-user view');

@@ -79,7 +79,7 @@ Datei (PDF/Bild/XML)
 | **BO1** | Rohpipeline Client härten | [~] BO1b–c ✅ · BO1d offen | 🟡🔴 |
 | **BO2** | Extrakt-Schema (Kopf + Positionen) | [x] BO2a–d ✅ | 🟢🟡 |
 | **BO3** | Kichel-Strukturierung | [x] BO3a–e ✅ | 🟢🟡 |
-| **BO4** | FiBu-UI Positionen übernehmen | [~] BO4a–c ✅ | 🟢🟡 |
+| **BO4** | FiBu-UI Positionen übernehmen | [x] BO4a–d ✅ | 🟢🟡 |
 | **BO5** | Lager-Anbindung | [ ] | 🟡🔴 |
 | **BO6** | Docs/Haken Abschluss | [ ] | 🟢 |
 
@@ -159,7 +159,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | **BO4a** | Ist: wie Belegformular Split-/Positionszeilen speichert (`buchhaltung-belege.js` / Form-Felder) — nur lesen | 🟢 | [x] 2026-11-27 · §12 |
 | **BO4b** | „Vorschläge übernehmen“ füllt **Belegpositionen** (Titel, Menge, Einzel/Gesamt, Steuersatz, Art Artikel/Leistung) | 🟢 | [x] 2026-11-27 · `applyOcrExtractLines` |
 | **BO4c** | Kopfdaten-Apply unverändert nutzbar; Konflikte/leere Zeilen klar in Status | 🟢 | [x] 2026-11-27 · `buildApplyStatus` |
-| **BO4d** | Guard + Smoke Dev (1 E-Rechnung mit Zeilen) | 🔴 | [ ] |
+| **BO4d** | Guard + Smoke Dev (1 E-Rechnung mit Zeilen) | 🟢 | [x] 2026-11-27 · CII-Selftest + `dg-voucher-ocr-apply.mjs`; UI-Smoke nach Deploy |
 
 **Nicht in BO4:** Artikelstamm anlegen (→ BO5).
 
@@ -456,3 +456,4 @@ Parallel ok: BO1 und BO2a (Schema schon hier). **BO5 nicht vor BO4.**
 | 2026-11-27 | **BO4a ✅** Ist Split/`items` vs. OCR-Apply §12 — Ausgabe nur `lines[]`; Items nur Erlös; Apply füllt keine Positionen |
 | 2026-11-27 | **BO4b ✅** Apply → `applyOcrExtractLines` (Ausgabe=Splits, Erlös=items, Konto/Artikel leer) |
 | 2026-11-27 | **BO4c ✅** Kopf zuerst; Status: übersprungene Zeilen, Summenprüfung, Extract-Warnings |
+| 2026-11-27 | **BO4d ✅** Guard+Smoke CII→Apply-Normalisierung · shared `dg-voucher-ocr-apply.mjs` · BO4-Block fertig |

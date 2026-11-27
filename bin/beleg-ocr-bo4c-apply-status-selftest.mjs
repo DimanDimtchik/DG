@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const importJs = readFileSync(join(root, 'assets/js/buchhaltung-import.mjs'), 'utf8');
 const belege = readFileSync(join(root, 'assets/js/buchhaltung-belege.js'), 'utf8');
+const applyVendor = readFileSync(join(root, 'assets/js/vendor/dg-voucher-ocr-apply.mjs'), 'utf8');
 const view = readFileSync(join(root, 'views/modules/buchhaltung-beleg-form.php'), 'utf8');
 
 function fail(msg) {
@@ -17,19 +18,25 @@ function fail(msg) {
   process.exit(1);
 }
 
-if (!importJs.includes('function buildApplyStatus')) {
-  fail('missing buildApplyStatus');
+if (!importJs.includes('buildApplyStatus')) {
+  fail('missing buildApplyStatus usage/import');
 }
-if (!importJs.includes('Kopfdaten übernommen')) {
+if (!importJs.includes('dg-voucher-ocr-apply.mjs')) {
+  fail('import.mjs must import dg-voucher-ocr-apply.mjs');
+}
+if (!applyVendor.includes('export function buildApplyStatus')) {
+  fail('buildApplyStatus must live in vendor module');
+}
+if (!applyVendor.includes('Kopfdaten übernommen')) {
   fail('status must mention Kopfdaten');
 }
-if (!importJs.includes('übersprungen')) {
+if (!applyVendor.includes('übersprungen')) {
   fail('status must mention skipped lines');
 }
-if (!importJs.includes('Summenprüfung')) {
+if (!applyVendor.includes('Summenprüfung')) {
   fail('status must surface amount_check conflicts');
 }
-if (!importJs.includes("amountCheck.ok === false")) {
+if (!applyVendor.includes('amountCheck.ok === false')) {
   fail('must check amount_check.ok === false');
 }
 if (!importJs.includes('Kopfdaten immer zuerst')) {

@@ -13,6 +13,7 @@ import {
   mapEInvoiceToBo2Extract,
   mapReceiptHintsToBo2Extract,
 } from './vendor/dg-einvoice-xml.mjs';
+import { buildApplyStatus } from './vendor/dg-voucher-ocr-apply.mjs';
 
 const PDFJS_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.6.82/build/pdf.min.mjs';
 const PDFJS_WORKER_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.6.82/build/pdf.worker.min.mjs';
@@ -985,62 +986,6 @@ function setFieldValue(el, value) {
   el.value = value;
   el.dispatchEvent(new Event('input', { bubbles: true }));
   el.dispatchEvent(new Event('change', { bubbles: true }));
-}
-
-/** BO4c — Status nach Apply: Kopf immer; Konflikte/leere Zeilen klar benennen. */
-function buildApplyStatus(suggestion, lineApply, extractLineCount) {
-  const notices = [];
-  let kind = 'ok';
-  let base = 'Kopfdaten übernommen. Bitte Kontakt aus der Liste bestätigen und Beleg speichern.';
-
-  if (lineApply.count > 0 && lineApply.mode === 'items') {
-    base = `Kopfdaten und ${lineApply.count} Positionen in die Rechnungspositionen übernommen. Katalogzuordnung später prüfen, dann speichern.`;
-  } else if (lineApply.count > 0 && lineApply.mode === 'splits') {
-    base = `Kopfdaten und ${lineApply.count} Positionen als Buchungszeilen übernommen. Konten bitte wählen und speichern.`;
-  } else if (extractLineCount > 0 && lineApply.count === 0) {
-    base = 'Kopfdaten übernommen. Keine Position mit Betrag übernommen — bitte manuell ergänzen.';
-    kind = 'warn';
-  }
-
-  const skipped = Number(lineApply.skipped || 0);
-  if (skipped > 0) {
-    kind = 'warn';
-    const bits = [];
-    if (lineApply.skippedNoAmount > 0) {
-      bits.push(`${lineApply.skippedNoAmount} ohne Betrag`);
-    }
-    if (lineApply.skippedEmptyTitle > 0) {
-      bits.push(`${lineApply.skippedEmptyTitle} ohne Titel`);
-    }
-    let skipMsg = `${skipped} Position${skipped === 1 ? '' : 'en'} übersprungen`;
-    if (bits.length) skipMsg += ` (${bits.join(', ')})`;
-    if (Array.isArray(lineApply.skippedTitles) && lineApply.skippedTitles.length) {
-      skipMsg += ': ' + lineApply.skippedTitles.join('; ');
-    }
-    notices.push(skipMsg);
-  }
-
-  const amountCheck = suggestion.extract?.amount_check;
-  if (amountCheck && amountCheck.ok === false) {
-    kind = 'warn';
-    notices.push(amountCheck.detail
-      ? `Summenprüfung: ${amountCheck.detail}`
-      : 'Summenprüfung: Zeilen und Kopf weichen ab.');
-  }
-
-  const warnings = Array.isArray(suggestion.extract?.warnings)
-    ? suggestion.extract.warnings.map((w) => String(w || '').trim()).filter(Boolean)
-    : [];
-  if (warnings.length) {
-    kind = 'warn';
-    notices.push('Hinweise: ' + warnings.slice(0, 2).join(' · '));
-  }
-
-  if (suggestion.assistenz?.soft_fail && suggestion.assistenz.soft_fail_reason) {
-    notices.push(String(suggestion.assistenz.soft_fail_reason));
-  }
-
-  return { kind, message: [base, ...notices].join(' ') };
 }
 
 function applySuggestion() {

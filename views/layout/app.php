@@ -584,6 +584,7 @@ $belegeFocus = (string) ($belegeFocus ?? '');
         ) ?>
       };
     </script>
+    <script type="module" src="<?= View::escape(Asset::url('/assets/js/vendor/dg-voucher-ocr-apply.mjs')) ?>"></script>
     <script src="<?= View::escape(Asset::url('/assets/js/buchhaltung-belege.js')) ?>" defer></script>
   <?php endif; ?>
   <?php if (($contentTemplate ?? '') === 'modules/buchhaltung-beleg-form') : ?>

@@ -3166,80 +3166,15 @@
   }
 
   function normalizeOcrExtractLines(rawLines) {
-    var out = [];
-    var skippedEmptyTitle = 0;
-    var skippedNoAmount = 0;
-    var skippedTitles = [];
-    if (!Array.isArray(rawLines)) {
-      return {
-        lines: out,
-        skippedEmptyTitle: 0,
-        skippedNoAmount: 0,
-        skippedTitles: skippedTitles,
-      };
+    // BO4d — gemeinsame Logik in vendor/dg-voucher-ocr-apply.mjs (window.dgVoucherOcrApply)
+    if (window.dgVoucherOcrApply && typeof window.dgVoucherOcrApply.normalizeOcrExtractLines === 'function') {
+      return window.dgVoucherOcrApply.normalizeOcrExtractLines(rawLines);
     }
-    rawLines.forEach(function (line) {
-      if (!line || typeof line !== 'object') {
-        skippedEmptyTitle += 1;
-        return;
-      }
-      var title = String(line.title || line.description || '').trim();
-      if (!title) {
-        skippedEmptyTitle += 1;
-        return;
-      }
-      var taxRate = parseInt(String(line.tax_percent != null ? line.tax_percent : (line.tax_rate != null ? line.tax_rate : 19)), 10);
-      if ([0, 7, 19].indexOf(taxRate) === -1) {
-        taxRate = 19;
-      }
-      var qty = parseAmount(line.quantity != null ? line.quantity : '1');
-      if (!qty || qty <= 0) {
-        qty = 1;
-      }
-      var kind = String(line.catalog_kind || 'service').toLowerCase();
-      if (kind !== 'product' && kind !== 'service') {
-        kind = 'service';
-      }
-      var unit = String(line.unit || 'Stück').trim() || 'Stück';
-      var gross = parseAmount(line.line_gross != null ? line.line_gross : '');
-      var net = parseAmount(line.line_net != null ? line.line_net : '');
-      if (!gross && net) {
-        gross = Math.round(net * (1 + taxRate / 100) * 100) / 100;
-      }
-      var unitNet = parseAmount(line.unit_price_net != null ? line.unit_price_net : '');
-      var unitGross = parseAmount(line.unit_price_gross != null ? line.unit_price_gross : '');
-      if (!unitGross && unitNet) {
-        unitGross = Math.round(unitNet * (1 + taxRate / 100) * 100) / 100;
-      }
-      if (!gross && unitGross) {
-        gross = Math.round(qty * unitGross * 100) / 100;
-      }
-      if (!unitGross && gross && qty) {
-        unitGross = Math.round((gross / qty) * 100) / 100;
-      }
-      if (!gross) {
-        skippedNoAmount += 1;
-        if (skippedTitles.length < 5) {
-          skippedTitles.push(title);
-        }
-        return;
-      }
-      out.push({
-        title: title,
-        catalog_kind: kind,
-        quantity: qty,
-        unit: unit,
-        unit_price_gross: unitGross || gross,
-        gross_amount: gross,
-        tax_rate: taxRate,
-        sku: String(line.sku || '').trim(),
-      });
-    });
     return {
-      lines: out,
-      skippedEmptyTitle: skippedEmptyTitle,
-      skippedNoAmount: skippedNoAmount,
-      skippedTitles: skippedTitles,
+      lines: [],
+      skippedEmptyTitle: Array.isArray(rawLines) ? rawLines.length : 0,
+      skippedNoAmount: 0,
+      skippedTitles: [],
     };
   }
 
