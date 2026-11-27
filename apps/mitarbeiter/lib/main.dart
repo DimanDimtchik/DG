@@ -1159,53 +1159,120 @@ class KontoTab extends StatefulWidget {
 class _KontoTabState extends State<KontoTab> {
   Map<String, dynamic>? _data;
   String? _error;
+  bool _loading = true;
 
   @override
   void initState() {
     super.initState();
-    widget.client.get('/api/mobile/staff/konto').then((res) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final res = await widget.client.get('/api/mobile/staff/konto');
       if (!mounted) return;
       setState(() {
+        _loading = false;
         if (apiIsOk(res)) {
-          _data = res['data'] as Map<String, dynamic>;
+          final d = res['data'];
+          _data = d is Map ? Map<String, dynamic>.from(d) : <String, dynamic>{};
           _error = null;
         } else {
           _error = apiUserMessage(res, fallback: 'Zeitkonto nicht ladbar.');
         }
       });
-    }).catchError((Object e) {
+    } catch (e) {
       if (!mounted) return;
-      setState(() => _error = apiUserMessage(e));
-    });
+      setState(() {
+        _loading = false;
+        _error = apiUserMessage(e, fallback: 'Zeitkonto nicht ladbar.');
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    if (_loading && _data == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
     if (_error != null && _data == null) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Text(_error!, textAlign: TextAlign.center),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(_error!, textAlign: TextAlign.center),
+              const SizedBox(height: 12),
+              FilledButton(onPressed: _load, child: const Text('Erneut laden')),
+            ],
+          ),
         ),
       );
     }
-    if (_data == null) return const Center(child: CircularProgressIndicator());
-    final lots = (_data!['lots'] as List?) ?? [];
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Text('Saldo: ${_data!['balance_display']} h', style: Theme.of(context).textTheme.headlineSmall),
-        const SizedBox(height: 12),
-        ...lots.map((l) {
-          final m = l as Map;
-          return ListTile(
-            title: Text('${m['remaining_display']} h'),
-            subtitle: Text(
-              'Ang. ${formatDeDate(m['accrued_date'])} · bis ${formatDeDate(m['expires_at'])}',
+    final lots = (_data?['lots'] as List?) ?? const [];
+    final balance = '${_data?['balance_display'] ?? '0:00'}';
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        children: [
+          Text('Zeitkonto', style: theme.textTheme.titleMedium),
+          const SizedBox(height: 8),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Saldo',
+                    style: theme.textTheme.labelLarge?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '$balance h',
+                    style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Offene Überstunden-Kontingente (älteste zuerst).',
+                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  ),
+                ],
+              ),
             ),
-          );
-        }),
-      ],
+          ),
+          const SizedBox(height: 16),
+          Text('Kontingente', style: theme.textTheme.titleSmall),
+          const SizedBox(height: 8),
+          if (lots.isEmpty)
+            Text(
+              'Keine offenen Kontingente.',
+              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            )
+          else
+            ...lots.map((l) {
+              final m = Map<String, dynamic>.from(l as Map);
+              return Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: ListTile(
+                  leading: const Icon(Icons.savings_outlined),
+                  title: Text('${m['remaining_display'] ?? '0:00'} h'),
+                  subtitle: Text(
+                    'Ang. ${formatDeDate(m['accrued_date'])} · bis ${formatDeDate(m['expires_at'])}',
+                  ),
+                ),
+              );
+            }),
+        ],
+      ),
     );
   }
 }
@@ -2106,35 +2173,45 @@ class _DocsTabState extends State<DocsTab> {
       _loading = true;
       _error = null;
     });
-    final res = await widget.client.get('/api/mobile/staff/documents');
-    if (!mounted) return;
-    setState(() {
-      _loading = false;
-      if (apiIsOk(res)) {
-        final data = res['data'] as Map? ?? {};
-        _slots = (data['slots'] as List?) ?? const [];
-        if (_slots.isEmpty) {
-          // Fallback ältere API: nur documents-Liste
-          final docs = (data['documents'] as List?) ?? const [];
-          _slots = docs
-              .map((d) {
-                final m = Map<String, dynamic>.from(d as Map);
-                return {
-                  'type': m['type'],
-                  'label': m['label'],
-                  'multi': false,
-                  'files': [m],
-                };
-              })
-              .toList();
+    try {
+      final res = await widget.client.get('/api/mobile/staff/documents');
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        if (apiIsOk(res)) {
+          final data = res['data'] is Map ? Map<String, dynamic>.from(res['data'] as Map) : <String, dynamic>{};
+          _slots = (data['slots'] as List?) ?? const [];
+          if (_slots.isEmpty) {
+            // Fallback ältere API: nur documents-Liste
+            final docs = (data['documents'] as List?) ?? const [];
+            _slots = docs
+                .map((d) {
+                  final m = Map<String, dynamic>.from(d as Map);
+                  return {
+                    'type': m['type'],
+                    'label': m['label'],
+                    'multi': false,
+                    'files': [m],
+                  };
+                })
+                .toList();
+          }
+          _error = null;
+        } else {
+          _error = apiUserMessage(res, fallback: 'Akte nicht ladbar.');
         }
-      } else {
-        _error = apiUserMessage(res, fallback: 'Akte nicht ladbar.');
-      }
-    });
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = apiUserMessage(e, fallback: 'Akte nicht ladbar.');
+      });
+    }
   }
 
   Future<void> _upload(String type, String label) async {
+    if (_busyType != null) return;
     final picked = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: const ['pdf', 'jpg', 'jpeg', 'png', 'webp'],
@@ -2151,25 +2228,33 @@ class _DocsTabState extends State<DocsTab> {
       return;
     }
     setState(() => _busyType = type);
-    final res = await widget.client.postMultipart(
-      '/api/mobile/staff/documents',
-      fields: {'type': type},
-      fileField: 'file',
-      filePath: path,
-      filename: file.name,
-    );
-    if (!mounted) return;
-    setState(() => _busyType = null);
-    if (apiIsOk(res)) {
-      final data = res['data'] as Map? ?? {};
-      setState(() => _slots = (data['slots'] as List?) ?? _slots);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$label hochgeladen.')),
+    try {
+      final res = await widget.client.postMultipart(
+        '/api/mobile/staff/documents',
+        fields: {'type': type},
+        fileField: 'file',
+        filePath: path,
+        filename: file.name,
       );
-    } else {
+      if (!mounted) return;
+      if (apiIsOk(res)) {
+        final data = res['data'] is Map ? Map<String, dynamic>.from(res['data'] as Map) : <String, dynamic>{};
+        setState(() => _slots = (data['slots'] as List?) ?? _slots);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$label hochgeladen.')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(apiUserMessage(res, fallback: 'Upload fehlgeschlagen.'))),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(apiUserMessage(res, fallback: 'Upload fehlgeschlagen.'))),
+        SnackBar(content: Text(apiUserMessage(e, fallback: 'Upload fehlgeschlagen.'))),
       );
+    } finally {
+      if (mounted) setState(() => _busyType = null);
     }
   }
 
@@ -2325,6 +2410,7 @@ class ProfileTab extends StatefulWidget {
 class _ProfileTabState extends State<ProfileTab> {
   Map<String, dynamic>? _data;
   String? _error;
+  bool _loading = true;
 
   @override
   void initState() {
@@ -2333,16 +2419,30 @@ class _ProfileTabState extends State<ProfileTab> {
   }
 
   Future<void> _load() async {
-    final res = await widget.client.get('/api/mobile/staff/profile');
-    if (!mounted) return;
     setState(() {
-      if (apiIsOk(res)) {
-        _data = res['data'] as Map<String, dynamic>;
-        _error = null;
-      } else {
-        _error = apiUserMessage(res, fallback: 'Profil nicht ladbar.');
-      }
+      _loading = true;
+      _error = null;
     });
+    try {
+      final res = await widget.client.get('/api/mobile/staff/profile');
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        if (apiIsOk(res)) {
+          final d = res['data'];
+          _data = d is Map ? Map<String, dynamic>.from(d) : <String, dynamic>{};
+          _error = null;
+        } else {
+          _error = apiUserMessage(res, fallback: 'Profil nicht ladbar.');
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = apiUserMessage(e, fallback: 'Profil nicht ladbar.');
+      });
+    }
   }
 
   Widget _kv(String label, String? value) {
@@ -2364,7 +2464,10 @@ class _ProfileTabState extends State<ProfileTab> {
 
   @override
   Widget build(BuildContext context) {
-    if (_error != null) {
+    if (_loading && _data == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error != null && _data == null) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -2398,6 +2501,7 @@ class _ProfileTabState extends State<ProfileTab> {
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
         children: [
           Text('${c['label'] ?? 'Mitarbeiter'}', style: theme.textTheme.headlineSmall),
