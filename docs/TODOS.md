@@ -2,9 +2,9 @@
 
 > **Regeln (nicht hier):** [`AGENTS.md`](../AGENTS.md) · SSH: [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md)
 
-Stand: **2026-11-11** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)** (A→C FiBu/Hetzner · **D0 Lohn:** zuerst Lexware-Office-Niveau, dann SV-Automatik, dann Baulohn-Produkt · D1 Jahresblock). Lohn-Detailquelle: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md).
+Stand: **2026-11-27** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)** (A→C FiBu/Hetzner · **D0 Lohn:** zuerst Lexware-Office-Niveau, dann SV-Automatik, dann Baulohn-Produkt · D1 Jahresblock). Lohn-Detailquelle: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md).
 
-**Nächste Session:** Kichel **KR0–9 ✅** · **KL0–5 ✅** · **KR8b ✅** · **KH0–3 ✅** · **KI0 ✅** (Intent-LLM geparkt) · Super-Kichel **SKP1a–e ✅**. Cutover/SC2 **geparkt**. **PB1–PB3 ✅**. AVV ✅.
+**Nächste Session:** Mobile Apps Rest **MA** [`MOBILE-APPS-REST-PLAN.md`](MOBILE-APPS-REST-PLAN.md) · Beleg-OCR BO0–BO6 (Branch) · optional BO1d Smoke · Kichel KR/KL/KH/KI0 ✅ · SKP1a–e ✅ · Cutover/SC2 **geparkt**. **PB1–PB3 ✅**. AVV ✅.
 
 **Ops-Merkposten (GEX45):** Ollama **SKB1 ✅** + CRM-Proxy **SKC1 ✅** (`llm.ganz-soft.de`). OpenHands **SKP0 ✅** · **SKP1a–e ✅** (`/superkihel` → `https://agent.ganz-soft.de/`, MCP ohne Basic Auth). Details: [`SUPERKICHEL-SKP-PLAN.md`](SUPERKICHEL-SKP-PLAN.md) · [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md).
 
@@ -25,7 +25,7 @@ Stand: **2026-11-11** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZN
 | Super-Kichel / GEX | [`SUPERKICHEL-GEX-PLAN.md`](SUPERKICHEL-GEX-PLAN.md) · UI: [`SUPERKICHEL-UI-PLAN.md`](SUPERKICHEL-UI-PLAN.md) · Agent: [`SUPERKICHEL-SKP-PLAN.md`](SUPERKICHEL-SKP-PLAN.md) | **SKU/SKC/SKD/SKP0 ✅** · **SKP1a–e ✅** |
 | Kichel RAG → Training | [`KICHEL-RAG-TRAINING-PLAN.md`](KICHEL-RAG-TRAINING-PLAN.md) · Basis [`KICHEL-PHASE2.md`](KICHEL-PHASE2.md) | **KR0–9 ✅** · **KL0–5 ✅** · **KR8b ✅** · **KH0–3 ✅** · **KI0 ✅** · KI1–3/KT/KP gesperrt |
 
-**Nächster Block:** optional **SKP2** (geparkt) oder Roadmap außerhalb Agent. Cutover/SC2 geparkt. UI/CSS U0–U5 ✅.
+**Nächster Block:** **Mobile Apps** [`MOBILE-APPS-REST-PLAN.md`](MOBILE-APPS-REST-PLAN.md) (MA0–MA6) · optional SKP2 geparkt · Cutover/SC2 geparkt. UI/CSS U0–U5 ✅.
 
 **Backlog (nicht jetzt):** Recruiting in HR — Plan [`RECRUITING-HR-PLAN.md`](RECRUITING-HR-PLAN.md) (eigene `/rekrut`-Seite; Xing/LinkedIn nur Anzeigen-Link). · Fließlinie FL0–FL9 ✅ · optionale Verfeinerungen [`FLIESSLINIE-FL8-BACKLOG.md`](FLIESSLINIE-FL8-BACKLOG.md). · Registerkasse/TSE — [`REGISTERKASSE-TSE-PLAN.md`](REGISTERKASSE-TSE-PLAN.md) Kern weitgehend ✅; bewusst später: **K18b**, **K19c**.
 
@@ -93,7 +93,7 @@ Deploy: `bash bin/deploy-via-rsync.sh` (Cloud) oder `deploy.bat` (PC) → `bash 
 - [x] **Kontakt-Akte (Mails + Dokumente am Kontakt):** Mini-IDs **KA0–KA7 ✅** — unten am Kontakt chronologisch Mails (verknüpft + E-Mail-Treffer) und Dokumente (Belege + Verfasser + HR); `ContactAkteService` + Partial `contact-akte`  
 - [~] **Vor Hetzner Rest:** `VOR-HETZNER-CHECK.md` (A1–A4 ✅; PB1 Basis ✅; Stack = PB2+)
 - [x] **ARAP-Prozent-Vorschlag:** Code bereits vorhanden; Jahresabschluss nutzt die resultierenden Ledger-/Folgejahresbuchungen, kein separater ARAP-Abschlussprozess
-- [ ] **Mobile Apps (Flutter):** Spec [`MOBILE-APPS-PLAN.md`](MOBILE-APPS-PLAN.md) — Serie M0 API → M1 Kalender → M2 Mitarbeiter (token-sparend `m0a`…)
+- [~] **Mobile Apps (Flutter):** Spec [`MOBILE-APPS-PLAN.md`](MOBILE-APPS-PLAN.md) · Rest tokenarm [`MOBILE-APPS-REST-PLAN.md`](MOBILE-APPS-REST-PLAN.md) — **MA0–MA6** (API M0–M2 ✅ · Flutter härten, Kalender + Mitarbeiter getrennt)
 - [x] **Multi-Firma Betrieb MB1–MB4** — SSO-Secret, Switcher-Smoke, Contact-Export/Import, Provision-Gates (`MULTI-FIRMA-KONZEPT.md` §15); **MB1–MB4 ✅** (KAS-Voll-Lauf nur auf expliziten Befehl)
 - [ ] **LDAP Phase 2 (nach Hetzner):** `ldap.local.php` + Hybrid-Login testen · Plugin-Code aus No-Repo-Chat
 - [~] **Amazon Business Stufe 2** — Code A0–A5 ✅ (Selftest `bin/amazon-business-stufe2-selftest.php`) · Fach: [`AMAZON-BUSINESS-STUFE2.md`](AMAZON-BUSINESS-STUFE2.md) · Plan: [`AMAZON-BUSINESS-REST-PLAN.md`](AMAZON-BUSINESS-REST-PLAN.md) · **[x] erst nach Live-Bestellung** · Onboarding API = Mensch parallel
@@ -219,6 +219,8 @@ Nur **1 Cloud-Chat** + **1 Lokal-Chat** behalten. Agent kann nicht archivieren �
 | `SUPERKICHEL-SKB0-ENTSCHEIDUNG.md` | **SKB0** + Nachtrag 2026-11-12 (Docker/SearXNG/Playwright/OpenHands/Comfy ja; Forgejo nein) |
 | `SHARED-CORE-REST-PLAN.md` | Shared Core SC0–SC7 · `/var/www/dg-crm/shared` (nach PB2) |
 | `SERVER-MIGRATION.md` | Hetzner-Zielserver GEX45-1 · B20261107-3544202 (bestellt) |
+| `MOBILE-APPS-PLAN.md` | Mobile Spec D1–D6 · API M0–M2 |
+| `MOBILE-APPS-REST-PLAN.md` | Mobile Flutter Rest MA0–MA6 (Kalender + Mitarbeiter) |
 | `CONTACT-SIGNATURE-REST-PLAN.md` | Kontakt-Unterschriftsbild Brief/Mail (ES0–ES8, kein QES) |
 | Kontakt-Akte KA0–KA7 | Mails+Dokumente am Kontakt (Cursor-Plan `kontakt-akte_mails_docs`) |
 | `SIGNATURE-IMPORT-PROVIDER.md` | ES7a Import-Service-Vertrag / Interface |

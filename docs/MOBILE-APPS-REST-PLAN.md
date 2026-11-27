@@ -1,0 +1,231 @@
+# Mobile Apps (Flutter) — Rest-Plan (tokenarm)
+
+> **Eine Chat-Session = eine Mini-ID.**  
+> Spec-Basis: [`MOBILE-APPS-PLAN.md`](MOBILE-APPS-PLAN.md) · Fach: [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) §D3  
+> Stand: **2026-11-27** · Branch-Empfehlung: `cursor/mobile-apps-…`
+
+---
+
+## 0. Zielbild (verbindlich)
+
+| Punkt | Festlegung |
+|-------|------------|
+| **Zwei Store-Apps** | **Kalender** (Kunden) · **Mitarbeiter** (Stempel/HR-Selbstservice) |
+| **Technik** | Flutter iOS + Android · API `/api/mobile/*` · eigene DB pro CRM-Instanz |
+| **CRM-Adresse** | App speichert Basis-URL (manuell oder QR aus Einstellungen) |
+| **Kunden-Auth** | E-Mail + Passwort → Kontakt, **kein** CRM-`dg_users`-Login |
+| **MA-Auth** | Kennung + Stempeluhr-PIN → Bearer |
+| **Phase-1-Grenze** | Kein GPS, keine Gesichtserkennung, keine In-App-Zahlung, kein Push-Zwang, kein CRM-Admin in der App |
+
+**Ist (2026-11-27):** PHP-API **M0–M2 weitgehend ✅**. Flutter unter `apps/kalender/` und `apps/mitarbeiter/` schon mit Login/Flows (kein leeres Hello-World) — aber **noch nicht** als „fertig nutzbar / Store-reif“ abgeschlossen. Dieser Plan macht die **Rest-Arbeit in Microschritten**.
+
+---
+
+## 1. Warum tokenarm
+
+| Regel | Bedeutung |
+|-------|-----------|
+| **1 ID = 1 Commit** | Doc, 1 Screen-Block, 1 API-Härte oder 1 Guard |
+| **Apps nicht mischen** | Kalender-IDs und Mitarbeiter-IDs getrennt — nie beide Apps in einem Chat umbauen |
+| **Kein Tenant im Kern** | Keine Kundenfirmen/Personen in Spec-Beispielen hardcoden |
+| **Apps nicht im CRM-Sync** | `apps/` bleiben außerhalb `sync-crm-from-master.sh` / rsync-Excludes |
+| **Kein Deploy außer „deploy“** | PHP-API nur bei Bedarf; Flutter-Builds separat |
+
+**Chat-Prompt-Vorlage:**  
+`Nur Mini-ID MA2b laut docs/MOBILE-APPS-REST-PLAN.md. Nur Kalender-App. Kein Mitarbeiter. Kein Refactor.`
+
+---
+
+## 2. Token-Stufen
+
+| Symbol | Wann |
+|--------|------|
+| 🟢 | Doc, Haken, kleiner Guard / Selftest |
+| 🟡 | 1 Flutter-Screen / Auth-Härtung / API-Feinschliff |
+| 🔴 | Gerät/Emulator-Smoke, Store-Checkliste |
+
+---
+
+## 3. Architektur (Soll)
+
+```
+CRM-Instanz (eigene DB)
+  └── /api/mobile/*
+        ├── auth (customer | staff)
+        ├── customer/*  → App Kalender
+        └── staff/*     → App Mitarbeiter
+
+App speichert: baseUrl + bearerToken (+ refresh-Flow)
+```
+
+**PHP:** `src/Mobile/*` · **Flutter:** `apps/kalender/` · `apps/mitarbeiter/`
+
+---
+
+## 4. Parent-Übersicht
+
+| ID | Thema | Status | Token |
+|----|--------|--------|-------|
+| **MA0** | Inventar / Ist / Docs | [~] MA0a ✅ | 🟢 |
+| **MA1** | Shared (beide Apps, gemeinsame Regeln) | [ ] | 🟢🟡 |
+| **MA2** | Kalender nutzbar | [ ] | 🟡🔴 |
+| **MA3** | Mitarbeiter nutzbar | [ ] | 🟡🔴 |
+| **MA4** | Härte / Guards / API-Smoke | [ ] | 🟢🟡 |
+| **MA5** | Store-Vorbereitung | [ ] | 🟡🔴 |
+| **MA6** | Abschluss-Haken | [ ] | 🟢 |
+
+**Reihenfolge:** MA0 → MA1 → **MA2 komplett** (oder **MA3 komplett**) → die andere App → MA4 → MA5 → MA6.  
+Push (**M1d** alt) bleibt bewusst später (nach MA5 oder eigene Serie).
+
+---
+
+## 5. Abhackplan (Mini-IDs)
+
+Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
+
+### MA0 — Inventar / Docs
+
+| ID | Aufgabe | Token | Status |
+|----|---------|-------|--------|
+| **MA0a** | Dieser Plan + Verweis in `MOBILE-APPS-PLAN.md` · `TODOS.md` · IQ-STROM §D3 | 🟢 | [x] 2026-11-27 |
+| **MA0b** | Ist-Tabelle: API-Endpunkte vs. Flutter-Screens (was schon da, was fehlt) — nur Doc hier §7 | 🟢 | [ ] |
+| **MA0c** | QR/Basis-URL: wo im CRM erzeugt? Kurznotiz (Einstellungen) | 🟢 | [ ] |
+
+**Prompt MA0a:**  
+`Nur Mini-ID MA0a laut docs/MOBILE-APPS-REST-PLAN.md. Nur Doc-Verweise. Kein Flutter-Code.`
+
+---
+
+### MA1 — Shared (gilt für beide Apps)
+
+| ID | Aufgabe | Token | Status |
+|----|---------|-------|--------|
+| **MA1a** | Fehlerformat vereinheitlichen: `ok`/`error`/`code` in beiden Apps anzeigen (menschliche Meldung) | 🟡 | [ ] |
+| **MA1b** | Token: Speichern, Logout, Refresh bei 401 — gemeinsames Muster (je App-Datei ok, Logik gleich) | 🟡 | [ ] |
+| **MA1c** | Basis-URL: Validierung + Speichern + optional QR-Scan (wenn Plugin schon da) | 🟡 | [ ] |
+| **MA1d** | Kurz: Netzwerk-Fehler / Offline-Hinweis (kein Offline-Modus) | 🟢 | [ ] |
+
+**Nicht in MA1:** neue API-Endpunkte · Store-Assets · Push.
+
+---
+
+### MA2 — Kalender (Kunden) nutzbar
+
+| ID | Aufgabe | Token | Status |
+|----|---------|-------|--------|
+| **MA2a** | Login + Register Ende-zu-Ende gegen Dev-API (Fehlermeldungen klar) | 🟡 | [ ] |
+| **MA2b** | Katalog → Slot wählen → Buchen (Happy Path) | 🟡 | [ ] |
+| **MA2c** | Meine Termine: Liste + Storno + Umbuchen | 🟡 | [ ] |
+| **MA2d** | Randfälle: Buchung aus, Slot weg, Session abgelaufen | 🟡 | [ ] |
+| **MA2e** | Smoke Emulator/Gerät + Kurznotiz §8 | 🔴 | [ ] |
+
+**Prompt MA2b:**  
+`Nur Mini-ID MA2b laut docs/MOBILE-APPS-REST-PLAN.md. Nur apps/kalender. Buchen Happy Path. Kein Mitarbeiter.`
+
+---
+
+### MA3 — Mitarbeiter nutzbar
+
+| ID | Aufgabe | Token | Status |
+|----|---------|-------|--------|
+| **MA3a** | Login Kennung+PIN Ende-zu-Ende gegen Dev-API | 🟡 | [ ] |
+| **MA3b** | Stempel: Ein/Aus/Pause + Tagesstatus | 🟡 | [ ] |
+| **MA3c** | Abwesenheit beantragen + Liste; Schichten Woche | 🟡 | [ ] |
+| **MA3d** | Profil + Konto-Saldo; Akte-Liste/Download wenn API da | 🟡 | [ ] |
+| **MA3e** | Unterschrift (bestehende `signature_page`) — nur Härte/Fehlerpfade | 🟡 | [ ] |
+| **MA3f** | Smoke Emulator/Gerät + Kurznotiz §8 | 🔴 | [ ] |
+
+**Prompt MA3b:**  
+`Nur Mini-ID MA3b laut docs/MOBILE-APPS-REST-PLAN.md. Nur apps/mitarbeiter. Stempel-UI. Kein Kalender.`
+
+---
+
+### MA4 — Härte / Guards
+
+| ID | Aufgabe | Token | Status |
+|----|---------|-------|--------|
+| **MA4a** | PHP: Selftest Auth + ein Customer- + ein Staff-Happy-Path (ohne echte Tenant-Daten hardcoden) | 🟢🟡 | [ ] |
+| **MA4b** | Flutter: `flutter analyze` / Widget-Tests Mindeststand je App | 🟡 | [ ] |
+| **MA4c** | Rate-Limit / ungültiges Token: UI zeigt verständliche Meldung | 🟢 | [ ] |
+
+---
+
+### MA5 — Store-Vorbereitung (noch kein Upload)
+
+| ID | Aufgabe | Token | Status |
+|----|---------|-------|--------|
+| **MA5a** | App-ID / Anzeigename / Icons je App prüfen (kein `com.example`) | 🟡 | [ ] |
+| **MA5b** | Privacy-Text / Datenfluss kurz dokumentieren (Login, Token, keine GPS) | 🟢 | [ ] |
+| **MA5c** | Release-Build-Checkliste (Android AAB / iOS Archive) — Doc only | 🟢 | [ ] |
+| **MA5d** | Optional: TestFlight / internes Track — nur nach explizitem Auftrag | 🔴 | [ ] |
+
+---
+
+### MA6 — Abschluss
+
+| ID | Aufgabe | Token | Status |
+|----|---------|-------|--------|
+| **MA6a** | `TODOS.md` · IQ-STROM §D3 Haken · Parent hier | 🟢 | [ ] |
+| **MA6b** | `MOBILE-APPS-PLAN.md` Statuszeile auf „Rest MA0–MA6“ aktualisieren | 🟢 | [ ] |
+
+---
+
+## 6. Empfohlene Reihenfolge (pragmatisch)
+
+1. **MA0a–c** (Ist klar)  
+2. **MA1a–d** (Shared, spart Doppelarbeit)  
+3. **Entweder MA2** (Kunden-Kalender) **oder MA3** (Mitarbeiter) — produktseitig wählen  
+4. Die andere App-Serie  
+5. **MA4** Guards  
+6. **MA5** Store-Prep  
+7. **MA6** Haken  
+
+**Tipp:** Mitarbeiter-App oft interner Nutzen früher; Kalender braucht Online-Buchung in der Instanz aktiv.
+
+---
+
+## 7. Ist-Matrix (MA0b ausfüllen)
+
+> Platzhalter — in **MA0b** konkret gegen Code haken.
+
+| Fähigkeit | API | Kalender-App | Mitarbeiter-App |
+|-----------|-----|--------------|-----------------|
+| Auth Login/Logout/Refresh | ✅ M0 | [ ] prüfen | [ ] prüfen |
+| Basis-URL speichern | — | [ ] | [ ] |
+| Katalog / Slots / Buchen | ✅ M1 | [ ] | — |
+| Termine storno/umbuchen | ✅ M1 | [ ] | — |
+| Stempel | ✅ M2 | — | [ ] |
+| Abwesenheit / Schichten | ✅ M2 | — | [ ] |
+| Akte / Unterschrift | ✅ M2 | — | [ ] |
+| Push | ❌ M1d später | — | — |
+
+---
+
+## 8. Smoke-Notizen
+
+| ID | Datum | Gerät | Ergebnis |
+|----|-------|-------|----------|
+| MA2e | | | |
+| MA3f | | | |
+
+---
+
+## 9. Verweise
+
+| Datei | Rolle |
+|-------|--------|
+| [`MOBILE-APPS-PLAN.md`](MOBILE-APPS-PLAN.md) | Entscheidungen D1–D6 + API-Vertrag |
+| [`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) | §D3 Mobile |
+| `src/Mobile/` | PHP API |
+| `apps/kalender/` | Flutter Kunden |
+| `apps/mitarbeiter/` | Flutter MA |
+| [`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md) | Unterschrift ES6 (App-Upload) |
+
+---
+
+## Änderungshistorie
+
+| Datum | Inhalt |
+|-------|--------|
+| 2026-11-27 | Plan angelegt · Micro-IDs MA0–MA6 für Kalender + Mitarbeiter · Ist API vs. Flutter-Rest |
+| 2026-11-27 | **MA0a ✅** Verweise Spec/TODOS/IQ-STROM |

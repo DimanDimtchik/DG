@@ -1,9 +1,10 @@
 # DG CRM — Mobile Apps (Flutter)
 
-> Agent-Regel: Pro Chat **eine** ID (`m0a` …). Spec nur dieser Abschnitt + genannte Dateien.  
-> Kein Deploy außer „deploy“. Flutter erst nach **M0c**. Kalender (M1) und Mitarbeiter (M2) nicht mischen.
+> Agent-Regel: Pro Chat **eine** ID. Spec nur dieser Abschnitt + genannte Dateien.  
+> Kein Deploy außer „deploy“. Kalender und Mitarbeiter **nicht** in einem Chat mischen.  
+> **Rest-Arbeit (Microschritte):** [`MOBILE-APPS-REST-PLAN.md`](MOBILE-APPS-REST-PLAN.md) — Serie **MA0–MA6**.
 
-Stand: **2026-09-22** — M0 API + M1/M2 Backend + Flutter-Skelette (`apps/kalender`, `apps/mitarbeiter`).
+Stand: **2026-11-27** — M0 API + M1/M2 Backend ✅ · Flutter unter `apps/kalender`, `apps/mitarbeiter` vorhanden · Ausbau/Härte → Rest-Plan MA.
 
 ---
 
@@ -64,7 +65,7 @@ Token-TTL: **30 Tage**; Logout revokiert. Refresh = neues Token, altes invalid.
 | M1a | API Buchung | ✅ |
 | M1b | Flutter Shell | ✅ Skelett |
 | M1c | UI Buchen / Meine Termine | ✅ Skelett |
-| M1d | Push (später) | |
+| M1d | Push (später) | → nach MA5 / eigene Serie |
 
 ### Kunden-API (nur eigener Kontakt / eigene E-Mail)
 
