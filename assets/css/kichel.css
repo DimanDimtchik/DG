@@ -250,6 +250,17 @@
   word-break: break-word;
 }
 
+.dg-kichel-disclaimer {
+  margin: 0;
+  padding: var(--dg-space-2, 0.5rem) var(--dg-space-3, 0.85rem) var(--dg-space-3, 0.75rem);
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.dg-panel > .dg-kichel-disclaimer {
+  padding: 0 0 var(--dg-space-3, 0.75rem);
+}
+
 .dg-kichel-form {
   display: flex;
   gap: 0.5rem;

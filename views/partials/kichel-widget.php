@@ -46,12 +46,14 @@ $kichelIconClass = str_ends_with($kichelIconPath, '.jpg') || str_ends_with($kich
     <input type="text" data-kichel-input placeholder="Frage stellen …" autocomplete="off" maxlength="500" aria-label="Frage an Kichel">
     <button type="submit">Senden</button>
   </form>
+  <?php View::render('partials/kichel-disclaimer'); ?>
 </div>
 <script>
   window.dgKichel = {
     apiUrl: '/api/kichel',
     csrf: <?= json_encode(Csrf::token(), JSON_THROW_ON_ERROR) ?>,
-    chatVersion: '4'
+    chatVersion: '5',
+    disclaimer: <?= json_encode(KichelDisclaimer::text(), JSON_THROW_ON_ERROR) ?>
   };
 </script>
 <script src="<?= View::escape(Asset::url('/assets/js/kichel.js')) ?>" defer></script>

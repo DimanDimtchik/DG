@@ -22,6 +22,7 @@ $scripts = [
     'kichel-statute-retriever-selftest.php',
     'kichel-gii-update-selftest.php',
     'kichel-rii-import-selftest.php',
+    'kichel-disclaimer-selftest.php',
 ];
 
 $failed = 0;
