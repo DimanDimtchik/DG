@@ -78,7 +78,7 @@ Datei (PDF/Bild/XML)
 | **BO0** | Inventar / Zielbild / Doc-Sync | [x] BO0a–c ✅ | 🟢 |
 | **BO1** | Rohpipeline Client härten | [~] BO1b–c ✅ · BO1d offen | 🟡🔴 |
 | **BO2** | Extrakt-Schema (Kopf + Positionen) | [x] BO2a–d ✅ | 🟢🟡 |
-| **BO3** | Kichel-Strukturierung | [ ] | 🟡🔴 |
+| **BO3** | Kichel-Strukturierung | [~] BO3a ✅ | 🟡🔴 |
 | **BO4** | FiBu-UI Positionen übernehmen | [ ] | 🟡 |
 | **BO5** | Lager-Anbindung | [ ] | 🟡🔴 |
 | **BO6** | Docs/Haken Abschluss | [ ] | 🟢 |
@@ -136,7 +136,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| **BO3a** | Ist: wie Ollama/Kichel von CRM erreichbar (`llm…`, `kichel.local.php`) — nur lesen/Doc | 🟢 | [ ] |
+| **BO3a** | Ist: wie Ollama/Kichel von CRM erreichbar (`llm…`, `kichel.local.php`) — nur lesen/Doc | 🟢 | [x] 2026-11-27 · §10 |
 | **BO3b** | Spec API: `action=voucher_extract` (o. Ä.) — Input Rohtext (+ Meta), Output BO2-JSON; **kein** Chat-Ersatz | 🟢 | [ ] |
 | **BO3c** | PHP: Extrakt-Service — Prompt „nur strukturieren“, PHP-Abgleich Brutto/Netto/MwSt, Fehler → soft fail | 🟡 | [ ] |
 | **BO3d** | Client: nach OCR/Textlayer optional Kichel-Extrakt aufrufen; UI zeigt „geordnet durch Assistenz“ ohne Plan-Codes | 🟡 | [ ] |
@@ -200,8 +200,32 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | `views/modules/buchhaltung-beleg-form.php` | Dropzone + Extract-UI |
 | `src/Accounting/VoucherApi.php` `file_upload` | Sofort speichern am Entwurf |
 | `src/Install/InstallVoucherImporter.php` | Massen-Entwürfe ohne Analyse |
-| Kichel Hilfe-API | **noch nicht** in Beleg-Extrakt verdrahtet |
+| Kichel Hilfe-API | Chat `POST /api/kichel` — **noch nicht** Beleg-Extrakt (→ BO3b+) |
+| `KichelOllamaClient` | Ollama nur `phrase`/`compose` (Formulierung); Config `kichel.local.php` · Ist §10 |
 | Lager / Artikelkatalog | **noch nicht** aus Extrakt angesteuert |
+
+---
+
+## 10. BO3a — Ist Ollama / Kichel vom CRM (2026-11-27, nur lesen)
+
+> Keine Secrets in Git. Path-Token / `kichel.local.php` nur Instanz-Server.
+
+| Baustein | Ist |
+|----------|-----|
+| **Config** | `config/kichel.local.php` (nicht committen) · Vorlage `config/kichel.local.php.example` |
+| **Laden** | `KichelOllamaClient::config()` liest nur diese Datei; fehlt sie → Ollama aus |
+| **Schalter** | `ollama_enabled` · URL `ollama_url` · Modell `ollama_model` · `timeout_seconds` |
+| **Beispiel-Defaults** | enabled `false` · URL `http://127.0.0.1:11434` · Model `llama3.1:8b` |
+| **Dev (ganz-om.de)** | SKC1 ✅: `ollama_enabled=true` · **HTTPS** `https://llm.ganz-soft.de/…` (Path-Secret) · Modell typ. `qwen2.5-coder:14b` |
+| **GEX Ollama** | Bind `127.0.0.1:11434` (SKB1) · UFW 11434 zu · nginx-Proxy nur Host `llm.ganz-soft.de` |
+| **Aufruf** | PHP `file_get_contents` → `{ollama_url}/api/generate` · `stream:false` |
+| **Hilfe-Pipeline** | Widget/Super-Kichel → `POST /api/kichel` → `KichelApi` → Assistant → ggf. `KichelOllamaClient::compose`/`phrase` |
+| **Regel heute** | Ollama **nur Formulierung**; Beträge/Normen PHP/RAG — **kein** freier Beleg-JSON-Extrakt |
+| **Beleg-OCR** | Client (Browser) spricht **nicht** Ollama an; BO3b+ = **neuer** Server-Pfad `voucher_extract` (nicht Chat) |
+
+**Folge für BO3b/c:** Extrakt-Service soll denselben `kichel.local.php`-/Proxy-Weg nutzen (wenn enabled), eigenes Prompt „nur strukturieren → BO2-JSON“, Soft-Fail wenn Ollama aus/Fehler → Regex-Hints (BO2c) bleiben Fallback. Kein Secret in Responses/Logs.
+
+**Verweise:** [`KICHEL-PHASE2.md`](KICHEL-PHASE2.md) · [`SUPERKICHEL-GEX-PLAN.md`](SUPERKICHEL-GEX-PLAN.md) § SKC0/SKC1 · `config/kichel.local.php.example`
 
 ---
 
@@ -278,6 +302,8 @@ Parallel ok: BO1 und BO2a (Schema schon hier). **BO5 nicht vor BO4.**
 | [`LAGER-WIRTSCHAFT.md`](LAGER-WIRTSCHAFT.md) | Bestand, EK, Wareneingang |
 | [`ZUGFERD-AUSGANG-ENTSCHEIDUNG.md`](ZUGFERD-AUSGANG-ENTSCHEIDUNG.md) | Ausgangs-Hybrid = anderes D2-Ticket |
 | [`UI-KLASSENKATALOG.md`](UI-KLASSENKATALOG.md) | Buttons/Form |
+| [`KICHEL-PHASE2.md`](KICHEL-PHASE2.md) | Ollama-Regel Formulierung / Dev-Proxy |
+| [`SUPERKICHEL-GEX-PLAN.md`](SUPERKICHEL-GEX-PLAN.md) | SKC1 `llm.ganz-soft.de` |
 
 ---
 
@@ -292,3 +318,4 @@ Parallel ok: BO1 und BO2a (Schema schon hier). **BO5 nicht vor BO4.**
 | 2026-11-27 | **BO2b ✅** E-Rechnung-Zeilen → BO2-Schema (Artikel/Leistung, Menge, Netto) · Node-Selftest |
 | 2026-11-27 | **BO2c ✅** Text/OCR-Hints → BO2-Schema ohne LLM · XML-Vorrang · Selftest |
 | 2026-11-27 | **BO2d ✅** Fixture-XML CII/UBL unter testdata · Schema-Selftest · BO2 Block fertig |
+| 2026-11-27 | **BO3a ✅** Ist Ollama/Kichel §10 (`kichel.local.php` · `llm.ganz-soft.de` · kein Beleg-Extrakt noch) |
