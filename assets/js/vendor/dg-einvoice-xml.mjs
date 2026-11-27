@@ -2,7 +2,12 @@
  * E-Rechnung (ZUGFeRD / Factur-X / XRechnung / UBL) XML -> strukturierte Felder.
  * Portiert aus der WG-App (pdf-extract-core.mjs), reine Regex-Logik ohne Node-Abhängigkeiten.
  */
-import { analyzeInvoiceText, parseReceiptAmount } from './receipt-parse-core.mjs';
+import {
+  analyzeInvoiceText,
+  parseReceiptAmount,
+  parseReceiptLines,
+  isTotalSummaryDescription,
+} from './receipt-parse-core.mjs';
 
 function decodeXmlEntities(value) {
   return value
@@ -435,6 +440,121 @@ function amountCheckForLines(lines, netTotal) {
     return { ok: false, detail, warnings };
   }
   return { ok: true, detail: '', warnings };
+}
+
+/**
+ * Filter: reine Gesamt-Fallback-Zeilen nicht als Positionen.
+ * @param {object} item
+ */
+function isUsableHintItem(item) {
+  if (!item) return false;
+  const title = String(item.description || item.title || '').trim();
+  if (!title) return false;
+  if (item.id === 'total') return false;
+  if (/^gesamtbetrag\s+aus\s+ocr$/i.test(title)) return false;
+  if (isTotalSummaryDescription(title)) return false;
+  return true;
+}
+
+/**
+ * Receipt-/OCR-Items → BO2-lines (ohne LLM).
+ * @param {list<object>} items
+ * @param {object} opts
+ */
+export function mapReceiptItemsToBo2Lines(items, opts = {}) {
+  const taxDefault = Number(opts.taxPercent) || 19;
+  const list = Array.isArray(items) ? items.filter(isUsableHintItem) : [];
+  return list.map((item, idx) => {
+    const title = String(item.description || item.title || '').trim();
+    const qty = item.quantity != null && item.quantity !== ''
+      ? String(item.quantity)
+      : '1';
+    const unit = item.unit || (/\bstück\b/i.test(item.sourceLine || '') ? 'Stück' : 'Stück');
+    const lineNet = moneyOrEmpty(item.amount ?? item.line_net);
+    let unitPriceNet = moneyOrEmpty(item.unitPrice ?? item.unit_price_net);
+    if (!unitPriceNet && lineNet && qty) {
+      const q = parseFloat(String(qty).replace(',', '.'));
+      const net = parseReceiptAmount(lineNet);
+      if (q && net !== null) unitPriceNet = (net / q).toFixed(2);
+    }
+    const taxPercent = Number(item.tax_percent) || taxDefault;
+    let lineGross = moneyOrEmpty(item.line_gross);
+    if (!lineGross && lineNet) {
+      const net = parseReceiptAmount(lineNet);
+      if (net !== null) lineGross = (net * (1 + taxPercent / 100)).toFixed(2);
+    }
+    const skuMatch = title.match(/\b([A-Z]{1,5}[-/]?\d{2,}[A-Z0-9/-]*)\b/);
+    const sku = item.sku || (skuMatch ? skuMatch[1] : '');
+    return {
+      line_no: idx + 1,
+      catalog_kind: inferCatalogKind({ sku, title, unit }),
+      sku,
+      title,
+      quantity: qty,
+      unit,
+      unit_price_net: unitPriceNet,
+      line_net: lineNet,
+      line_gross: lineGross,
+      tax_percent: taxPercent,
+      confidence: item.quantity || item.unitPrice ? 0.65 : 0.45,
+      match_article_id: null,
+    };
+  });
+}
+
+/**
+ * BO2-Extrakt aus Textlayer/OCR-Hints (Regex), ohne LLM.
+ * Überschreibt keine vorhandenen E-Rechnungs-Zeilen.
+ * @param {object} suggestion Kopf-Vorschlag
+ * @param {string} rawText Rohtext
+ * @param {'pdf_text'|'ocr'} source
+ */
+export function mapReceiptHintsToBo2Extract(suggestion, rawText, source = 'pdf_text') {
+  const existingLines = Array.isArray(suggestion?.lines) ? suggestion.lines : [];
+  const existingExtractLines = Array.isArray(suggestion?.extract?.lines) ? suggestion.extract.lines : [];
+  if (suggestion?.source === 'einvoice' && (existingLines.length > 0 || existingExtractLines.length > 0)) {
+    return suggestion.extract || mapEInvoiceToBo2Extract(suggestion);
+  }
+
+  let items = Array.isArray(suggestion?.items) ? suggestion.items : [];
+  if ((!items.length || !items.some(isUsableHintItem)) && rawText) {
+    items = parseReceiptLines(
+      String(rawText)
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean),
+    );
+  }
+
+  const lines = mapReceiptItemsToBo2Lines(items, { taxPercent: suggestion?.taxPercent });
+  const check = amountCheckForLines(lines, suggestion?.netAmount || '');
+  // Bei fehlendem Netto: grobe Prüfung gegen Brutto optional weglassen
+  const warnings = [...(check.warnings || [])];
+  if (lines.length === 0) {
+    warnings.push('Keine Positionszeilen per Text/OCR erkannt.');
+  }
+
+  return {
+    schema_version: 1,
+    source: source === 'ocr' ? 'ocr' : 'pdf_text',
+    supplier_name: suggestion?.supplier || '',
+    invoice_number: suggestion?.invoiceNumber || '',
+    invoice_date: suggestion?.invoiceDate || '',
+    currency: 'EUR',
+    gross_total: moneyOrEmpty(suggestion?.grossAmount) || String(suggestion?.grossAmount || ''),
+    net_total: moneyOrEmpty(suggestion?.netAmount) || String(suggestion?.netAmount || ''),
+    vat_total: moneyOrEmpty(suggestion?.vatAmount) || String(suggestion?.vatAmount || ''),
+    tax_rates: suggestion?.taxPercent
+      ? [{ percent: Number(suggestion.taxPercent) || 19, net: String(suggestion.netAmount || ''), vat: String(suggestion.vatAmount || '') }]
+      : [],
+    iban: suggestion?.iban || '',
+    bic: suggestion?.bic || '',
+    vat_id: suggestion?.vatId || '',
+    tax_number: suggestion?.taxNumber || '',
+    lines,
+    warnings,
+    amount_check: { ok: check.ok, detail: check.detail || '' },
+  };
 }
 
 /**

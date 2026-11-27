@@ -11,6 +11,7 @@ import {
   looksLikeEInvoiceXml,
   extractContactMasterFromText,
   mapEInvoiceToBo2Extract,
+  mapReceiptHintsToBo2Extract,
 } from './vendor/dg-einvoice-xml.mjs';
 
 const PDFJS_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.6.82/build/pdf.min.mjs';
@@ -617,15 +618,37 @@ function enrichSuggestion(suggestion, rawText) {
 
 function finalizeSuggestion(suggestion, sourceLabel, rawText) {
   const next = enrichSuggestion({ ...suggestion, sourceLabel }, rawText);
-  if (next.source === 'einvoice' || (Array.isArray(next.lines) && next.lines.length > 0)) {
+  const hasEInvoiceLines = next.source === 'einvoice'
+    && ((Array.isArray(next.lines) && next.lines.length > 0)
+      || (Array.isArray(next.extract?.lines) && next.extract.lines.length > 0));
+
+  if (hasEInvoiceLines) {
     if (!next.extract || next.extract.schema_version !== 1) {
       next.extract = mapEInvoiceToBo2Extract(next);
     }
-    if (!Array.isArray(next.lines) && next.extract?.lines) {
-      next.lines = next.extract.lines;
+  } else if (next.source === 'textlayer' || next.source === 'ocr' || next.source === 'pdf_text') {
+    const hintSource = next.source === 'ocr' ? 'ocr' : 'pdf_text';
+    next.extract = mapReceiptHintsToBo2Extract(next, rawText || '', hintSource);
+  } else if (next.source === 'einvoice') {
+    // XML ohne Positionen: optional Text-Hints aus Rohtext (ohne LLM)
+    next.extract = mapEInvoiceToBo2Extract(next);
+    if (!next.extract.lines.length && rawText) {
+      const hints = mapReceiptHintsToBo2Extract({ ...next, source: 'textlayer' }, rawText, 'pdf_text');
+      if (hints.lines.length) {
+        next.extract = { ...hints, source: 'einvoice_xml', warnings: [...(hints.warnings || []), 'Positionen aus Text-Hints ergänzt.'] };
+      }
     }
-    if (!next.itemCount && Array.isArray(next.lines)) {
-      next.itemCount = next.lines.length;
+  }
+
+  if (next.extract?.lines) {
+    next.lines = next.extract.lines;
+    next.itemCount = next.extract.lines.length;
+    if (!Array.isArray(next.items) || next.items.length === 0) {
+      next.items = next.extract.lines.map((line) => ({
+        id: `line-${line.line_no}`,
+        description: line.title,
+        amount: Number(String(line.line_net || '').replace(',', '.')) || 0,
+      }));
     }
   }
   return next;
@@ -654,8 +677,8 @@ function suggestionFromAnalysis(analysis, source) {
     postal: '',
     commercialRegister: '',
     weeeRegistration: '',
-    items: [],
-    itemCount: Number(analysis.itemCount) || 0,
+    items: Array.isArray(analysis.items) ? analysis.items : [],
+    itemCount: Number(analysis.itemCount) || (Array.isArray(analysis.items) ? analysis.items.length : 0),
   };
 }
 

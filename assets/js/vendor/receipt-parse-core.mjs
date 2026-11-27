@@ -580,8 +580,17 @@ export function parseGermanInvoiceLine(line) {
   if (stueckMatch) {
     const description = cleanReceiptDescription(stueckMatch[2]);
     const amount = parseReceiptAmount(stueckMatch[4]);
+    const quantity = parseReceiptAmount(stueckMatch[1]);
+    const unitPrice = parseReceiptAmount(stueckMatch[3]);
     if (description && amount !== null && !shouldSkipReceiptLine(description)) {
-      return { description, amount, sourceLine: normalizedLine };
+      return {
+        description,
+        amount,
+        quantity: quantity !== null ? String(quantity) : '1',
+        unit: 'Stück',
+        unitPrice,
+        sourceLine: normalizedLine,
+      };
     }
   }
 
@@ -589,11 +598,18 @@ export function parseGermanInvoiceLine(line) {
   if (looseStueckMatch) {
     const amountTokens = extractGermanAmountTokens(normalizedLine);
     const lineTotal = amountTokens.length > 0 ? amountTokens[amountTokens.length - 1].amount : null;
+    const quantity = parseReceiptAmount(looseStueckMatch[1]);
     const description = cleanReceiptDescription(
       looseStueckMatch[2].replace(/\s+\d+[,.]\d{2}(?:\s+\d+[,.]\d{2})*.*$/, '').trim(),
     );
     if (description && lineTotal !== null && !shouldSkipReceiptLine(description)) {
-      return { description, amount: lineTotal, sourceLine: normalizedLine };
+      return {
+        description,
+        amount: lineTotal,
+        quantity: quantity !== null ? String(quantity) : '1',
+        unit: 'Stück',
+        sourceLine: normalizedLine,
+      };
     }
   }
 
@@ -942,6 +958,7 @@ export function analyzeInvoiceText(text) {
     vatId,
     grossAmount: gross.value,
     grossLine: gross.line,
+    items: parsedItems,
     itemCount: parsedItems.length,
     tseLineCount: tseLines.length,
   };
