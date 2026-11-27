@@ -4,7 +4,7 @@
 
 Stand: **2026-11-11** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md)** (A→C FiBu/Hetzner · **D0 Lohn:** zuerst Lexware-Office-Niveau, dann SV-Automatik, dann Baulohn-Produkt · D1 Jahresblock). Lohn-Detailquelle: [`LOHNABRECHNUNG-ERWEITERUNG.md`](LOHNABRECHNUNG-ERWEITERUNG.md).
 
-**Nächste Session:** Kichel **KR0–9 ✅** · **KL0–5 ✅** · **KR8b ✅** · **KH0–3 ✅** · Super-Kichel **SKP1a–e ✅**. Cutover/SC2 **geparkt**. **PB1–PB3 ✅**. AVV ✅.
+**Nächste Session:** Kichel **KR0–9 ✅** · **KL0–5 ✅** · **KR8b ✅** · **KH0–3 ✅** · **KI0 ✅** (Intent-LLM geparkt) · Super-Kichel **SKP1a–e ✅**. Cutover/SC2 **geparkt**. **PB1–PB3 ✅**. AVV ✅.
 
 **Ops-Merkposten (GEX45):** Ollama **SKB1 ✅** + CRM-Proxy **SKC1 ✅** (`llm.ganz-soft.de`). OpenHands **SKP0 ✅** · **SKP1a–e ✅** (`/superkihel` → `https://agent.ganz-soft.de/`, MCP ohne Basic Auth). Details: [`SUPERKICHEL-SKP-PLAN.md`](SUPERKICHEL-SKP-PLAN.md) · [`CLOUD-AGENT-ACCESS.md`](CLOUD-AGENT-ACCESS.md).
 
@@ -23,7 +23,7 @@ Stand: **2026-11-11** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZN
 | Tests | [`TESTLISTE-2026-09-22.md`](TESTLISTE-2026-09-22.md) | Manuelle Smoke ganz-soft |
 | ERP V2 | [`ERP-ERWEITERUNG-LASTENHEFT-V2.md`](ERP-ERWEITERUNG-LASTENHEFT-V2.md) · Rest tokenarm: [`ERP-REST-PLAN.md`](ERP-REST-PLAN.md) | Lohn/Baulohn, Zertifizierungen, Maschinen-Gemeinkosten, Akademie-Wissensbrücke |
 | Super-Kichel / GEX | [`SUPERKICHEL-GEX-PLAN.md`](SUPERKICHEL-GEX-PLAN.md) · UI: [`SUPERKICHEL-UI-PLAN.md`](SUPERKICHEL-UI-PLAN.md) · Agent: [`SUPERKICHEL-SKP-PLAN.md`](SUPERKICHEL-SKP-PLAN.md) | **SKU/SKC/SKD/SKP0 ✅** · **SKP1a–e ✅** |
-| Kichel RAG → Training | [`KICHEL-RAG-TRAINING-PLAN.md`](KICHEL-RAG-TRAINING-PLAN.md) · Basis [`KICHEL-PHASE2.md`](KICHEL-PHASE2.md) | **KR0–9 ✅** · **KL0–5 ✅** · **KR8b ✅** · **KH0–3 ✅** · **KT/KP** gesperrt |
+| Kichel RAG → Training | [`KICHEL-RAG-TRAINING-PLAN.md`](KICHEL-RAG-TRAINING-PLAN.md) · Basis [`KICHEL-PHASE2.md`](KICHEL-PHASE2.md) | **KR0–9 ✅** · **KL0–5 ✅** · **KR8b ✅** · **KH0–3 ✅** · **KI0 ✅** · KI1–3/KT/KP gesperrt |
 
 **Nächster Block:** optional **SKP2** (geparkt) oder Roadmap außerhalb Agent. Cutover/SC2 geparkt. UI/CSS U0–U5 ✅.
 

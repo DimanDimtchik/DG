@@ -60,7 +60,7 @@ Kein Fine-Tuning, kein Gesetzes-Vollimport außerhalb dieser ID.
 |-------|--------|--------|--------|
 | **A — RAG (jetzt)** | **KR0–KR9** | Verdrahtung Suche → Fakten → Qwen; CRM-Korpus; Quellen; Smoke | **KR0–9 ✅** Gate offen |
 | **B — Rechtskorpus** | **KL0–KL5** | Gesetze/Urteile importieren & indexieren (nach stabilem RAG) | **KL0–5 ✅** · KR8b ✅ |
-| **C — Intent-LLM** | **KI0–KI3** | Qwen nur als Frage-Parser (JSON), Suche weiter PHP | geplant |
+| **C — Intent-LLM** | **KI0–KI3** | Qwen nur als Frage-Parser (JSON), Suche weiter PHP | **KI0 ✅** · KI1–3 geparkt |
 | **D — Produkt/Haftung** | **KH0–KH3** | Disclaimer, Protokoll-Felder, Admin-Qualität | **KH0–3 ✅** |
 | **E — Fine-Tuning** | **KT0–KT5** | LoRA auf Q&A/Stil — **nur nach RAG-Stabil** | später, beschrieben |
 | **F — Gesetzestraining** | **KP0–KP4** | Continued Pretraining / schweres Norm-Training | später, beschrieben |
@@ -610,12 +610,63 @@ Nach `--apply` mit Download: `KichelStatuteIndex::reset()`. Snapshot ist Instanz
 
 | ID | Inhalt |
 |----|--------|
-| **KI0** | Entscheidung: LLM-Parser ja/nein (Kosten, Latenz, Fehlerrate) |
-| **KI1** | Qwen liefert **nur JSON** (Intent, Suchstrings, vermutete Normen) — kein Fließtext-Recht |
-| **KI2** | Validierung: Schema-Check; bei Müll → Fallback Token-Suche (heutige Logik) |
-| **KI3** | A/B: Parser an/aus · gleiche Selftests |
+| **KI0** ✅ | Entscheidung: LLM-Parser ja/nein (Kosten, Latenz, Fehlerrate) — **2026-11-27: vorerst nein** · §5.1 |
+| **KI1** | Qwen liefert **nur JSON** (Intent, Suchstrings, vermutete Normen) — kein Fließtext-Recht · **geparkt** |
+| **KI2** | Validierung: Schema-Check; bei Müll → Fallback Token-Suche (heutige Logik) · **geparkt** |
+| **KI3** | A/B: Parser an/aus · gleiche Selftests · **geparkt** |
 
-Parser **ersetzt nicht** die Suche. Er verbessert nur die Query.
+Parser **ersetzt nicht** die Suche. Er verbessert nur die Query. **KI1–3 erst nach neuem Freigabe-Kriterium (§5.1).**
+
+### 5.1 KI0 — Entscheidung LLM-Intent-Parser ✅ 2026-11-27
+
+#### Ist (relevant für die Entscheidung)
+
+| Baustein | Rolle heute |
+|----------|-------------|
+| `KichelIntent::detect` | Regex/Stichworte → `navigate` \| `explain` \| `calculate` \| `general` |
+| Pflichtpfade | Legal / Ledger **ohne** Intent-Gate |
+| Money | `KichelMoneyLogic` **nur** wenn Intent=`calculate` (sonst weiter Suche) |
+| Freie Suche | Token → Nav/Knowledge/Fields/Media/Statute/Caselaw → Ranker → RAG compose |
+| Ollama heute | nur **Formulierung** (`phrase`/`compose`), nicht Query-Verstehen |
+
+Schwache Formulierungen ohne Keyword landen oft bei `general` + Token-Suche — das deckt RAG/KL bereits besser als vor KR9.
+
+#### Kriterien
+
+| Kriterium | Bewertung 2026-11-27 |
+|-----------|----------------------|
+| **Kosten / Last** | Zusätzlicher Ollama-Call **pro Frage** vor der Suche · konkurriert mit Compose und GEX-Agent |
+| **Latenz** | +Netz/Timeout-Risiko auf dem kritischen Hilfe-Pfad; Failures brauchen Fallback (KI2) |
+| **Fehlerrate** | Falsches Intent kann Money blockieren oder Suche verzerren; JSON-Müll ohne strikten Schema-Gate (KI2) |
+| **Nutzen jetzt** | Retrieval+Ranker+Statute/Caselaw schon aktiv; Intent steuert nur eng (v. a. Money) |
+| **Prüfbarkeit / GoBD-Ton** | Rechts-/Betragsrichtigkeit bleibt PHP — Intent-LLM ändert das nicht positiv; Risiko eher Prompt-Drift |
+| **Betrieb** | Kill-Switch möglich, aber Monitoring „emptyResponse / Negativ-Feedback“ (KU1) noch nicht als KPI verdrahtet |
+
+#### Entscheidung (verbindlich)
+
+**Vorerst kein LLM-Intent-Parser (KI1–3 geparkt).**
+
+Begründung kurz: Mehrwert unklar bei spürbaren Kosten/Latenz; PHP-Intent + RAG reichen für den aktuellen Produktstand nach KR/KL/KH. Sicherheit und Nachvollziehbarkeit der Suche bleiben in PHP.
+
+#### Wann neu öffnen (Freigabe für KI1)
+
+Alle Punkte sollten greifen, bevor KI1 startet:
+
+1. Messwert: spürbarer Anteil **Leerantworten / „Nein“-Feedback** mit erkennbaren Umschreibungen (Protokoll KH1), die Token-Suche verfehlt  
+2. Kill-Switch in `kichel.local.php` (Parser an/aus, Default aus)  
+3. KI2-Schema verpflichtend vor Suche (bei Müll → heutige `KichelIntent` + Token)  
+4. Kein Extra-Call wenn Ollama ohnehin aus (`ollama_enabled=false`)  
+5. Kurzes A/B (KI3) gegen Suite KR8 + Smoke, ohne Regression Money/GoBD
+
+#### Abnahme KI0
+
+- [x] Kosten / Latenz / Fehlerrate bewertet  
+- [x] Ist-Nutzung von `KichelIntent` dokumentiert  
+- [x] Entscheidung **vorerst nein** schriftlich  
+- [x] Öffnungs-Kriterien für KI1 festgelegt  
+- [x] kein Parser-Code in KI0  
+
+**Nächste Mini-ID:** optional **KU** / Roadmap außerhalb KI · **KI1** erst nach Freigabe-Kriterium.
 
 ---
 
@@ -719,8 +770,8 @@ KR0 ✅
 
 ## 12. Nächster konkreter Schritt
 
-**KH0–3 ✅** (Phase D Produkt/Haftung). Nächste optional KI / KU / SKP.  
-**Kein** KT/KP ohne neues Gate.
+**KH0–3 ✅** · **KI0 ✅** (Intent-LLM vorerst nein, KI1–3 geparkt). Nächste optional **KU** oder Roadmap außerhalb.  
+**Kein** KT/KP ohne neues Gate · **kein** KI1 ohne Freigabe §5.1.
 
 ---
 
@@ -749,3 +800,4 @@ KR0 ✅
 | 2026-11-27 | **KH1 ✅** Qualität markieren · Overrides · Feedback-API · Migration 161 |
 | 2026-11-27 | **KH2 ✅** Rollenfilter API · `KichelRoleView` · Selftest |
 | 2026-11-27 | **KH3 ✅** GoBD-Ton Guard · Ollama-Verbot Buchungsrat · Selftest |
+| 2026-11-27 | **KI0 ✅** Intent-LLM vorerst nein · KI1–3 geparkt · Öffnungs-Kriterien |

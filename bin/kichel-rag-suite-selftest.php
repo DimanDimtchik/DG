@@ -26,6 +26,7 @@ $scripts = [
     'kichel-quality-selftest.php',
     'kichel-role-view-selftest.php',
     'kichel-gobd-tone-selftest.php',
+    'kichel-intent-decision-selftest.php',
 ];
 
 $failed = 0;
