@@ -80,7 +80,7 @@ Datei (PDF/Bild/XML)
 | **BO2** | Extrakt-Schema (Kopf + Positionen) | [x] BO2a–d ✅ | 🟢🟡 |
 | **BO3** | Kichel-Strukturierung | [x] BO3a–e ✅ | 🟢🟡 |
 | **BO4** | FiBu-UI Positionen übernehmen | [x] BO4a–d ✅ | 🟢🟡 |
-| **BO5** | Lager-Anbindung | [ ] | 🟡🔴 |
+| **BO5** | Lager-Anbindung | [~] BO5a ✅ | 🟡🔴 |
 | **BO6** | Docs/Haken Abschluss | [ ] | 🟢 |
 
 ---
@@ -169,7 +169,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| **BO5a** | Ist: `CalendarArticleRepository` / `catalog_kind` product\|service · `ArticlePurchaseSourceRepository` · Wareneingang — nur Doc | 🟢 | [ ] |
+| **BO5a** | Ist: `CalendarArticleRepository` / `catalog_kind` product\|service · `ArticlePurchaseSourceRepository` · Wareneingang — nur Doc | 🟢 | [x] 2026-11-27 · §13 |
 | **BO5b** | Match-Vorschläge: bestehende Artikel/Leistungen (Nummer/Titel); UI-Liste zur Bestätigung | 🟡 | [ ] |
 | **BO5c** | Neuanlage-Vorschlag: product vs. service; **nur nach User-Klick** speichern | 🟡 | [ ] |
 | **BO5d** | EK-Quelle am Artikel aus Beleg (Lieferant-Kontakt + Preis), Preferred optional | 🟡 | [ ] |
@@ -205,7 +205,54 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | `src/Install/InstallVoucherImporter.php` | Massen-Entwürfe ohne Analyse |
 | Kichel Hilfe-API | Chat `POST /api/kichel` — getrennt von `voucher_extract` |
 | `KichelOllamaClient` | `phrase`/`compose` + `generate` (Extrakt); Config `kichel.local.php` · Ist §10 |
-| Lager / Artikelkatalog | **noch nicht** aus Extrakt angesteuert (→ BO5) |
+| Lager / Artikelkatalog | Ist §13 · **noch nicht** aus Extrakt angesteuert (→ BO5b+) |
+
+---
+
+## 13. BO5a — Ist Katalog / EK-Quellen / Wareneingang (2026-11-27, nur lesen)
+
+> Kein Code in BO5a. Grundlage für Match/Neuanlage/EK/WE-Vorschlag (BO5b–e). Keine Tenant-Firmendaten.
+
+### Katalog (`dg_calendar_articles`)
+
+| Punkt | Ist |
+|-------|-----|
+| **Klassen** | `CalendarArticleRepository` · `CalendarArticleCatalog` (`src/Calendar/`) |
+| **Kinds** | `product` \| `service` (`KIND_*`); Aliase `artikel`/`ware`/… → product |
+| **Nummern** | product → `A-…` · service → `L-…` (`allocateArticleNumber`) |
+| **Lagerrelevant** | nur `catalog_kind=product` **und** `track_stock` (`stock_qty`/`min_stock`) |
+| **Felder (Kern)** | `article_number`, `gtin`, `title`, `unit`, `tax_type`, `price_gross`, `area_id`/`work_minutes` (eher service), Lagerplatz-IDs, `is_active` |
+| **Match vorhanden** | `findIdByArticleNumber` · `findIdByTitle` · `findIdByTitleForImport` · Beleg-Suche `VoucherIncomePositions::searchArticles` (LIKE) · Scan `StockBarcodeService::findArticleByBarcode` (GTIN/Nummer, nur product+track) |
+| **OCR** | **kein** Matcher aus Extrakt noch — `match_article_id` im BO2-Schema bleibt null bis BO5b |
+
+### Einkaufsquellen (`dg_article_purchase_sources`)
+
+| Punkt | Ist |
+|-------|-----|
+| **Klasse** | `ArticlePurchaseSourceRepository` (`src/Inventory/`) · Migr. **080** |
+| **Felder** | `supplier_contact_id` (optional → Kontakt), `supplier_name`, `purchase_price`, `currency`, `order_url`, `external_sku`, `is_preferred`, `sort_order`, `note` |
+| **Write** | `replaceFromInput` beim Artikelsave (`CalendarArticleRepository::save`) — genau eine Preferred |
+| **Read** | `forArticle` / `preferredForArticle` · Lieferantenwahl `supplierContactOptions` |
+
+### Wareneingang — zwei Pfade
+
+| Pfad | Mechanik | Bestätigung |
+|------|----------|-------------|
+| **A) Beleg-Sync** | `VoucherRepository::save/delete` → `StockMovementService::syncForVoucher` / `revertForVoucher` → `dg_stock_movements` | Speichern des Belegs (kein Extra-Lager-Dialog). **+Bestand** bei `expense`/`credit` wenn Item mit `article_id`, product+`track_stock`, qty&gt;0, kein Draft |
+| **B) Manuell** | `StockReceiptIssueService` (`processReceipt` / `receiptFromPost`) · UI Lager → Wareneingang · Button „Wareneingang buchen“ | **Expliziter Klick**. Optional `voucher_id` in API — **UI ohne Beleg-Dropdown** (anders als Warenausgang) |
+
+**Praxis-Hinweis (mit §12):** Ausgabe-OCR schreibt heute **Splits**, keine `items[]` mit `article_id` → Beleg-Sync-WE greift nach Apply **noch nicht**. BO5 muss Match → `article_id` (und ggf. Items/WE-Vorschlag) verdrahten.
+
+### Folge für BO5b–e
+
+| Mini-ID | Nutzen aus Ist |
+|---------|----------------|
+| **BO5b** | Match über Nummer/Titel/Import-Titel + Suche; UI-Liste zur Bestätigung — kein stilles `article_id` |
+| **BO5c** | Neuanlage nur nach Klick → `CalendarArticleRepository::save` mit `catalog_kind` aus Extrakt |
+| **BO5d** | EK-Zeile via `replaceFromInput` / Purchase-Source (Lieferant-Kontakt + Preis aus Beleg) |
+| **BO5e** | **Nicht** still `syncForVoucher` aus OCR; Vorschlag + Klick (manueller WE-Pfad oder bestätigter Beleg-Hook) |
+
+**Verweise:** [`LAGER-WIRTSCHAFT.md`](LAGER-WIRTSCHAFT.md) · [`LAGER-EINKAUF-RESERVIERUNG-PLAN.md`](LAGER-EINKAUF-RESERVIERUNG-PLAN.md) · `StockMovementService` · `StockReceiptIssueService` · Plan §12 (Ausgabe ohne items)
 
 ---
 
@@ -457,3 +504,4 @@ Parallel ok: BO1 und BO2a (Schema schon hier). **BO5 nicht vor BO4.**
 | 2026-11-27 | **BO4b ✅** Apply → `applyOcrExtractLines` (Ausgabe=Splits, Erlös=items, Konto/Artikel leer) |
 | 2026-11-27 | **BO4c ✅** Kopf zuerst; Status: übersprungene Zeilen, Summenprüfung, Extract-Warnings |
 | 2026-11-27 | **BO4d ✅** Guard+Smoke CII→Apply-Normalisierung · shared `dg-voucher-ocr-apply.mjs` · BO4-Block fertig |
+| 2026-11-27 | **BO5a ✅** Ist Katalog/EK/WE §13 — Match-APIs vorhanden, OCR noch unverdrahtet; WE Auto vs. Klick |
