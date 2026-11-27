@@ -107,7 +107,7 @@ flutter build ipa --release
 - [ ] Optional intern: APK nach `downloads/dg-*.apk`
 - [ ] iOS: Projekt vorhanden, Bundle-ID, Archive/IPA OK
 - [ ] Privacy-Punkte für Store-Formulare aus `MOBILE-APPS-PRIVACY.md` vorbereitet
-- [ ] Store-Upload / TestFlight **bewusst zurückgestellt** (MA5d)
+- [ ] Store-Upload / TestFlight **bewusst zurückgestellt** (MA5d am 2026-11-27 übersprungen — erneuter Lauf nur nach explizitem Auftrag + Credentials)
 
 ---
 

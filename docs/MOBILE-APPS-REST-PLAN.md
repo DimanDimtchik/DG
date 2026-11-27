@@ -161,10 +161,24 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | **MA5a** | App-ID / Anzeigename / Icons je App prüfen (kein `com.example`) | 🟡 | [x] 2026-11-27 · `de.ganzsoft.*` · Icons/Labels · Selftest |
 | **MA5b** | Privacy-Text / Datenfluss kurz dokumentieren (Login, Token, keine GPS) | 🟢 | [x] 2026-11-27 · [`MOBILE-APPS-PRIVACY.md`](MOBILE-APPS-PRIVACY.md) |
 | **MA5c** | Release-Build-Checkliste (Android AAB / iOS Archive) — Doc only | 🟢 | [x] 2026-11-27 · [`MOBILE-APPS-RELEASE-CHECKLIST.md`](MOBILE-APPS-RELEASE-CHECKLIST.md) |
-| **MA5d** | Optional: TestFlight / internes Track — nur nach explizitem Auftrag | 🔴 | [ ] |
+| **MA5d** | Optional: TestFlight / internes Track — nur nach explizitem Auftrag | 🔴 | [x] 2026-11-27 · **übersprungen** (kein Upload-Auftrag; siehe §5.2) |
 
-**Prompt MA5d:**  
-`Nur Mini-ID MA5d laut docs/MOBILE-APPS-REST-PLAN.md. TestFlight / internes Track — nur nach explizitem Auftrag. Sonst überspringen.`
+**Prompt MA6a:**  
+`Nur Mini-ID MA6a laut docs/MOBILE-APPS-REST-PLAN.md. TODOS + IQ-STROM §D3 Haken. Kein Store-Upload.`
+
+### 5.2 MA5d — bewusst übersprungen (2026-11-27)
+
+Plan-Regel: *„nur nach explizitem Auftrag. Sonst überspringen.“*  
+Es gab **keinen** Auftrag zum Hochladen und **keine** Store-Credentials in dieser Umgebung.
+
+| Voraussetzung für späteren MA5d-Lauf | Ist |
+|--------------------------------------|-----|
+| Expliziter Upload-Auftrag („TestFlight / Play Internal Track jetzt“) | fehlt |
+| iOS-Projekt (`apps/*/ios`) + Apple Signing | fehlt |
+| Android Release-Keystore (nicht Debug) | fehlt (siehe Release-Checkliste) |
+| App Store Connect / Play Console API-Zugang | nicht hinterlegt |
+
+**Wenn Auftrag kommt:** Release-Checkliste [`MOBILE-APPS-RELEASE-CHECKLIST.md`](MOBILE-APPS-RELEASE-CHECKLIST.md) abarbeiten, dann AAB → Play Internal Testing bzw. IPA → TestFlight. Kein automatischer Upload ohne Secrets.
 
 ### 5.1 App-IDs & Anzeigenamen (MA5a)
 
@@ -347,6 +361,7 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | `bin/mobile-privacy-selftest.php` | Guard MA5b |
 | [`MOBILE-APPS-RELEASE-CHECKLIST.md`](MOBILE-APPS-RELEASE-CHECKLIST.md) | MA5c Release AAB/IPA |
 | `bin/mobile-release-checklist-selftest.php` | Guard MA5c |
+| `bin/mobile-ma5d-skip-selftest.php` | Guard MA5d (Skip dokumentiert) |
 | `bin/mobile-app-download-slug-selftest.php` | Guard MA0d |
 | [`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md) | Unterschrift ES6 (App-Upload) |
 
@@ -381,5 +396,6 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | 2026-11-27 | **MA5a ✅** App-IDs `de.ganzsoft.dgkalender` / `…dgmitarbeiter` · Labels/Icons · kein `com.example` |
 | 2026-11-27 | **MA5b ✅** Privacy/Datenfluss · Login/Token/kein GPS · `MOBILE-APPS-PRIVACY.md` |
 | 2026-11-27 | **MA5c ✅** Release-Checkliste AAB/Archive · Doc only · `MOBILE-APPS-RELEASE-CHECKLIST.md` |
+| 2026-11-27 | **MA5d ⏭** TestFlight/Internal Track übersprungen (kein Upload-Auftrag, keine Store-Credentials) · MA5-Block abgeschlossen |
 | 2026-11-27 | **MA1a ✅** `api_message.dart` identisch in beiden Apps · UI über `apiUserMessage`/`apiIsOk` · `php bin/mobile-api-message-selftest.php` |
 | 2026-11-27 | **MA0d ✅** CRM-Download-Slug `apps` → `app-download` · Legacy-Migration nur bei `page_kind=mobile_app_download` · `/apps` frei für Website |
