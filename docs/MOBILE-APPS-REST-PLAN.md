@@ -66,7 +66,7 @@ App speichert: baseUrl + bearerToken (+ refresh-Flow)
 
 | ID | Thema | Status | Token |
 |----|--------|--------|-------|
-| **MA0** | Inventar / Ist / Docs | [~] MA0a ✅ | 🟢 |
+| **MA0** | Inventar / Ist / Docs | [~] MA0a–b ✅ · MA0c offen | 🟢 |
 | **MA1** | Shared (beide Apps, gemeinsame Regeln) | [ ] | 🟢🟡 |
 | **MA2** | Kalender nutzbar | [ ] | 🟡🔴 |
 | **MA3** | Mitarbeiter nutzbar | [ ] | 🟡🔴 |
@@ -88,7 +88,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
 | **MA0a** | Dieser Plan + Verweis in `MOBILE-APPS-PLAN.md` · `TODOS.md` · IQ-STROM §D3 | 🟢 | [x] 2026-11-27 |
-| **MA0b** | Ist-Tabelle: API-Endpunkte vs. Flutter-Screens (was schon da, was fehlt) — nur Doc hier §7 | 🟢 | [ ] |
+| **MA0b** | Ist-Tabelle: API-Endpunkte vs. Flutter-Screens (was schon da, was fehlt) — nur Doc hier §7 | 🟢 | [x] 2026-11-27 |
 | **MA0c** | QR/Basis-URL: wo im CRM erzeugt? Kurznotiz (Einstellungen) | 🟢 | [ ] |
 
 **Prompt MA0a:**  
@@ -184,20 +184,68 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 ---
 
-## 7. Ist-Matrix (MA0b ausfüllen)
+## 7. Ist-Matrix (MA0b, 2026-11-27)
 
-> Platzhalter — in **MA0b** konkret gegen Code haken.
+Legende: **✅** verdrahtet · **🟡** teilweise · **❌** fehlt · **—** nicht vorgesehen
 
-| Fähigkeit | API | Kalender-App | Mitarbeiter-App |
-|-----------|-----|--------------|-----------------|
-| Auth Login/Logout/Refresh | ✅ M0 | [ ] prüfen | [ ] prüfen |
-| Basis-URL speichern | — | [ ] | [ ] |
-| Katalog / Slots / Buchen | ✅ M1 | [ ] | — |
-| Termine storno/umbuchen | ✅ M1 | [ ] | — |
-| Stempel | ✅ M2 | — | [ ] |
-| Abwesenheit / Schichten | ✅ M2 | — | [ ] |
-| Akte / Unterschrift | ✅ M2 | — | [ ] |
-| Push | ❌ M1d später | — | — |
+Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/lib/{main,signature_page}.dart` · `views/app-connect.php`
+
+### Auth & Verbindung
+
+| Fähigkeit | API | Kalender | Mitarbeiter |
+|-----------|-----|----------|-------------|
+| Customer Register/Login | ✅ `POST …/auth/customer/*` | ✅ LoginPage (Toggle Register) | — |
+| Staff Login (Kennung+PIN) | ✅ `POST …/auth/staff/login` | — | ✅ LoginPage |
+| Logout | ✅ `POST …/auth/logout` | ✅ | ✅ |
+| Token Refresh | ✅ `POST …/auth/refresh` | ❌ nicht aufgerufen | ❌ nicht aufgerufen |
+| Session `me` | ✅ `GET …/auth/me` | ❌ | ❌ |
+| Basis-URL manuell speichern | — (App) | ✅ BootstrapPage | ✅ BootstrapPage |
+| Deep-Link / Connect | HTML `/app-connect` + Scheme | ❌ kein Scheme-Listener | ✅ `dg-mitarbeiter?base=` (app_links) |
+| QR-Scan in der App | — | ❌ | ❌ (URL tippen oder Deep-Link) |
+
+### Kalender (Kunden)
+
+| Fähigkeit | API | App |
+|-----------|-----|-----|
+| Katalog | ✅ `GET …/customer/catalog` | ✅ HomePage Tab „Buchen“ |
+| Slots | ✅ `GET …/customer/slots` | ✅ BookSlotPage (Datum + Liste) |
+| Buchen | ✅ `POST …/customer/bookings` | ✅ Bestätigungsdialog → POST |
+| Meine Termine | ✅ `GET …/customer/bookings` | ✅ HomePage Tab „Termine“ |
+| Storno | ✅ `POST …/bookings/{id}/cancel` | ✅ |
+| Umbuchen | ✅ `POST …/bookings/{id}/reschedule` | ❌ keine UI |
+| Mitarbeiter-Filter bei Slots | API: `employee_id` optional | 🟡 nicht gesetzt (nur article + date) |
+
+### Mitarbeiter
+
+| Fähigkeit | API | App |
+|-----------|-----|-----|
+| Stempel Status / Events | ✅ `GET/POST …/staff/clock` | ✅ ClockTab |
+| Zeitkonto | ✅ `GET …/staff/konto` | ✅ KontoTab |
+| Abwesenheiten Liste/Antrag | ✅ `GET/POST …/staff/absences` | ✅ AbsencesTab (+ Multipart Nachweis) |
+| Schichten | ✅ `GET …/staff/shifts` | ✅ ShiftsTab |
+| Akte Liste/Download | ✅ `…/documents` (+ download) | ✅ DocsTab |
+| Profil | ✅ `GET …/staff/profile` | ✅ ProfileTab |
+| Unterschrift GET/POST | ✅ `…/staff/signature` | ✅ `signature_page.dart` |
+
+### Sonst
+
+| Fähigkeit | API | Apps |
+|-----------|-----|------|
+| Push | ❌ (M1d später) | ❌ |
+| HTTP 401 → Refresh → Retry | API da | ❌ beide ApiClients ohne Auto-Refresh |
+| Offline-Hinweis | — | 🟡 Fehlertexte bei Netz/API, kein eigener Offline-Modus |
+
+### Folge für Mini-IDs
+
+| Lücke | → |
+|-------|---|
+| Refresh / 401 / `me` | **MA1b** |
+| Fehlerformat / Offline-Hinweis vereinheitlichen | **MA1a** / **MA1d** |
+| Basis-URL QR / Deep-Link Kalender angleichen | **MA1c** (+ Kurz **MA0c** CRM-Seite) |
+| Umbuchen-UI Kalender | **MA2c** |
+| Slot `employee_id` optional | **MA2b** / **MA2d** |
+| Stempel/Abwesenheit Härte | **MA3b–e** |
+| Smoke Geräte | **MA2e** / **MA3f** |
 
 ---
 
@@ -229,3 +277,4 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 |-------|--------|
 | 2026-11-27 | Plan angelegt · Micro-IDs MA0–MA6 für Kalender + Mitarbeiter · Ist API vs. Flutter-Rest |
 | 2026-11-27 | **MA0a ✅** Verweise Spec/TODOS/IQ-STROM |
+| 2026-11-27 | **MA0b ✅** Ist-Matrix §7 API vs. Flutter (Lücken → MA1–MA3) |
