@@ -20,7 +20,7 @@
 
 **Abgrenzung Lexware:** Lexware Office ignoriert oft Rechnungspositionen beim Beleg-Einlesen. DG soll Positionen **mitnehmen** und an Katalog/Lager anbinden.
 
-**Ist heute (2026-11-27):** Client-OCR/E-Rechnung/Textlayer im Belegformular für **FiBu-Kopf-Vorschläge**. Positionen höchstens Zähler. **Kein** Kichel in der Pipeline. **Kein** Lager-Anschluss. Docs teilweise noch „OCR zurückgestellt“ → veraltet.
+**Ist heute (2026-11-27):** Client-OCR + optional Kichel-Extrakt (BO3) für **FiBu-Kopf-Vorschläge**; Extrakt-Positionen im Panel sichtbar. Apply schreibt noch **keine** Form-Positionen (nur Kopf + 1. Split) — siehe §12. **Kein** Lager-Anschluss (→ BO5).
 
 ---
 
@@ -78,8 +78,8 @@ Datei (PDF/Bild/XML)
 | **BO0** | Inventar / Zielbild / Doc-Sync | [x] BO0a–c ✅ | 🟢 |
 | **BO1** | Rohpipeline Client härten | [~] BO1b–c ✅ · BO1d offen | 🟡🔴 |
 | **BO2** | Extrakt-Schema (Kopf + Positionen) | [x] BO2a–d ✅ | 🟢🟡 |
-| **BO3** | Kichel-Strukturierung | [~] BO3a–b ✅ | 🟡🔴 |
-| **BO4** | FiBu-UI Positionen übernehmen | [ ] | 🟡 |
+| **BO3** | Kichel-Strukturierung | [x] BO3a–e ✅ | 🟢🟡 |
+| **BO4** | FiBu-UI Positionen übernehmen | [~] BO4a ✅ | 🟢🟡 |
 | **BO5** | Lager-Anbindung | [ ] | 🟡🔴 |
 | **BO6** | Docs/Haken Abschluss | [ ] | 🟢 |
 
@@ -156,7 +156,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| **BO4a** | Ist: wie Belegformular Split-/Positionszeilen speichert (`buchhaltung-belege.js` / Form-Felder) — nur lesen | 🟢 | [ ] |
+| **BO4a** | Ist: wie Belegformular Split-/Positionszeilen speichert (`buchhaltung-belege.js` / Form-Felder) — nur lesen | 🟢 | [x] 2026-11-27 · §12 |
 | **BO4b** | „Vorschläge übernehmen“ füllt **Belegpositionen** (Titel, Menge, Einzel/Gesamt, Steuersatz, Art Artikel/Leistung) | 🟡 | [ ] |
 | **BO4c** | Kopfdaten-Apply unverändert nutzbar; Konflikte/leere Zeilen klar in Status | 🟡 | [ ] |
 | **BO4d** | Guard + Smoke Dev (1 E-Rechnung mit Zeilen) | 🔴 | [ ] |
@@ -194,15 +194,65 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 
 | Baustein | Rolle |
 |----------|--------|
-| `assets/js/buchhaltung-import.mjs` | Upload, Analyse-Kaskade, Vorschlagspanel, Apply Kopf |
+| `assets/js/buchhaltung-import.mjs` | Upload, Analyse-Kaskade, Vorschlagspanel, Apply **Kopf** (+ 1. Split-Brutto); BO3d Assistenz-Extrakt |
+| `assets/js/buchhaltung-belege.js` | Form-Logik: Rechnungspositionen ↔ Buchungszeilen, Summen, Speichern |
 | `assets/js/vendor/receipt-parse-core.mjs` | Text-/OCR-Heuristiken, u. a. `analyzeInvoiceText` |
 | `assets/js/vendor/dg-einvoice-xml.mjs` | E-Rechnung XML → Felder |
-| `views/modules/buchhaltung-beleg-form.php` | Dropzone + Extract-UI |
-| `src/Accounting/VoucherApi.php` `file_upload` | Sofort speichern am Entwurf |
+| `views/modules/buchhaltung-beleg-form.php` | Dropzone + Extract-UI + `items[]` / `lines[]` |
+| `src/Accounting/VoucherApi.php` | `file_upload` · `voucher_extract` (BO3c) |
+| `src/Accounting/VoucherRepository.php` | `dg_voucher_items` / `dg_voucher_lines` replace on save |
+| `src/Accounting/VoucherIncomePositions.php` | Items nur Erlös-Typen; leitet Buchungszeilen ab |
 | `src/Install/InstallVoucherImporter.php` | Massen-Entwürfe ohne Analyse |
-| Kichel Hilfe-API | Chat `POST /api/kichel` — **noch nicht** Beleg-Extrakt (→ BO3b+) |
-| `KichelOllamaClient` | Ollama nur `phrase`/`compose` (Formulierung); Config `kichel.local.php` · Ist §10 |
-| Lager / Artikelkatalog | **noch nicht** aus Extrakt angesteuert |
+| Kichel Hilfe-API | Chat `POST /api/kichel` — getrennt von `voucher_extract` |
+| `KichelOllamaClient` | `phrase`/`compose` + `generate` (Extrakt); Config `kichel.local.php` · Ist §10 |
+| Lager / Artikelkatalog | **noch nicht** aus Extrakt angesteuert (→ BO5) |
+
+---
+
+## 12. BO4a — Ist Split- / Positionszeilen im Belegformular (2026-11-27, nur lesen)
+
+> Kein Code in BO4a. Grundlage für BO4b (Apply Positionen). Lieferanten-OCR zielt auf **Ausgabe**-Belege.
+
+### Zwei Zeilenwelten
+
+| Welt | UI | POST-Felder | DB | Wann sichtbar |
+|------|-----|-------------|-----|----------------|
+| **Rechnungspositionen** | `#dg-voucher-invoice-items-section` · `.dg-voucher-items__row` | `items[i][…]` | `dg_voucher_items` | nur `income` / `income_reduction` / `credit` (`VoucherIncomePositions::usesInvoiceItems`) |
+| **Buchungszeilen (Split)** | `#dg-voucher-booking-section` · `.dg-voucher-split__row` | `lines[i][…]` | `dg_voucher_lines` | **immer** (bei Items: abgeleitet / `dg-voucher-booking--derived`) |
+
+**Ausgabe / Aufwand (`expense`, `expense_reduction`):** Section Rechnungspositionen **hidden**. Nutzer erfasst FiBu nur über **Konto + Brutto + USt %** in den Split-Zeilen. Kein `article_id` / `catalog_kind` / Menge in diesem UI.
+
+**Erlös:** Positionen = Katalogartikel/Leistung (Suche); JS `syncBookingFromItems()` gruppiert nach Steuersatz → Erlöskonten in Split; Server `bookingLinesFromItems` beim Speichern.
+
+### Form-Felder (Ist)
+
+**`items[i]` (Erlös):** `article_id`, `catalog_kind`, `article_number`, `title`, `area_id`/`area_name`, `quantity`, `unit`, `unit_price_gross`, `tax_rate`, `tax_type`, `gross_amount`  
+Klassen: `.dg-voucher-items-*` · JS: `bindInvoiceItemRow`, `collectInvoiceItems`, `addInvoiceItemRow`, `reindexInvoiceItems`.
+
+**`lines[i]` (Buchung):** `account_number`, `gross_amount`, `tax_rate`  
+Klassen: `.dg-voucher-split-*` · JS: `bindBookingRow`, `addBookingRow`, `syncTotalsFromLines`.  
+Bei Items-Modus: Split oft read-derived; Hinweis „Wird aus den Rechnungspositionen berechnet“.
+
+### Speichern (Server)
+
+`VoucherRepository` (Save-Pfad):
+
+1. Wenn `usesInvoiceItems` und Items vorhanden → `parseItemRows` → `replaceItems` → Buchungszeilen aus Items.  
+2. Sonst → `parseLineRows` aus POST `lines[]` → `replaceLines` (`dg_voucher_lines`).  
+3. Journal/Lager erst über bestehende Posting-/Stock-Services nach gültigem Speichern — **nicht** aus OCR-Apply.
+
+### OCR-Apply heute (`buchhaltung-import.mjs` → `applySuggestion`)
+
+| Feld | Verhalten |
+|------|-----------|
+| Kopf | Rechnungsnr., Datum, Lieferant, Kontakt-Suche, Notizen (IBAN/USt …) |
+| Split | **nur erste** `.dg-voucher-split-gross` + USt-Selects |
+| Rechnungspositionen `items[]` | **nicht** befüllt |
+| Extrakt-`lines[]` (BO2) | nur Anzeige im Vorschlagspanel / `suggestion.lines` — **kein** Form-Write |
+
+**Folge für BO4b:** Lieferantenbelege brauchen einen Apply-Pfad in die **Ausgabe-UI**. Optionen (Entscheidung in BO4b, nicht hier bauen): (A) mehrere Split-Zeilen aus Extrakt (Konto manuell/leer, Brutto/Steuer aus Zeile) + Titel in Notizen; (B) sichtbare Positionsvorschau-Tabelle am Ausgabe-Beleg (noch nicht vorhanden) die später BO5 an Katalog hängt; (C) bei Erlös-Belegen zusätzlich `items[]` füllen. Zielbild Plan §0 will Artikel+DL — für Ausgabe ist das **nicht** die bestehende Items-Section.
+
+**Verweise:** `views/modules/buchhaltung-beleg-form.php` · `assets/js/buchhaltung-belege.js` · `assets/js/buchhaltung-import.mjs` · `VoucherIncomePositions` · `VoucherRepository::replaceItems` / `replaceLines`
 
 ---
 
@@ -399,3 +449,4 @@ Parallel ok: BO1 und BO2a (Schema schon hier). **BO5 nicht vor BO4.**
 | 2026-11-27 | **BO3c ✅** `VoucherExtractService` + `VoucherApi` Zweig + `KichelOllamaClient::generate` · Soft-Fail Selftest |
 | 2026-11-27 | **BO3d ✅** Client `enrichWithAssistenz` → `voucher_extract` nach OCR/Text; E-Rechnung-Zeilen überspringen |
 | 2026-11-27 | **BO3e ✅** Fixture `invoice-ocr-sample.txt` + GoBD-Scan (kein stilles Buchen/Lager/Auto-Apply) · `beleg-ocr-bo3e-gobd-selftest.php` · BO3-Block fertig |
+| 2026-11-27 | **BO4a ✅** Ist Split/`items` vs. OCR-Apply §12 — Ausgabe nur `lines[]`; Items nur Erlös; Apply füllt keine Positionen |
