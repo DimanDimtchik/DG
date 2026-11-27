@@ -28,15 +28,15 @@ PHP-Regel bleibt: **Beträge/Steuer = PHP**; der Agent schreibt Code/Docs, rechn
 | **SKP0c** | Erste Anbindung in `/superkihel` (Staff) laut SKP0b | 🔴🟡 | [x] 2026-11-12 · §5 |
 | **SKP0d** | Smoke: aus Super-Kichel (oder dokumentiertem Weg) kleine Repo-Änderung | 🔴 | [x] 2026-11-12 · §6 |
 | **SKP0e** | Docs/Haken TODOS + Produkt-Skizze | 🟢 | [x] 2026-11-12 · §7 |
-| **SKP1** | HTTPS-Zugang OpenHands ohne PC-Tunnel — Kind-IDs a–e | 🟢 | a–c+e ✅ · d offen |
+| **SKP1** | HTTPS-Zugang OpenHands ohne PC-Tunnel — Kind-IDs a–e | 🟢 | a–e ✅ |
 | **SKP1a** | Ist: `:3000` host-netz · UFW ohne 3000 · kein Agent-Host — **nur lesen** | 🟢 | [x] 2026-11-12 · §8 |
 | **SKP1b** | Hostname `agent.ganz-soft.de` + DNS A → GEX | 🟢 | [x] 2026-11-12 · Auth-NS A=GEX |
 | **SKP1c** | nginx Proxy → `127.0.0.1:3000` + certbot (+ Basic Auth Minimum) | 🟢 | [x] 2026-11-12 · §8 |
-| **SKP1d** | Zugangsschutz Feinschliff · Smoke HTTPS formal | 🔴 | [ ] Basic Auth schon in c |
+| **SKP1d** | Zugangsschutz Feinschliff · Smoke HTTPS formal | 🟢 | [x] 2026-11-27 · MCP `auth_basic off` · Smoke |
 | **SKP1e** | `/superkihel` Button-URL + Docs | 🟢 | [x] 2026-11-27 · `https://agent.ganz-soft.de/` |
 | **SKP2** | Optional: Agent-API/Tools **in** der Chat-UI | 🔴 | [ ] geparkt |
 
-**SKP0 ✅.** **SKP1a–c+e ✅.** Optional **SKP1d** (Smoke/Feinschliff).
+**SKP0 ✅.** **SKP1a–e ✅.** Optional später **SKP2** (geparkt).
 
 ---
 
@@ -196,9 +196,22 @@ Nachgezogen: dieser Plan · [`TODOS.md`](TODOS.md) · [`SUPERKICHEL-GEX-PLAN.md`
 | **Button** | `/superkihel` „Agent öffnen“ → `https://agent.ganz-soft.de/` (`data-superkihel-agent`) |
 | **Text** | Kein Tunnel-Pflichttext mehr · Hinweis Basic-Auth / Ops-Tunnel optional |
 | **Selftest** | `php bin/superkihel-agent-url-selftest.php` |
-| **Nicht** | Passwort in Git/UI · SKP1d formal Smoke |
+| **Nicht** | Passwort in Git/UI |
 
-**Nächste ID:** optional **SKP1d** (formal Smoke/Feinschliff).
+### SKP1d — Feinschliff + Formal-Smoke (2026-11-27) ✅
+
+| Check | Ergebnis |
+|-------|----------|
+| UI `https://agent.ganz-soft.de/` ohne Login | **401** + `WWW-Authenticate: Basic realm="Agent"` |
+| `/mcp/` ohne Login | **kein** Basic-Auth (nach Fix) · Upstream **404** ok |
+| Öffentlich `:3000` | **Timeout** (UFW zu) |
+| LE-Zertifikat | `agent.ganz-soft.de` · gültig bis **2027-02-21** |
+| UFW | 22/80/443 + 8443–8447 · **kein** 3000 |
+| Feinschliff | nginx `location ^~ /mcp/` hatte nur Kommentar „no auth“ — **fehlte** `auth_basic off` (erbte Server-Auth) → gesetzt + reload |
+| Smoke-Skript | `php bin/superkihel-agent-https-smoke.php` (ohne Passwort) |
+| **Nicht** | Passwort in Git · IP-Allowlist (Basic Auth bleibt Minimum) · SKP2 |
+
+**Nächste ID:** optional **SKP2** (geparkt) oder andere Roadmap.
 
 ---
 
@@ -216,3 +229,4 @@ Nachgezogen: dieser Plan · [`TODOS.md`](TODOS.md) · [`SUPERKICHEL-GEX-PLAN.md`
 | 2026-11-12 | **SKP1c ✅** HTTPS Proxy + LE + Basic Auth · UFW 3000 zu |
 | 2026-11-12 | Sandbox-Fix: Host-Netz max1 + HTTPS 8443/8444/… · VSCode-URL korrekt · 2. Start READY |
 | 2026-11-27 | **SKP1e ✅** Button → `https://agent.ganz-soft.de/` · Selftest · Docs |
+| 2026-11-27 | **SKP1d ✅** MCP `auth_basic off` Fix · Formal-Smoke · Zert/UFW |

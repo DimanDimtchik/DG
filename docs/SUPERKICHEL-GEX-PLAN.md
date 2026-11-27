@@ -149,7 +149,7 @@ PHP-Regel aus Phase 2 bleibt: **Ollama rechnet keine Beträge.** CRM bleibt nati
 2. optional **SKA0-1…12** Live-Inventar (Bestätigung)  
 3. CRM-Probe-HTTPS = **PB2c4** (Phase B, getrennt von Ollama-TLS)  
 
-**Stand:** **SKP0 ✅** · **SKP1a–c+e ✅** (`https://agent.ganz-soft.de` + Basic Auth · CRM-Button). Optional **SKP1d**. Phase-B Cutover geparkt.
+**Stand:** **SKP0 ✅** · **SKP1a–e ✅** (`https://agent.ganz-soft.de` + Basic Auth · CRM-Button · MCP ohne Auth). Phase-B Cutover geparkt.
 
 **Nicht** parallel zu einer offenen `PB*`-Serverarbeit dieselben Dienste umbauen, ohne das in der Freigabe zu sagen.
 
