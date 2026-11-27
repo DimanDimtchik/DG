@@ -3131,37 +3131,61 @@
   });
 
   /**
-   * BO4b — OCR-/Extrakt-Positionen in Form schreiben (User-Klick Apply).
+   * BO4b/BO4c — OCR-/Extrakt-Positionen in Form schreiben (User-Klick Apply).
    * Erlös → items[]; Ausgabe → Split-Zeilen (Konto leer) + Summary für Notizen.
    *
    * @param {Array<Object>} rawLines BO2 extract.lines
-   * @return {{mode: string, count: number, summaryLines: string[]}}
+   * @return {{mode: string, count: number, summaryLines: string[], skipped: number, skippedEmptyTitle: number, skippedNoAmount: number, skippedTitles: string[]}}
    */
   function applyOcrExtractLines(rawLines) {
-    var normalized = normalizeOcrExtractLines(rawLines);
-    if (normalized.length === 0) {
-      return { mode: 'none', count: 0, summaryLines: [] };
+    var parsed = normalizeOcrExtractLines(rawLines);
+    var emptyResult = {
+      mode: 'none',
+      count: 0,
+      summaryLines: [],
+      skipped: parsed.skippedEmptyTitle + parsed.skippedNoAmount,
+      skippedEmptyTitle: parsed.skippedEmptyTitle,
+      skippedNoAmount: parsed.skippedNoAmount,
+      skippedTitles: parsed.skippedTitles,
+    };
+    if (parsed.lines.length === 0) {
+      return emptyResult;
     }
     if (readOnly) {
-      return { mode: 'readonly', count: 0, summaryLines: [] };
+      emptyResult.mode = 'readonly';
+      return emptyResult;
     }
-    if (usesIncomeItems()) {
-      return fillInvoiceItemsFromOcr(normalized);
-    }
-    return fillBookingSplitsFromOcr(normalized);
+    var filled = usesIncomeItems()
+      ? fillInvoiceItemsFromOcr(parsed.lines)
+      : fillBookingSplitsFromOcr(parsed.lines);
+    filled.skipped = parsed.skippedEmptyTitle + parsed.skippedNoAmount;
+    filled.skippedEmptyTitle = parsed.skippedEmptyTitle;
+    filled.skippedNoAmount = parsed.skippedNoAmount;
+    filled.skippedTitles = parsed.skippedTitles;
+    return filled;
   }
 
   function normalizeOcrExtractLines(rawLines) {
-    if (!Array.isArray(rawLines)) {
-      return [];
-    }
     var out = [];
+    var skippedEmptyTitle = 0;
+    var skippedNoAmount = 0;
+    var skippedTitles = [];
+    if (!Array.isArray(rawLines)) {
+      return {
+        lines: out,
+        skippedEmptyTitle: 0,
+        skippedNoAmount: 0,
+        skippedTitles: skippedTitles,
+      };
+    }
     rawLines.forEach(function (line) {
       if (!line || typeof line !== 'object') {
+        skippedEmptyTitle += 1;
         return;
       }
       var title = String(line.title || line.description || '').trim();
       if (!title) {
+        skippedEmptyTitle += 1;
         return;
       }
       var taxRate = parseInt(String(line.tax_percent != null ? line.tax_percent : (line.tax_rate != null ? line.tax_rate : 19)), 10);
@@ -3194,6 +3218,10 @@
         unitGross = Math.round((gross / qty) * 100) / 100;
       }
       if (!gross) {
+        skippedNoAmount += 1;
+        if (skippedTitles.length < 5) {
+          skippedTitles.push(title);
+        }
         return;
       }
       out.push({
@@ -3207,7 +3235,12 @@
         sku: String(line.sku || '').trim(),
       });
     });
-    return out;
+    return {
+      lines: out,
+      skippedEmptyTitle: skippedEmptyTitle,
+      skippedNoAmount: skippedNoAmount,
+      skippedTitles: skippedTitles,
+    };
   }
 
   function ocrLineSummary(line) {
@@ -3221,7 +3254,7 @@
 
   function fillInvoiceItemsFromOcr(lines) {
     if (!invoiceItemsBody || !invoiceItemRowTemplate) {
-      return { mode: 'none', count: 0, summaryLines: [] };
+      return { mode: 'none', count: 0, summaryLines: [], skipped: 0, skippedEmptyTitle: 0, skippedNoAmount: 0, skippedTitles: [] };
     }
     invoiceItemsBody.innerHTML = '';
     lines.forEach(function (line) {
@@ -3290,7 +3323,7 @@
 
   function fillBookingSplitsFromOcr(lines) {
     if (!bookingBody || !bookingRowTemplate) {
-      return { mode: 'none', count: 0, summaryLines: [] };
+      return { mode: 'none', count: 0, summaryLines: [], skipped: 0, skippedEmptyTitle: 0, skippedNoAmount: 0, skippedTitles: [] };
     }
     bookingBody.innerHTML = '';
     lines.forEach(function (line) {

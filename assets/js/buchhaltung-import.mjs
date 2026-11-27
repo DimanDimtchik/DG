@@ -987,11 +987,68 @@ function setFieldValue(el, value) {
   el.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
+/** BO4c — Status nach Apply: Kopf immer; Konflikte/leere Zeilen klar benennen. */
+function buildApplyStatus(suggestion, lineApply, extractLineCount) {
+  const notices = [];
+  let kind = 'ok';
+  let base = 'Kopfdaten übernommen. Bitte Kontakt aus der Liste bestätigen und Beleg speichern.';
+
+  if (lineApply.count > 0 && lineApply.mode === 'items') {
+    base = `Kopfdaten und ${lineApply.count} Positionen in die Rechnungspositionen übernommen. Katalogzuordnung später prüfen, dann speichern.`;
+  } else if (lineApply.count > 0 && lineApply.mode === 'splits') {
+    base = `Kopfdaten und ${lineApply.count} Positionen als Buchungszeilen übernommen. Konten bitte wählen und speichern.`;
+  } else if (extractLineCount > 0 && lineApply.count === 0) {
+    base = 'Kopfdaten übernommen. Keine Position mit Betrag übernommen — bitte manuell ergänzen.';
+    kind = 'warn';
+  }
+
+  const skipped = Number(lineApply.skipped || 0);
+  if (skipped > 0) {
+    kind = 'warn';
+    const bits = [];
+    if (lineApply.skippedNoAmount > 0) {
+      bits.push(`${lineApply.skippedNoAmount} ohne Betrag`);
+    }
+    if (lineApply.skippedEmptyTitle > 0) {
+      bits.push(`${lineApply.skippedEmptyTitle} ohne Titel`);
+    }
+    let skipMsg = `${skipped} Position${skipped === 1 ? '' : 'en'} übersprungen`;
+    if (bits.length) skipMsg += ` (${bits.join(', ')})`;
+    if (Array.isArray(lineApply.skippedTitles) && lineApply.skippedTitles.length) {
+      skipMsg += ': ' + lineApply.skippedTitles.join('; ');
+    }
+    notices.push(skipMsg);
+  }
+
+  const amountCheck = suggestion.extract?.amount_check;
+  if (amountCheck && amountCheck.ok === false) {
+    kind = 'warn';
+    notices.push(amountCheck.detail
+      ? `Summenprüfung: ${amountCheck.detail}`
+      : 'Summenprüfung: Zeilen und Kopf weichen ab.');
+  }
+
+  const warnings = Array.isArray(suggestion.extract?.warnings)
+    ? suggestion.extract.warnings.map((w) => String(w || '').trim()).filter(Boolean)
+    : [];
+  if (warnings.length) {
+    kind = 'warn';
+    notices.push('Hinweise: ' + warnings.slice(0, 2).join(' · '));
+  }
+
+  if (suggestion.assistenz?.soft_fail && suggestion.assistenz.soft_fail_reason) {
+    notices.push(String(suggestion.assistenz.soft_fail_reason));
+  }
+
+  return { kind, message: [base, ...notices].join(' ') };
+}
+
 function applySuggestion() {
   if (!currentSuggestion) return;
   const s = currentSuggestion;
 
   const apply = async () => {
+    // Kopfdaten immer zuerst — unabhängig von Positions-Apply (BO4c).
     const invoiceEl = $('dg-voucher-invoice-number');
     if (invoiceEl && invoiceEl.name === 'invoice_number') setFieldValue(invoiceEl, s.invoiceNumber);
 
@@ -1009,18 +1066,35 @@ function applySuggestion() {
       ? s.extract.lines
       : (Array.isArray(s.lines) ? s.lines : []);
     const formApi = window.dgVoucherFormApi;
-    let lineApply = { mode: 'none', count: 0, summaryLines: [] };
-    if (extractLines.length && formApi && typeof formApi.applyOcrExtractLines === 'function') {
-      lineApply = formApi.applyOcrExtractLines(extractLines) || lineApply;
-    } else if (s.grossAmount) {
-      const grossInput = document.querySelector('.dg-voucher-split-gross');
-      if (grossInput) setFieldValue(grossInput, formatMoneyDe(s.grossAmount));
-      if (s.taxPercent) {
-        const rate = normalizeTaxRate(s.taxPercent);
-        document.querySelectorAll('.dg-voucher-split-tax, select[name*="[tax_rate]"]').forEach((taxField) => {
-          if (taxField.tagName === 'SELECT') setFieldValue(taxField, rate);
-        });
+    let lineApply = {
+      mode: 'none',
+      count: 0,
+      summaryLines: [],
+      skipped: 0,
+      skippedEmptyTitle: 0,
+      skippedNoAmount: 0,
+      skippedTitles: [],
+    };
+    try {
+      if (extractLines.length && formApi && typeof formApi.applyOcrExtractLines === 'function') {
+        lineApply = formApi.applyOcrExtractLines(extractLines) || lineApply;
+      } else if (s.grossAmount) {
+        const grossInput = document.querySelector('.dg-voucher-split-gross');
+        if (grossInput) setFieldValue(grossInput, formatMoneyDe(s.grossAmount));
+        if (s.taxPercent) {
+          const rate = normalizeTaxRate(s.taxPercent);
+          document.querySelectorAll('.dg-voucher-split-tax, select[name*="[tax_rate]"]').forEach((taxField) => {
+            if (taxField.tagName === 'SELECT') setFieldValue(taxField, rate);
+          });
+        }
       }
+    } catch (lineError) {
+      lineApply = {
+        ...lineApply,
+        mode: 'error',
+        count: 0,
+      };
+      lineApply._error = lineError?.message || String(lineError);
     }
 
     const notes = document.querySelector('textarea[name="notes"]');
@@ -1054,13 +1128,11 @@ function applySuggestion() {
       }
     }
 
-    let statusMsg = 'Vorschläge übernommen. Bitte Kontakt aus der Liste bestätigen und Beleg speichern.';
-    if (lineApply.count > 0 && lineApply.mode === 'items') {
-      statusMsg = `Vorschläge übernommen: ${lineApply.count} Positionen in die Rechnungspositionen übernommen. Katalogzuordnung später prüfen, dann speichern.`;
-    } else if (lineApply.count > 0 && lineApply.mode === 'splits') {
-      statusMsg = `Vorschläge übernommen: ${lineApply.count} Positionen als Buchungszeilen übernommen. Konten bitte wählen und speichern.`;
-    } else if (extractLines.length && lineApply.count === 0) {
-      statusMsg = 'Kopfdaten übernommen. Positionen ohne Betrag wurden übersprungen — bitte manuell ergänzen.';
+    const status = buildApplyStatus(s, lineApply, extractLines.length);
+    let statusMsg = status.message;
+    if (lineApply._error) {
+      statusMsg = `Kopfdaten übernommen. Positionen konnten nicht übernommen werden: ${lineApply._error}`;
+      status.kind = 'warn';
     }
     try {
       const updated = await patchContactMasterData(s);
@@ -1070,9 +1142,10 @@ function applySuggestion() {
     } catch (error) {
       statusMsg += ' Kontakt-Stammdaten konnten nicht gespeichert werden: '
         + (error.message || String(error));
+      status.kind = 'warn';
     }
 
-    setStatus('ok', statusMsg);
+    setStatus(status.kind, statusMsg);
     const actionsEl = $('dg-voucher-extract-actions');
     if (actionsEl) actionsEl.hidden = true;
   };
