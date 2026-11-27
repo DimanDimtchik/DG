@@ -10363,10 +10363,46 @@ switch ($path) {
             header('Location: /app', true, 302);
             exit;
         } elseif ($page === 'kichel-protokoll' && MenuRegistry::canAccess($user, 'kichel-protokoll')) {
+            $kichelQualityFilter = trim((string) ($_GET['quality'] ?? 'all'));
+            if (!in_array($kichelQualityFilter, ['all', 'bad', 'queued', 'done', 'open'], true)) {
+                $kichelQualityFilter = 'all';
+            }
+            if ($_SERVER['REQUEST_METHOD'] === 'POST' && Csrf::verify($_POST['_csrf'] ?? null) && RoleResolver::isAdmin($user)) {
+                $qualityId = (int) ($_POST['kichel_quality_id'] ?? 0);
+                $qualityAction = trim((string) ($_POST['kichel_quality_action'] ?? ''));
+                $qualityInput = [
+                    'title' => (string) ($_POST['title'] ?? ''),
+                    'keywords' => (string) ($_POST['keywords'] ?? ''),
+                    'answer' => (string) ($_POST['answer'] ?? ''),
+                    'href' => (string) ($_POST['href'] ?? ''),
+                ];
+                $qualityResult = match ($qualityAction) {
+                    'apply' => KichelQualityService::applyToKnowledge($qualityId, $user->id, $qualityInput),
+                    'bad', 'queued', 'done' => KichelQualityService::mark($qualityId, $qualityAction, $user->id, $qualityInput),
+                    default => ['ok' => false, 'message' => 'Unbekannte Aktion.'],
+                };
+                Flash::set($qualityResult['ok'] ? 'success' : 'error', $qualityResult['message']);
+                $redir = '/app?page=kichel-protokoll';
+                if ($kichelQualityFilter !== 'all') {
+                    $redir .= '&quality=' . rawurlencode($kichelQualityFilter);
+                }
+                if ($qualityId > 0) {
+                    $redir .= '&edit=' . $qualityId;
+                }
+                header('Location: ' . $redir, true, 302);
+                exit;
+            }
             $kichelListPage = ListPagination::parsePage($_GET['paged'] ?? null);
             $kichelListPerPage = ListPagination::parsePerPageKey($_GET['per_page'] ?? null);
-            $kichelLogPaged = KichelProtocolRepository::paginate($kichelListPage, $kichelListPerPage);
+            $kichelLogPaged = KichelProtocolRepository::paginate(
+                $kichelListPage,
+                $kichelListPerPage,
+                10000,
+                $kichelQualityFilter === 'all' ? null : $kichelQualityFilter
+            );
             $kichelLogRows = $kichelLogPaged['items'];
+            $kichelEditId = (int) ($_GET['edit'] ?? 0);
+            $kichelEditRow = $kichelEditId > 0 ? KichelProtocolRepository::find($kichelEditId) : null;
             $contentTemplate = 'modules/kichel-protokoll';
             $title = 'Kichel-Protokoll';
             $currentPage = 'kichel-protokoll';

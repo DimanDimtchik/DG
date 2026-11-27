@@ -6,10 +6,13 @@ declare(strict_types=1);
  */
 final class KichelProtocolRepository
 {
-    public static function record(int $userId, string $query, string $answer, ?array $response = null): void
+    /**
+     * @return int|null Insert-ID (für Feedback KH1)
+     */
+    public static function record(int $userId, string $query, string $answer, ?array $response = null): ?int
     {
         if (!Database::isConfigured()) {
-            return;
+            return null;
         }
 
         MigrationRunner::runPending();
@@ -28,8 +31,67 @@ final class KichelProtocolRepository
                 'answer' => mb_substr($answer, 0, 65000),
                 'json' => $json,
             ]);
+
+            return (int) Database::pdo()->lastInsertId() ?: null;
         } catch (Throwable $e) {
             error_log('KichelProtocolRepository: ' . $e->getMessage());
+
+            return null;
+        }
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public static function find(int $id): ?array
+    {
+        if ($id < 1 || !Database::isConfigured()) {
+            return null;
+        }
+        MigrationRunner::runPending();
+        try {
+            $stmt = Database::pdo()->prepare(
+                'SELECT k.*, u.username, u.display_name
+                 FROM dg_kichel_log k
+                 LEFT JOIN dg_users u ON u.id = k.user_id
+                 WHERE k.id = :id
+                 LIMIT 1'
+            );
+            $stmt->execute(['id' => $id]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            return is_array($row) ? $row : null;
+        } catch (Throwable) {
+            return null;
+        }
+    }
+
+    public static function setQuality(int $id, string $status, ?string $note, int $markedBy): bool
+    {
+        if ($id < 1 || !Database::isConfigured()) {
+            return false;
+        }
+        MigrationRunner::runPending();
+        try {
+            $stmt = Database::pdo()->prepare(
+                'UPDATE dg_kichel_log
+                 SET quality_status = :status,
+                     quality_note = :note,
+                     quality_marked_at = NOW(),
+                     quality_marked_by = :by
+                 WHERE id = :id'
+            );
+
+            return $stmt->execute([
+                'status' => $status,
+                'note' => $note,
+                'by' => $markedBy,
+                'id' => $id,
+            ]);
+        } catch (Throwable $e) {
+            error_log('KichelProtocolRepository::setQuality: ' . $e->getMessage());
+
+            return false;
         }
     }
 
@@ -61,25 +123,51 @@ final class KichelProtocolRepository
     }
 
     /**
+     * @param string|null $qualityFilter bad|queued|done|open (ohne Status) | null = alle
      * @return array{items: list<array<string, mixed>>, total: int, page: int, per_page: int, total_pages: int, per_page_key: string}
      */
-    public static function paginate(int $page = 1, string $perPageKey = ListPagination::DEFAULT, int $hardCap = 10000): array
-    {
+    public static function paginate(
+        int $page = 1,
+        string $perPageKey = ListPagination::DEFAULT,
+        int $hardCap = 10000,
+        ?string $qualityFilter = null
+    ): array {
         $perPageKey = ListPagination::parsePerPageKey($perPageKey);
         if (!Database::isConfigured()) {
             return ListPagination::emptyResult($perPageKey);
         }
         MigrationRunner::runPending();
         try {
-            $total = min((int) Database::pdo()->query('SELECT COUNT(*) FROM dg_kichel_log')->fetchColumn(), max(1, $hardCap));
+            $where = '';
+            $params = [];
+            if ($qualityFilter === 'open') {
+                $where = ' WHERE (k.quality_status IS NULL OR k.quality_status = \'\')';
+            } elseif ($qualityFilter !== null && $qualityFilter !== '' && $qualityFilter !== 'all') {
+                $where = ' WHERE k.quality_status = :qstatus';
+                $params['qstatus'] = $qualityFilter;
+            }
+
+            $countSql = 'SELECT COUNT(*) FROM dg_kichel_log k' . $where;
+            if ($params === []) {
+                $total = min((int) Database::pdo()->query($countSql)->fetchColumn(), max(1, $hardCap));
+            } else {
+                $cstmt = Database::pdo()->prepare($countSql);
+                $cstmt->execute($params);
+                $total = min((int) $cstmt->fetchColumn(), max(1, $hardCap));
+            }
+
             $meta = ListPagination::sliceMeta($total, $page, $perPageKey);
             $stmt = Database::pdo()->prepare(
                 'SELECT k.*, u.username, u.display_name
                  FROM dg_kichel_log k
-                 LEFT JOIN dg_users u ON u.id = k.user_id
+                 LEFT JOIN dg_users u ON u.id = k.user_id'
+                . $where . '
                  ORDER BY k.created_at DESC
                  LIMIT :lim OFFSET :off'
             );
+            foreach ($params as $key => $value) {
+                $stmt->bindValue($key, $value);
+            }
             $stmt->bindValue('lim', $meta['show_all'] ? max(1, $hardCap) : $meta['limit'], PDO::PARAM_INT);
             $stmt->bindValue('off', $meta['show_all'] ? 0 : $meta['offset'], PDO::PARAM_INT);
             $stmt->execute();

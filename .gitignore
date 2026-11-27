@@ -43,6 +43,7 @@ storage/kichel/gii/*.manifest.json
 storage/kichel/gii/toc-snapshot.json
 storage/kichel/rii/*.jsonl
 storage/kichel/rii/*.manifest.json
+storage/kichel/knowledge-overrides.json
 
 # Flutter
 apps/**/.dart_tool/

@@ -12,6 +12,19 @@
 
   var submitBtn = form.querySelector('button[type="submit"]');
   var busy = false;
+  var lastLogId = null;
+
+  function sendFeedback(rating) {
+    if (!lastLogId || !cfg.apiUrl || !cfg.csrf) {
+      return;
+    }
+    var fd = new FormData();
+    fd.append('_csrf', cfg.csrf);
+    fd.append('action', 'feedback');
+    fd.append('log_id', String(lastLogId));
+    fd.append('rating', rating);
+    fetch(cfg.apiUrl, { method: 'POST', body: fd, credentials: 'same-origin' }).catch(function () {});
+  }
 
   function escapeHtml(value) {
     return String(value)
@@ -155,7 +168,9 @@
         feedback.remove();
       }
     }
-    if (feedbackBtn.getAttribute('data-superkihel-feedback') === 'yes') {
+    var rating = feedbackBtn.getAttribute('data-superkihel-feedback') === 'yes' ? 'yes' : 'no';
+    sendFeedback(rating);
+    if (rating === 'yes') {
       appendMessage('Freut mich! Bei weiteren Fragen einfach melden.', 'bot');
     } else {
       appendMessage('Alles klar — formulieren Sie die Frage gerne noch einmal.', 'bot');
@@ -214,6 +229,7 @@
           return;
         }
         var data = result.json.data || {};
+        lastLogId = data.log_id || null;
         appendMessage(data.answer || 'Keine Antwort.', 'bot');
         renderSources(data.sources || []);
         renderPageLinks(data.page_links || []);

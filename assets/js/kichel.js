@@ -119,6 +119,20 @@
     superLink.addEventListener('click', markCloseAfterNavigate);
   }
 
+  var lastLogId = null;
+
+  function sendFeedback(rating) {
+    if (!lastLogId || !cfg.apiUrl || !cfg.csrf) {
+      return;
+    }
+    var fd = new FormData();
+    fd.append('_csrf', cfg.csrf);
+    fd.append('action', 'feedback');
+    fd.append('log_id', String(lastLogId));
+    fd.append('rating', rating);
+    fetch(cfg.apiUrl, { method: 'POST', body: fd, credentials: 'same-origin' }).catch(function () {});
+  }
+
   messages.addEventListener('click', function (ev) {
     var feedbackBtn = ev.target.closest('[data-kichel-feedback]');
     if (feedbackBtn) {
@@ -127,7 +141,9 @@
       if (wrap) {
         wrap.querySelector('.dg-kichel-feedback').remove();
       }
-      if (feedbackBtn.getAttribute('data-kichel-feedback') === 'yes') {
+      var rating = feedbackBtn.getAttribute('data-kichel-feedback') === 'yes' ? 'yes' : 'no';
+      sendFeedback(rating);
+      if (rating === 'yes') {
         appendMessage('Freut mich! Bei weiteren Fragen einfach melden.', 'bot');
       } else {
         appendMessage('Alles klar — formuliere die Frage gerne noch einmal.', 'bot');
@@ -286,6 +302,7 @@
           return;
         }
         var data = json.data || {};
+        lastLogId = data.log_id || null;
         appendMessage(data.answer || 'Keine Antwort.', 'bot');
         renderSources(data.sources || []);
         renderPageLinks(data.page_links || []);

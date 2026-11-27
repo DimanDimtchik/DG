@@ -1,6 +1,8 @@
 <?php
 /** @var list<array<string, mixed>> $kichelLogRows */
 /** @var array{type: string, message: string}|null $flash */
+/** @var string $kichelQualityFilter */
+/** @var array<string, mixed>|null $kichelEditRow */
 $kichelLogPaged = is_array($kichelLogPaged ?? null) ? $kichelLogPaged : null;
 if ($kichelLogPaged !== null && isset($kichelLogPaged['items'])) {
     $rows = $kichelLogPaged['items'];
@@ -15,6 +17,31 @@ if ($kichelLogPaged !== null && isset($kichelLogPaged['items'])) {
     $kichelTotalPages = 1;
     $kichelPerPageKey = ListPagination::DEFAULT;
 }
+$kichelQualityFilter = (string) ($kichelQualityFilter ?? 'all');
+$kichelEditRow = is_array($kichelEditRow ?? null) ? $kichelEditRow : null;
+$filterExtra = $kichelQualityFilter !== 'all' ? ['quality' => $kichelQualityFilter] : [];
+$filterLinks = [
+    'all' => 'Alle',
+    'bad' => 'Schlecht',
+    'queued' => 'Warteschlange',
+    'done' => 'Erledigt',
+    'open' => 'Unmarkiert',
+];
+
+$buildProtokollUrl = static function (array $extra = []) use ($kichelQualityFilter): string {
+    $query = ['page' => 'kichel-protokoll'];
+    if ($kichelQualityFilter !== 'all') {
+        $query['quality'] = $kichelQualityFilter;
+    }
+    foreach ($extra as $key => $value) {
+        if ($value === null || $value === '') {
+            continue;
+        }
+        $query[$key] = $value;
+    }
+
+    return '/app?' . http_build_query($query);
+};
 ?>
 <div class="dg-wrap">
   <?php View::render('partials/flash', compact('flash')); ?>
@@ -22,13 +49,30 @@ if ($kichelLogPaged !== null && isset($kichelLogPaged['items'])) {
   <header class="dg-page-header">
     <div>
       <h1 class="dg-page-title">Kichel-Protokoll</h1>
-      <p class="dg-lead">Letzte Anfragen an den CRM-Helfer — zum Prüfen und Verbessern der Antworten.</p>
+      <p class="dg-lead">Letzte Anfragen an den CRM-Helfer — schlecht markieren und in die Hilfe-Wissensbasis der Instanz übernehmen.</p>
     </div>
   </header>
 
+  <div class="dg-stack">
+    <div class="dg-panel">
+      <p class="dg-muted">Filter:</p>
+      <div class="dg-btn-row">
+        <?php foreach ($filterLinks as $key => $label) : ?>
+          <?php
+            $href = '/app?page=kichel-protokoll';
+            if ($key !== 'all') {
+                $href .= '&amp;quality=' . rawurlencode($key);
+            }
+            $isActive = $kichelQualityFilter === $key;
+          ?>
+          <a class="dg-button dg-button--small<?= $isActive ? ' dg-button--primary' : '' ?>" href="<?= $href ?>"><?= View::escape($label) ?></a>
+        <?php endforeach; ?>
+      </div>
+    </div>
+
   <?php if ($rows === []) : ?>
     <div class="dg-panel">
-      <p>Noch keine Einträge — stellen Sie Kichel im CRM eine Frage.</p>
+      <p>Keine Einträge für diesen Filter — stellen Sie Kichel im CRM eine Frage oder wählen Sie einen anderen Filter.</p>
     </div>
   <?php else : ?>
     <div class="dg-panel">
@@ -37,7 +81,7 @@ if ($kichelLogPaged !== null && isset($kichelLogPaged['items'])) {
             'total' => $kichelTotal,
             'perPageKey' => $kichelPerPageKey,
             'listPage' => 'kichel-protokoll',
-            'extraQuery' => [],
+            'extraQuery' => $filterExtra,
         ]);
       ?>
       <div class="dg-table-wrap">
@@ -49,12 +93,15 @@ if ($kichelLogPaged !== null && isset($kichelLogPaged['items'])) {
             <th>Frage</th>
             <th>RAG</th>
             <th>Quellen</th>
+            <th>Qualität</th>
             <th>Antwort (Auszug)</th>
+            <th>Aktionen</th>
           </tr>
         </thead>
         <tbody>
           <?php foreach ($rows as $row) : ?>
             <?php
+              $rowId = (int) ($row['id'] ?? 0);
               $protoMeta = KichelProtocolRepository::metaFromResponseJson(
                   isset($row['response_json']) ? (string) $row['response_json'] : null
               );
@@ -62,6 +109,8 @@ if ($kichelLogPaged !== null && isset($kichelLogPaged['items'])) {
               $sourceLabel = $sourceRefs !== []
                   ? implode(', ', array_slice($sourceRefs, 0, 4)) . (count($sourceRefs) > 4 ? ' …' : '')
                   : '—';
+              $qStatus = isset($row['quality_status']) ? (string) $row['quality_status'] : '';
+              $editHref = $buildProtokollUrl(['edit' => $rowId]);
             ?>
             <tr>
               <td><?= View::escape((string) ($row['created_at'] ?? '')) ?></td>
@@ -69,6 +118,17 @@ if ($kichelLogPaged !== null && isset($kichelLogPaged['items'])) {
               <td><?= View::escape((string) ($row['query_text'] ?? '')) ?></td>
               <td><?= $protoMeta['rag_used'] ? 'ja' : 'nein' ?></td>
               <td><?= View::escape($sourceLabel) ?></td>
+              <td>
+                <?php if ($qStatus === KichelQualityService::STATUS_BAD) : ?>
+                  <span class="dg-badge dg-badge--error"><?= View::escape(KichelQualityService::statusLabel($qStatus)) ?></span>
+                <?php elseif ($qStatus === KichelQualityService::STATUS_QUEUED) : ?>
+                  <span class="dg-badge dg-badge--pending"><?= View::escape(KichelQualityService::statusLabel($qStatus)) ?></span>
+                <?php elseif ($qStatus === KichelQualityService::STATUS_DONE) : ?>
+                  <span class="dg-badge dg-badge--ok"><?= View::escape(KichelQualityService::statusLabel($qStatus)) ?></span>
+                <?php else : ?>
+                  <span class="dg-muted">—</span>
+                <?php endif; ?>
+              </td>
               <td>
                 <details>
                   <summary><?= View::escape(mb_substr((string) ($row['answer_text'] ?? ''), 0, 120)) ?><?= mb_strlen((string) ($row['answer_text'] ?? '')) > 120 ? '…' : '' ?></summary>
@@ -90,6 +150,11 @@ if ($kichelLogPaged !== null && isset($kichelLogPaged['items'])) {
                   <?php endif; ?>
                 </details>
               </td>
+              <td class="dg-table__actions">
+                <div class="dg-table__actions-group">
+                  <a class="dg-button dg-button--small" href="<?= View::escape($editHref) ?>">Bearbeiten</a>
+                </div>
+              </td>
             </tr>
           <?php endforeach; ?>
         </tbody>
@@ -102,9 +167,51 @@ if ($kichelLogPaged !== null && isset($kichelLogPaged['items'])) {
             'totalPages' => $kichelTotalPages,
             'perPageKey' => $kichelPerPageKey,
             'listPage' => 'kichel-protokoll',
-            'extraQuery' => [],
+            'extraQuery' => $filterExtra,
         ]);
       ?>
     </div>
   <?php endif; ?>
+
+  <?php if ($kichelEditRow !== null) : ?>
+    <?php
+      $editId = (int) ($kichelEditRow['id'] ?? 0);
+      $draft = KichelQualityService::draftFromLog($kichelEditRow);
+      $kwText = implode(', ', $draft['keywords']);
+      $formAction = $buildProtokollUrl(['edit' => $editId]);
+    ?>
+    <div class="dg-panel" id="kichel-quality-edit">
+      <h2 class="dg-section-title">Knowledge-Entwurf #<?= $editId ?></h2>
+      <p class="dg-muted">Frage: <?= View::escape((string) ($kichelEditRow['query_text'] ?? '')) ?></p>
+      <form class="dg-form" method="post" action="<?= View::escape($formAction) ?>">
+        <input type="hidden" name="_csrf" value="<?= View::escape(Csrf::token()) ?>">
+        <input type="hidden" name="kichel_quality_id" value="<?= $editId ?>">
+        <div class="dg-form-grid">
+          <div class="dg-field">
+            <label for="kichel-title">Titel</label>
+            <input id="kichel-title" type="text" name="title" maxlength="120" value="<?= View::escape($draft['title']) ?>">
+          </div>
+          <div class="dg-field">
+            <label for="kichel-keywords">Stichworte (Komma)</label>
+            <input id="kichel-keywords" type="text" name="keywords" maxlength="500" value="<?= View::escape($kwText) ?>">
+          </div>
+          <div class="dg-field">
+            <label for="kichel-href">Link im CRM (optional)</label>
+            <input id="kichel-href" type="text" name="href" maxlength="500" value="<?= View::escape($draft['href']) ?>" placeholder="/app?page=…">
+          </div>
+          <div class="dg-field">
+            <label for="kichel-answer">Antworttext</label>
+            <textarea id="kichel-answer" name="answer" rows="5" maxlength="65000"><?= View::escape($draft['answer']) ?></textarea>
+          </div>
+        </div>
+        <div class="dg-form-actions">
+          <button type="submit" class="dg-button" name="kichel_quality_action" value="bad">Als schlecht markieren</button>
+          <button type="submit" class="dg-button" name="kichel_quality_action" value="queued">In Warteschlange</button>
+          <button type="submit" class="dg-button dg-button--primary" name="kichel_quality_action" value="apply">In Hilfe übernehmen</button>
+          <button type="submit" class="dg-button dg-button--ghost" name="kichel_quality_action" value="done">Erledigt</button>
+        </div>
+      </form>
+    </div>
+  <?php endif; ?>
+  </div>
 </div>

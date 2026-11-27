@@ -17,10 +17,35 @@ final class KichelKnowledge
         if (self::$topics === null) {
             /** @var list<array<string, mixed>> $loaded */
             $loaded = require __DIR__ . '/data/knowledge.php';
-            self::$topics = $loaded;
+            $byId = [];
+            foreach ($loaded as $topic) {
+                if (!is_array($topic)) {
+                    continue;
+                }
+                $id = trim((string) ($topic['id'] ?? ''));
+                if ($id === '') {
+                    continue;
+                }
+                $byId[$id] = $topic;
+            }
+            // KH1: Instanz-Overrides ersetzen gleiche IDs bzw. ergänzen.
+            foreach (KichelKnowledgeOverrides::all() as $override) {
+                $id = trim((string) ($override['id'] ?? ''));
+                if ($id === '') {
+                    continue;
+                }
+                $byId[$id] = $override;
+            }
+            self::$topics = array_values($byId);
         }
 
         return self::$topics;
+    }
+
+    /** KH1 — Cache leeren nach Override-Schreiben. */
+    public static function resetTopicsCache(): void
+    {
+        self::$topics = null;
     }
 
     /**

@@ -23,6 +23,7 @@ $scripts = [
     'kichel-gii-update-selftest.php',
     'kichel-rii-import-selftest.php',
     'kichel-disclaimer-selftest.php',
+    'kichel-quality-selftest.php',
 ];
 
 $failed = 0;

@@ -6,6 +6,7 @@ declare(strict_types=1);
  *
  * KR7: einzige Hilfe-Pipeline für Widget und Super-Kichel (`POST /api/kichel` → Assistant).
  * Kein zweites Prompt-/Ollama-System in der Super-Kichel-Seite (OpenHands = SKP, getrennt).
+ * KH1: optional `action=feedback` mit log_id + rating.
  */
 final class KichelApi
 {
@@ -28,15 +29,31 @@ final class KichelApi
             return;
         }
 
+        $action = trim((string) ($_POST['action'] ?? 'ask'));
+        if ($action === 'feedback') {
+            $logId = (int) ($_POST['log_id'] ?? 0);
+            $rating = (string) ($_POST['rating'] ?? '');
+            $result = KichelQualityService::applyUserFeedback($logId, $rating, $user->id);
+            echo json_encode([
+                'success' => $result['ok'],
+                'message' => $result['message'],
+            ], JSON_UNESCAPED_UNICODE);
+
+            return;
+        }
+
         $query = trim((string) ($_POST['query'] ?? ''));
         $result = KichelAssistant::answer($user, $query);
 
-        KichelProtocolRepository::record(
+        $logId = KichelProtocolRepository::record(
             $user->id,
             $query,
             (string) ($result['answer'] ?? ''),
             $result
         );
+        if ($logId !== null) {
+            $result['log_id'] = $logId;
+        }
 
         echo json_encode([
             'success' => true,
