@@ -58,7 +58,7 @@ Kein Fine-Tuning, kein Gesetzes-Vollimport außerhalb dieser ID.
 
 | Phase | Kürzel | Inhalt | Status |
 |-------|--------|--------|--------|
-| **A — RAG (jetzt)** | **KR0–KR9** | Verdrahtung Suche → Fakten → Qwen; CRM-Korpus; Quellen; Smoke | **KR0–7 ✅** · als Nächstes **KR8** |
+| **A — RAG (jetzt)** | **KR0–KR9** | Verdrahtung Suche → Fakten → Qwen; CRM-Korpus; Quellen; Smoke | **KR0–8a ✅** · **KR8b** Dev-UI-Checkliste · als Nächstes **KR9** |
 | **B — Rechtskorpus** | **KL0–KL5** | Gesetze/Urteile importieren & indexieren (nach stabilem RAG) | geplant |
 | **C — Intent-LLM** | **KI0–KI3** | Qwen nur als Frage-Parser (JSON), Suche weiter PHP | geplant |
 | **D — Produkt/Haftung** | **KH0–KH3** | Disclaimer, Protokoll-Felder, Admin-Qualität | geplant |
@@ -85,7 +85,7 @@ Kein Fine-Tuning, kein Gesetzes-Vollimport außerhalb dieser ID.
 | **KR5** | Ranking / „kein Treffer“ / Mehrfachtreffer | 🟡 | [x] 2026-11-27 · a–b ✅ |
 | **KR6** | Quellenzeile in Antwort + Protokoll | 🟡 | [x] 2026-11-27 · a–b ✅ |
 | **KR7** | Super-Kichel/Widget: gleiche Pipeline (kein Parallelweg) | 🟡 | [x] 2026-11-27 |
-| **KR8** | Selftests + Dev-Smoke | 🔴🟡 | [ ] · Kinder a–b |
+| **KR8** | Selftests + Dev-Smoke | 🔴🟡 | [x] 2026-11-27 · a ✅ · b Checkliste (Dev-UI offen) |
 | **KR9** | Docs-Haken / Abnahmekriterien „RAG stabil“ | 🟢 | [ ] |
 
 **Empfohlene Reihenfolge:** KR0 ✅ → KR1 → KR2 → KR3 → KR4 → KR5 → KR6 → KR7 → KR8 → KR9.  
@@ -352,12 +352,35 @@ window.dgKichel.apiUrl = /api/kichel
 
 ---
 
-### 3.9 KR8 — Tests
+### 3.9 KR8 — Tests ✅/◐ 2026-11-27
 
-| Kind | Aufgabe | Abnahme |
-|------|---------|---------|
-| **KR8a** | Selftest CLI: feste Fragen → erwartete Quellen-IDs / kein Fantasie-§ | `bin/…-selftest.php` grün |
-| **KR8b** | Manuell Dev: 3 gute / 2 absichtlich unklare Fragen; Ollama an/aus | Checkliste abgehakt |
+| Kind | Aufgabe | Abnahme | Status |
+|------|---------|---------|--------|
+| **KR8a** | Selftest CLI: feste Fragen → Quellen-IDs / kein Fantasie-§ | `bin/kichel-rag-smoke-selftest.php` · Suite `bin/kichel-rag-suite-selftest.php` | [x] SUITE ALL OK |
+| **KR8b** | Manuell Dev: 3 gut / 2 unklar; Ollama an/aus | Checkliste unten | [~] Inhalt lokal via Smoke ✅ · **Dev-Browser offen** |
+
+#### KR8a — feste Fragen (CLI)
+
+| Frage | Erwartung |
+|-------|-----------|
+| USt-ID | Quelle `topic:ust-id` / Firmendaten · kein Fantasie-§ |
+| Kleinunternehmer | `tax:tax-u19` · §§ nur aus Fakten |
+| Skonto 3 % von 1000 € | `money:skonto` · Beträge PHP |
+| Ist-Versteuerung | `tax:tax-ist-soll` |
+| Pflichtseiten | `legal:pflichtseiten` |
+| asdf… | Leerfall, keine Quellen, kein § |
+| vage Steuerfrage | leer oder nur Fakten-§ |
+
+#### KR8b — Dev-Browser (`ganz-om.de`, Staff)
+
+Fragen wie KR8a (mind. 3 gut + 2 unklar) in **Widget** und einmal **Super-Kichel**:
+
+- [ ] Ollama **aus** (`ollama_enabled=false` oder Proxy tot): Antworten + Quellen-Block sichtbar
+- [ ] Ollama **an**: Formulierung ok, Zahlen/§ unverändert, Quellen bleiben
+- [ ] Nonsense → „nichts Passendes“, keine erfundenen Normen
+- [ ] Protokoll: RAG-Spalte + Quellen-Refs nach einer Frage
+
+**Lokal bereits:** Smoke mit `ollama_enabled=false` (dieser Host). Dev-UI-Haken bei Freigabe / vor **KR9**.
 
 ---
 
@@ -507,8 +530,8 @@ KR0 ✅
 
 ## 12. Nächster konkreter Schritt
 
-**KR8** (Selftests + Dev-Smoke) — Start **KR8a** (CLI-Fragen/Quellen).  
-Kein Gesetzes-Vollimport, kein Fine-Tuning.
+**KR9** (RAG-Gate) — Doc-Freigabe nach KR8a ✅; Dev-Browser-Haken (KR8b) ideal vorher setzen.  
+Kein Gesetzes-Vollimport, kein Fine-Tuning ohne Gate.
 
 ---
 
@@ -524,3 +547,4 @@ Kein Gesetzes-Vollimport, kein Fine-Tuning.
 | 2026-11-27 | **KR5 ✅** `KichelRanker` · Leerfall · Top-K · nummerierte Mehrfachtreffer |
 | 2026-11-27 | **KR6 ✅** `sources[]` UI · Protokoll RAG/Refs ohne Migration |
 | 2026-11-27 | **KR7 ✅** eine Hilfe-Pipeline Widget=Super-Kichel · Selftest |
+| 2026-11-27 | **KR8a ✅** Smoke+Suite Selftests · **KR8b** Dev-UI-Checkliste offen |
