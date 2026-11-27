@@ -86,6 +86,69 @@ final class VoucherArticleMatchService
     }
 
     /**
+     * BO5c — Katalog-Neuanlage aus Extrakt-Zeile. Nur nach User-Klick aufrufen.
+     * track_stock aus → kein Wareneingang/Anfangsbestand.
+     *
+     * @param array<string, mixed> $line
+     * @return array<string, mixed> Artikel-Payload inkl. score/match_reason
+     */
+    public static function createFromExtractLine(array $line, ?string $forceKind = null): array
+    {
+        if (!Database::isConfigured()) {
+            throw new RuntimeException('Datenbank nicht konfiguriert.');
+        }
+
+        $title = trim((string) ($line['title'] ?? $line['description'] ?? ''));
+        if ($title === '') {
+            throw new InvalidArgumentException('Bezeichnung fehlt — Neuanlage nicht möglich.');
+        }
+
+        $kind = CalendarArticleCatalog::normalizeKind(
+            (string) ($forceKind ?? $line['catalog_kind'] ?? CalendarArticleCatalog::KIND_SERVICE)
+        );
+        $sku = trim((string) ($line['sku'] ?? $line['article_number'] ?? ''));
+        $articleNumber = '';
+        if ($sku !== '' && CalendarArticleRepository::findIdByArticleNumber($sku) === null) {
+            $articleNumber = $sku;
+        }
+
+        $taxRate = (int) ($line['tax_percent'] ?? $line['tax_rate'] ?? 19);
+        if (!in_array($taxRate, [0, 7, 19], true)) {
+            $taxRate = 19;
+        }
+        $taxType = VoucherIncomePositions::taxTypeFromRate($taxRate);
+        $unit = trim((string) ($line['unit'] ?? 'Stück')) ?: 'Stück';
+
+        $id = CalendarArticleRepository::save([
+            'catalog_kind' => $kind,
+            'article_number' => $articleNumber,
+            'title' => $title,
+            'description' => '',
+            'note' => 'Aus Beleg-Vorschlag angelegt — bitte prüfen.',
+            'unit' => $unit,
+            'tax_type' => $taxType,
+            'price_gross' => 0,
+            'work_minutes' => $kind === CalendarArticleCatalog::KIND_SERVICE ? 15 : 0,
+            'area_id' => 0,
+            'sort_order' => 0,
+            'is_active' => 1,
+            'price_list_online' => 0,
+            'track_stock' => 0,
+            'import' => 1,
+        ]);
+
+        $row = CalendarArticleRepository::findById($id);
+        if ($row === null) {
+            throw new RuntimeException('Artikel wurde angelegt, konnte aber nicht geladen werden.');
+        }
+        $payload = VoucherIncomePositions::articlePayload($row);
+        $payload['score'] = 1.0;
+        $payload['match_reason'] = 'Neu angelegt';
+
+        return $payload;
+    }
+
+    /**
      * @param list<array<string, mixed>> $lines
      * @return list<array{line_no: int, title: string, catalog_kind: string, sku: string, candidates: list<array<string, mixed>>}>
      */

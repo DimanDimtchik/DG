@@ -37,7 +37,10 @@ $assert(str_contains($api, 'VoucherArticleMatchService::candidatesForLines'), 'A
 $assert(str_contains($service, 'findIdByArticleNumber'), 'match by article number');
 $assert(str_contains($service, 'findIdByTitle'), 'match by title');
 $assert(str_contains($service, 'searchArticles'), 'match falls back to search');
-$assert(!str_contains($service, 'CalendarArticleRepository::save'), 'match service does not save articles');
+// Speichern nur in createFromExtractLine (BO5c), nicht in Match-Kandidaten
+$assert(str_contains($service, 'createFromExtractLine'), 'create helper present (BO5c)');
+$matchOnly = preg_replace('/function createFromExtractLine[\s\S]*?function candidatesForLines/', 'function candidatesForLines', $service) ?? $service;
+$assert(!str_contains($matchOnly, 'CalendarArticleRepository::save'), 'match candidates path does not save');
 $assert(!str_contains($service, 'StockMovement'), 'match service does not touch stock');
 
 $assert(str_contains($view, 'id="dg-voucher-extract-matches"'), 'matches panel in view');

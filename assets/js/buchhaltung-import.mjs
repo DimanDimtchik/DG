@@ -955,7 +955,7 @@ function renderMatchPanel(suggestion, matchRows) {
     const candidates = Array.isArray(row.candidates) ? row.candidates : [];
     let listHtml;
     if (!candidates.length) {
-      listHtml = '<p class="dg-muted">Kein Treffer — Zuordnung später oder neu anlegen.</p>';
+      listHtml = '<p class="dg-muted">Kein Treffer im Katalog.</p>';
     } else {
       listHtml = `<ul class="dg-voucher-extract__match-list">${candidates.map((c) => {
         const label = c.article_number ? `${c.article_number} — ${c.title}` : c.title;
@@ -969,10 +969,18 @@ function renderMatchPanel(suggestion, matchRows) {
         return `<li class="dg-voucher-extract__match-item"><div class="dg-voucher-extract__match-meta"><strong>${escapeHtml(label)}</strong><br><span class="dg-muted">${escapeHtml(meta)}</span></div><span class="dg-table__actions-group">${btn}</span></li>`;
       }).join('')}</ul>`;
     }
+    const createHtml = chosenId > 0
+      ? ''
+      : `<div class="dg-btn-row dg-mt-2">
+          <button type="button" class="dg-button dg-button--small" data-match-create="${idx}" data-create-kind="product">Als Artikel anlegen</button>
+          <button type="button" class="dg-button dg-button--small" data-match-create="${idx}" data-create-kind="service">Als Leistung anlegen</button>
+        </div>
+        <p class="dg-field-hint">Nur nach Klick — ohne Lagerbuchung. Einkaufspreis später zuordnen.</p>`;
     return `<div class="dg-voucher-extract__match-block" data-match-line="${idx}">
       <p class="dg-voucher-extract__match-title">${escapeHtml(kind)}: ${escapeHtml(row.title || line.title || '—')}</p>
       ${chosenLabel}
       ${listHtml}
+      ${createHtml}
     </div>`;
   }).join('');
 
@@ -998,6 +1006,72 @@ function renderMatchPanel(suggestion, matchRows) {
       );
       clearArticleMatch(extractIdx >= 0 ? extractIdx : lineIdx);
     });
+  });
+  body.querySelectorAll('[data-match-create]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const lineIdx = Number(btn.getAttribute('data-match-create'));
+      const kind = btn.getAttribute('data-create-kind') || 'service';
+      createArticleFromExtract(suggestion, matchRows, lineIdx, kind, btn);
+    });
+  });
+}
+
+async function createArticleFromExtract(suggestion, matchRows, lineIdx, forceKind, buttonEl) {
+  const row = matchRows[lineIdx];
+  const lines = ensureExtractLines(suggestion);
+  const extractIdx = lines.findIndex((l) => Number(l.line_no) === Number(row?.line_no));
+  const line = extractIdx >= 0 ? lines[extractIdx] : lines[lineIdx];
+  if (!line || !row) return;
+
+  const csrf = importConfig.csrf
+    || document.querySelector('#dg-voucher-form input[name="_csrf"]')?.value
+    || '';
+  if (!csrf) {
+    setStatus('warn', 'Neuanlage nicht möglich — Sicherheitstoken fehlt. Bitte Seite neu laden.');
+    return;
+  }
+
+  const prevLabel = buttonEl ? buttonEl.textContent : '';
+  bodyQueryDisableCreate(true);
+  if (buttonEl) buttonEl.textContent = 'Wird angelegt …';
+
+  const body = new FormData();
+  body.set('_csrf', csrf);
+  body.set('title', line.title || row.title || '');
+  body.set('sku', line.sku || row.sku || '');
+  body.set('catalog_kind', forceKind);
+  body.set('force_kind', forceKind);
+  body.set('unit', line.unit || 'Stück');
+  body.set('tax_percent', String(line.tax_percent ?? line.tax_rate ?? 19));
+
+  try {
+    const response = await fetch('/api/voucher?action=article_create', {
+      method: 'POST',
+      body,
+      credentials: 'same-origin',
+    });
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok || !json.success || !json.data?.article) {
+      throw new Error(json.message || 'Neuanlage fehlgeschlagen.');
+    }
+    const article = json.data.article;
+    confirmArticleMatch(extractIdx >= 0 ? extractIdx : lineIdx, article);
+    setStatus(
+      'ok',
+      `${forceKind === 'product' ? 'Artikel' : 'Leistung'} „${escapeHtml(article.title || '')}“ angelegt und zugeordnet. Bitte prüfen — kein Wareneingang gebucht.`,
+    );
+  } catch (error) {
+    setStatus('warn', 'Neuanlage fehlgeschlagen: ' + escapeHtml(error.message || String(error)));
+    if (buttonEl) buttonEl.textContent = prevLabel;
+    bodyQueryDisableCreate(false);
+  }
+}
+
+function bodyQueryDisableCreate(disabled) {
+  const body = $('dg-voucher-extract-matches-body');
+  if (!body) return;
+  body.querySelectorAll('[data-match-create]').forEach((btn) => {
+    btn.disabled = !!disabled;
   });
 }
 

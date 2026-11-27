@@ -35,6 +35,10 @@ final class VoucherApi
                 self::handleVoucherExtract();
                 return;
             }
+            if ($action === 'article_create') {
+                self::handleArticleCreate();
+                return;
+            }
 
             http_response_code(405);
             echo json_encode(['success' => false, 'message' => 'Unbekannte POST-Aktion.'], JSON_UNESCAPED_UNICODE);
@@ -336,6 +340,50 @@ final class VoucherApi
             'success' => true,
             'data' => ['items' => $out],
         ], JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * BO5c — Katalog-Neuanlage aus Extrakt-Zeile (nur nach User-Klick). Kein Wareneingang.
+     */
+    private static function handleArticleCreate(): void
+    {
+        $user = AuthService::user();
+        if ($user === null || !RoleResolver::canEdit($user)) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Keine Berechtigung.'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'CSRF ungültig.'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        try {
+            $line = [
+                'title' => (string) ($_POST['title'] ?? ''),
+                'sku' => (string) ($_POST['sku'] ?? ''),
+                'catalog_kind' => (string) ($_POST['catalog_kind'] ?? 'service'),
+                'unit' => (string) ($_POST['unit'] ?? 'Stück'),
+                'tax_percent' => (int) ($_POST['tax_percent'] ?? $_POST['tax_rate'] ?? 19),
+            ];
+            $forceKind = trim((string) ($_POST['force_kind'] ?? ''));
+            $article = VoucherArticleMatchService::createFromExtractLine(
+                $line,
+                $forceKind !== '' ? $forceKind : null
+            );
+            echo json_encode([
+                'success' => true,
+                'data' => ['article' => $article],
+            ], JSON_UNESCAPED_UNICODE);
+        } catch (InvalidArgumentException $e) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+        } catch (Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+        }
     }
 
     /**
