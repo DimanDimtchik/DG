@@ -245,7 +245,7 @@ Ohne diese Punkte ersetzt DG Lex **nicht** vollständig für eine bilanzierungsp
 
 ### D3 · Produkt / Mobile / Shop / Cloud
 
-- [x] **Mobile Apps** Flutter — API M0–M2 ✅ · Rest **MA0–MA5 ✅** (MA5d TestFlight ⏭ ohne Auftrag) · Abschluss **MA6a** 2026-11-27 · noch **MA6b** Spec-Statuszeile  
+- [x] **Mobile Apps** Flutter — API M0–M2 ✅ · Rest **MA0–MA6 ✅** 2026-11-27 (MA5d TestFlight ⏭ ohne Auftrag)  
   → Spec [`MOBILE-APPS-PLAN.md`](MOBILE-APPS-PLAN.md) · Rest [`MOBILE-APPS-REST-PLAN.md`](MOBILE-APPS-REST-PLAN.md) · Privacy [`MOBILE-APPS-PRIVACY.md`](MOBILE-APPS-PRIVACY.md)
 - [ ] Amazon Business Stufe 2  
   → [`AMAZON-BUSINESS-STUFE2.md`](AMAZON-BUSINESS-STUFE2.md)

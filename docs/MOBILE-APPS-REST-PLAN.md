@@ -17,7 +17,7 @@
 | **MA-Auth** | Kennung + Stempeluhr-PIN → Bearer |
 | **Phase-1-Grenze** | Kein GPS, keine Gesichtserkennung, keine In-App-Zahlung, kein Push-Zwang, kein CRM-Admin in der App |
 
-**Ist (2026-11-27):** PHP-API **M0–M2 weitgehend ✅**. Flutter unter `apps/kalender/` und `apps/mitarbeiter/` schon mit Login/Flows (kein leeres Hello-World) — aber **noch nicht** als „fertig nutzbar / Store-reif“ abgeschlossen. Dieser Plan macht die **Rest-Arbeit in Microschritten**.
+**Ist (2026-11-27):** PHP-API **M0–M2 ✅** · Flutter Kalender + Mitarbeiter gehärtet · **Rest-Plan MA0–MA6 ✅** (MA5d TestFlight ⏭). Store-Upload optional später; interne APKs weiter über `/app-download`.
 
 ---
 
@@ -192,10 +192,11 @@ Es gab **keinen** Auftrag zum Hochladen und **keine** Store-Credentials in diese
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
 | **MA6a** | `TODOS.md` · IQ-STROM §D3 Haken · Parent hier | 🟢 | [x] 2026-11-27 · TODOS + IQ §D3 Mobile ✅ |
-| **MA6b** | `MOBILE-APPS-PLAN.md` Statuszeile auf „Rest MA0–MA6“ aktualisieren | 🟢 | [ ] |
+| **MA6b** | `MOBILE-APPS-PLAN.md` Statuszeile auf „Rest MA0–MA6“ aktualisieren | 🟢 | [x] 2026-11-27 · Spec-Stand Rest MA0–MA6 ✅ |
 
-**Prompt MA6b:**  
-`Nur Mini-ID MA6b laut docs/MOBILE-APPS-REST-PLAN.md. MOBILE-APPS-PLAN Statuszeile aktualisieren. Kein Store-Upload.`
+---
+
+**Serie MA0–MA6 abgeschlossen** (2026-11-27). Optional später: MA5d TestFlight/Play Internal nur nach explizitem Auftrag.
 
 ---
 
@@ -363,6 +364,7 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | `bin/mobile-release-checklist-selftest.php` | Guard MA5c |
 | `bin/mobile-ma5d-skip-selftest.php` | Guard MA5d (Skip dokumentiert) |
 | `bin/mobile-ma6a-todos-selftest.php` | Guard MA6a TODOS/IQ §D3 |
+| `bin/mobile-ma6b-spec-status-selftest.php` | Guard MA6b Spec-Statuszeile |
 | `bin/mobile-app-download-slug-selftest.php` | Guard MA0d |
 | [`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md) | Unterschrift ES6 (App-Upload) |
 
@@ -399,5 +401,6 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | 2026-11-27 | **MA5c ✅** Release-Checkliste AAB/Archive · Doc only · `MOBILE-APPS-RELEASE-CHECKLIST.md` |
 | 2026-11-27 | **MA5d ⏭** TestFlight/Internal Track übersprungen (kein Upload-Auftrag, keine Store-Credentials) · MA5-Block abgeschlossen |
 | 2026-11-27 | **MA6a ✅** TODOS.md + IQ-STROM §D3 Mobile-Haken · Parent Rest-Plan |
+| 2026-11-27 | **MA6b ✅** Spec `MOBILE-APPS-PLAN.md` Statuszeile Rest MA0–MA6 ✅ · Serie fertig |
 | 2026-11-27 | **MA1a ✅** `api_message.dart` identisch in beiden Apps · UI über `apiUserMessage`/`apiIsOk` · `php bin/mobile-api-message-selftest.php` |
 | 2026-11-27 | **MA0d ✅** CRM-Download-Slug `apps` → `app-download` · Legacy-Migration nur bei `page_kind=mobile_app_download` · `/apps` frei für Website |
