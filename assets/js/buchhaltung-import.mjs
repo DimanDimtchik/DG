@@ -923,9 +923,123 @@ function clearArticleMatch(lineIndex) {
   lines[lineIndex].match_article_id = null;
   lines[lineIndex].match_label = '';
   lines[lineIndex].match_reason = '';
+  lines[lineIndex].purchase_source_saved = false;
   currentSuggestion.lines = lines;
   persistSuggestion(currentSuggestion);
   renderMatchPanel(currentSuggestion, currentSuggestion._matchRows || []);
+}
+
+/** EK-Stückpreis netto aus Extraktzeile (unit_price_net oder line_net/qty). */
+function extractUnitPurchasePrice(line) {
+  if (!line || typeof line !== 'object') return 0;
+  const parseNum = (v) => {
+    const n = Number(String(v ?? '').replace(/\s/g, '').replace(',', '.'));
+    return Number.isFinite(n) ? n : 0;
+  };
+  const unitNet = parseNum(line.unit_price_net);
+  if (unitNet > 0) return Math.round(unitNet * 10000) / 10000;
+  const lineNet = parseNum(line.line_net);
+  const qty = parseNum(line.quantity) || 1;
+  if (lineNet > 0 && qty > 0) return Math.round((lineNet / qty) * 10000) / 10000;
+  const unitGross = parseNum(line.unit_price_gross);
+  const tax = parseNum(line.tax_percent ?? line.tax_rate);
+  if (unitGross > 0) {
+    const net = tax > 0 ? unitGross / (1 + tax / 100) : unitGross;
+    return Math.round(net * 10000) / 10000;
+  }
+  return 0;
+}
+
+function formatPurchasePriceDe(price) {
+  return Number(price || 0).toLocaleString('de-DE', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 4,
+  });
+}
+
+async function savePurchaseSourceFromExtract(suggestion, matchRows, lineIdx, buttonEl) {
+  const row = matchRows[lineIdx];
+  const lines = ensureExtractLines(suggestion);
+  const extractIdx = lines.findIndex((l) => Number(l.line_no) === Number(row?.line_no));
+  const line = extractIdx >= 0 ? lines[extractIdx] : lines[lineIdx];
+  const articleId = Number(line?.match_article_id || 0);
+  if (!line || articleId < 1) return;
+
+  const csrf = importConfig.csrf
+    || document.querySelector('#dg-voucher-form input[name="_csrf"]')?.value
+    || '';
+  if (!csrf) {
+    setStatus('warn', 'Einkaufspreis nicht speicherbar — Sicherheitstoken fehlt. Bitte Seite neu laden.');
+    return;
+  }
+
+  const contactId = Number(($('dg-voucher-contact-id') || {}).value || 0);
+  const supplierName = String(
+    ($('dg-voucher-supplier-name') || {}).value
+    || suggestion.supplier
+    || suggestion.extract?.supplier_name
+    || '',
+  ).trim();
+  const price = extractUnitPurchasePrice(line);
+  if (contactId < 1 && !supplierName && price <= 0) {
+    setStatus('warn', 'Lieferant oder Einkaufspreis fehlt — bitte Kontakt wählen oder Preis prüfen.');
+    return;
+  }
+
+  const preferredEl = bodyQueryPreferredCheckbox(lineIdx);
+  const isPreferred = !!(preferredEl && preferredEl.checked);
+  const prevLabel = buttonEl ? buttonEl.textContent : '';
+  if (buttonEl) {
+    buttonEl.disabled = true;
+    buttonEl.textContent = 'Wird gespeichert …';
+  }
+
+  const body = new FormData();
+  body.set('_csrf', csrf);
+  body.set('article_id', String(articleId));
+  if (contactId > 0) body.set('supplier_contact_id', String(contactId));
+  if (supplierName) body.set('supplier_name', supplierName);
+  body.set('purchase_price', String(price));
+  body.set('currency', String(suggestion.extract?.currency || suggestion.currency || 'EUR'));
+  if (line.sku) body.set('external_sku', String(line.sku));
+  if (isPreferred) body.set('is_preferred', '1');
+  body.set('note', 'Aus Beleg-Vorschlag');
+
+  try {
+    const response = await fetch('/api/voucher?action=article_purchase_source', {
+      method: 'POST',
+      body,
+      credentials: 'same-origin',
+    });
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok || !json.success || !json.data?.purchase_source) {
+      throw new Error(json.message || 'Speichern fehlgeschlagen.');
+    }
+    const idx = extractIdx >= 0 ? extractIdx : lineIdx;
+    lines[idx].purchase_source_saved = true;
+    currentSuggestion.lines = lines;
+    persistSuggestion(currentSuggestion);
+    renderMatchPanel(currentSuggestion, currentSuggestion._matchRows || []);
+    const savedPrice = formatPurchasePriceDe(json.data.purchase_source.purchase_price ?? price);
+    setStatus(
+      'ok',
+      `Einkaufspreis ${escapeHtml(savedPrice)} € am Artikel gespeichert`
+        + (isPreferred ? ' (bevorzugte Quelle).' : '.')
+        + ' Kein Wareneingang gebucht.',
+    );
+  } catch (error) {
+    setStatus('warn', 'Einkaufspreis nicht gespeichert: ' + escapeHtml(error.message || String(error)));
+    if (buttonEl) {
+      buttonEl.disabled = false;
+      buttonEl.textContent = prevLabel;
+    }
+  }
+}
+
+function bodyQueryPreferredCheckbox(lineIdx) {
+  const body = $('dg-voucher-extract-matches-body');
+  if (!body) return null;
+  return body.querySelector(`[data-ek-preferred="${lineIdx}"]`);
 }
 
 function renderMatchPanel(suggestion, matchRows) {
@@ -975,12 +1089,34 @@ function renderMatchPanel(suggestion, matchRows) {
           <button type="button" class="dg-button dg-button--small" data-match-create="${idx}" data-create-kind="product">Als Artikel anlegen</button>
           <button type="button" class="dg-button dg-button--small" data-match-create="${idx}" data-create-kind="service">Als Leistung anlegen</button>
         </div>
-        <p class="dg-field-hint">Nur nach Klick — ohne Lagerbuchung. Einkaufspreis später zuordnen.</p>`;
+        <p class="dg-field-hint">Nur nach Klick — ohne Lagerbuchung. Einkaufspreis danach zuordnen.</p>`;
+    const ekPrice = extractUnitPurchasePrice(line);
+    let ekHtml = '';
+    if (chosenId > 0) {
+      if (line.purchase_source_saved) {
+        ekHtml = `<p class="dg-field-hint">Einkaufspreis am Artikel gespeichert.</p>`;
+      } else {
+        const priceLabel = ekPrice > 0
+          ? `${formatPurchasePriceDe(ekPrice)} € netto`
+          : 'Preis aus Beleg prüfen';
+        ekHtml = `<div class="dg-voucher-extract__ek dg-mt-2">
+          <p class="dg-field-hint">Einkaufspreis vom Beleg: ${escapeHtml(priceLabel)} — Lieferant aus Kontaktfeld.</p>
+          <label class="dg-voucher-extract__contact-sync">
+            <input type="checkbox" data-ek-preferred="${idx}">
+            Als bevorzugte Einkaufsquelle setzen
+          </label>
+          <div class="dg-btn-row">
+            <button type="button" class="dg-button dg-button--small" data-ek-save="${idx}">Einkaufspreis speichern</button>
+          </div>
+        </div>`;
+      }
+    }
     return `<div class="dg-voucher-extract__match-block" data-match-line="${idx}">
       <p class="dg-voucher-extract__match-title">${escapeHtml(kind)}: ${escapeHtml(row.title || line.title || '—')}</p>
       ${chosenLabel}
       ${listHtml}
       ${createHtml}
+      ${ekHtml}
     </div>`;
   }).join('');
 
@@ -1012,6 +1148,12 @@ function renderMatchPanel(suggestion, matchRows) {
       const lineIdx = Number(btn.getAttribute('data-match-create'));
       const kind = btn.getAttribute('data-create-kind') || 'service';
       createArticleFromExtract(suggestion, matchRows, lineIdx, kind, btn);
+    });
+  });
+  body.querySelectorAll('[data-ek-save]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const lineIdx = Number(btn.getAttribute('data-ek-save'));
+      savePurchaseSourceFromExtract(suggestion, matchRows, lineIdx, btn);
     });
   });
 }

@@ -39,6 +39,10 @@ final class VoucherApi
                 self::handleArticleCreate();
                 return;
             }
+            if ($action === 'article_purchase_source') {
+                self::handleArticlePurchaseSource();
+                return;
+            }
 
             http_response_code(405);
             echo json_encode(['success' => false, 'message' => 'Unbekannte POST-Aktion.'], JSON_UNESCAPED_UNICODE);
@@ -340,6 +344,48 @@ final class VoucherApi
             'success' => true,
             'data' => ['items' => $out],
         ], JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * BO5d — EK-Quelle aus Beleg an Katalogartikel (nur nach User-Klick). Kein Wareneingang.
+     */
+    private static function handleArticlePurchaseSource(): void
+    {
+        $user = AuthService::user();
+        if ($user === null || !RoleResolver::canEdit($user)) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Keine Berechtigung.'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        if (!Csrf::verify($_POST['_csrf'] ?? null)) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'CSRF ungültig.'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        try {
+            $articleId = (int) ($_POST['article_id'] ?? 0);
+            $source = ArticlePurchaseSourceRepository::upsertFromBeleg($articleId, [
+                'supplier_contact_id' => (int) ($_POST['supplier_contact_id'] ?? 0),
+                'supplier_name' => (string) ($_POST['supplier_name'] ?? ''),
+                'purchase_price' => (string) ($_POST['purchase_price'] ?? '0'),
+                'currency' => (string) ($_POST['currency'] ?? 'EUR'),
+                'external_sku' => (string) ($_POST['external_sku'] ?? ''),
+                'is_preferred' => !empty($_POST['is_preferred']),
+                'note' => (string) ($_POST['note'] ?? ''),
+            ]);
+            echo json_encode([
+                'success' => true,
+                'data' => ['purchase_source' => $source],
+            ], JSON_UNESCAPED_UNICODE);
+        } catch (InvalidArgumentException $e) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+        } catch (Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+        }
     }
 
     /**

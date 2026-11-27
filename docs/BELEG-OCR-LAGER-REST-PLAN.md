@@ -172,12 +172,15 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | **BO5a** | Ist: `CalendarArticleRepository` / `catalog_kind` product\|service · `ArticlePurchaseSourceRepository` · Wareneingang — nur Doc | 🟢 | [x] 2026-11-27 · §13 |
 | **BO5b** | Match-Vorschläge: bestehende Artikel/Leistungen (Nummer/Titel); UI-Liste zur Bestätigung | 🟢 | [x] 2026-11-27 · `article_match` + UI |
 | **BO5c** | Neuanlage-Vorschlag: product vs. service; **nur nach User-Klick** speichern | 🟢 | [x] 2026-11-27 · `article_create` |
-| **BO5d** | EK-Quelle am Artikel aus Beleg (Lieferant-Kontakt + Preis), Preferred optional | 🟡 | [ ] |
+| **BO5d** | EK-Quelle am Artikel aus Beleg (Lieferant-Kontakt + Preis), Preferred optional | 🟢 | [x] 2026-11-27 · `article_purchase_source` |
 | **BO5e** | Wareneingang-**Vorschlag** (bestehender Lager-Service) nach gespeichertem Eingangsbeleg — kein Auto-Post ohne Klick | 🟡🔴 | [ ] |
 | **BO5f** | Smoke: 1 Artikel-Match + 1 Neuanlage + EK sichtbar; Kurznotiz | 🔴 | [ ] |
 
 **Prompt BO5c:**  
 `Nur Mini-ID BO5c laut docs/BELEG-OCR-LAGER-REST-PLAN.md. Neuanlage Artikel/Leistung nur nach Bestätigung. Katalog-UI. Kein Auto-Wareneingang.`
+
+**Prompt BO5d:**  
+`Nur Mini-ID BO5d laut docs/BELEG-OCR-LAGER-REST-PLAN.md. EK-Quelle aus Beleg an den Artikel. Prüfe Purchase-Source-API und UI-Anbindung.`
 
 ---
 
@@ -231,7 +234,7 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 |-------|-----|
 | **Klasse** | `ArticlePurchaseSourceRepository` (`src/Inventory/`) · Migr. **080** |
 | **Felder** | `supplier_contact_id` (optional → Kontakt), `supplier_name`, `purchase_price`, `currency`, `order_url`, `external_sku`, `is_preferred`, `sort_order`, `note` |
-| **Write** | `replaceFromInput` beim Artikelsave (`CalendarArticleRepository::save`) — genau eine Preferred |
+| **Write** | `replaceFromInput` beim Artikelsave · BO5d `upsertFromBeleg` (eine Quelle mergen, Preferred optional) |
 | **Read** | `forArticle` / `preferredForArticle` · Lieferantenwahl `supplierContactOptions` |
 
 ### Wareneingang — zwei Pfade
@@ -507,3 +510,4 @@ Parallel ok: BO1 und BO2a (Schema schon hier). **BO5 nicht vor BO4.**
 | 2026-11-27 | **BO5a ✅** Ist Katalog/EK/WE §13 — Match-APIs vorhanden, OCR noch unverdrahtet; WE Auto vs. Klick |
 | 2026-11-27 | **BO5b ✅** `VoucherArticleMatchService` + `article_match` · UI Katalog-Vorschläge mit Zuordnen (kein Auto-Save) |
 | 2026-11-27 | **BO5c ✅** Neuanlage Artikel/Leistung per Klick (`article_create`, track_stock aus, kein WE) |
+| 2026-11-27 | **BO5d ✅** EK-Quelle aus Beleg (`upsertFromBeleg` + `article_purchase_source`, Preferred optional, kein WE) |

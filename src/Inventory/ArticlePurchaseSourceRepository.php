@@ -161,6 +161,105 @@ final class ArticlePurchaseSourceRepository
     }
 
     /**
+     * BO5d — eine EK-Quelle aus Beleg hinzufügen/aktualisieren (andere Quellen bleiben).
+     *
+     * Match-Reihenfolge: gleicher Lieferant-Kontakt → gleicher Name → gleiche externe SKU.
+     * Preferred nur wenn explizit gesetzt; sonst bestehende Preferred-Flag beibehalten
+     * (replaceFromInput stellt sicher, dass genau eine Preferred existiert).
+     *
+     * @param array{
+     *   supplier_contact_id?: int|null,
+     *   supplier_name?: string,
+     *   purchase_price?: float|string,
+     *   currency?: string,
+     *   external_sku?: string,
+     *   is_preferred?: bool|int,
+     *   note?: string
+     * } $entry
+     * @return array<string, mixed> normalisierte gespeicherte Quelle
+     */
+    public static function upsertFromBeleg(int $articleId, array $entry): array
+    {
+        if ($articleId < 1) {
+            throw new InvalidArgumentException('Artikel fehlt.');
+        }
+        if (!Database::isConfigured() || !self::tableReady()) {
+            throw new RuntimeException('Einkaufsquellen nicht verfügbar.');
+        }
+
+        $normalized = self::normalizeInputRow($entry);
+        if ($normalized === null) {
+            throw new InvalidArgumentException('Lieferant oder Einkaufspreis fehlt.');
+        }
+
+        $wantPreferred = !empty($normalized['is_preferred']);
+        $contactId = $normalized['supplier_contact_id'];
+        $nameKey = mb_strtolower($normalized['supplier_name']);
+        $skuKey = mb_strtolower($normalized['external_sku']);
+
+        $merged = [];
+        $matchIndex = null;
+        foreach (self::forArticle($articleId) as $row) {
+            $payload = [
+                'supplier_contact_id' => $row['supplier_contact_id'],
+                'supplier_name' => (string) ($row['supplier_name'] ?? ''),
+                'purchase_price' => (float) ($row['purchase_price'] ?? 0),
+                'currency' => (string) ($row['currency'] ?? 'EUR'),
+                'order_url' => (string) ($row['order_url'] ?? ''),
+                'external_sku' => (string) ($row['external_sku'] ?? ''),
+                'is_preferred' => !empty($row['is_preferred']) ? 1 : 0,
+                'note' => (string) ($row['note'] ?? ''),
+            ];
+            $sameContact = $contactId !== null
+                && (int) ($payload['supplier_contact_id'] ?? 0) === (int) $contactId;
+            $sameName = $nameKey !== ''
+                && mb_strtolower($payload['supplier_name']) === $nameKey
+                && $contactId === null;
+            $sameSku = $skuKey !== ''
+                && mb_strtolower($payload['external_sku']) === $skuKey
+                && ($sameContact || $sameName || ($contactId === null && $nameKey === ''));
+            if ($matchIndex === null && ($sameContact || $sameName || $sameSku)) {
+                $matchIndex = count($merged);
+                $payload['supplier_contact_id'] = $normalized['supplier_contact_id'];
+                if ($normalized['supplier_name'] !== '') {
+                    $payload['supplier_name'] = $normalized['supplier_name'];
+                }
+                $payload['purchase_price'] = $normalized['purchase_price'];
+                $payload['currency'] = $normalized['currency'];
+                if ($normalized['external_sku'] !== '') {
+                    $payload['external_sku'] = $normalized['external_sku'];
+                }
+                if ($normalized['note'] !== '') {
+                    $payload['note'] = $normalized['note'];
+                }
+                if ($wantPreferred) {
+                    $payload['is_preferred'] = 1;
+                }
+            }
+            $merged[] = $payload;
+        }
+        if ($matchIndex === null) {
+            $matchIndex = count($merged);
+            $merged[] = $normalized;
+        }
+
+        if ($wantPreferred) {
+            foreach ($merged as $i => &$row) {
+                $row['is_preferred'] = $i === $matchIndex ? 1 : 0;
+            }
+            unset($row);
+        }
+
+        self::replaceFromInput($articleId, ['purchase_sources' => $merged]);
+
+        $saved = self::forArticle($articleId);
+        return $saved[$matchIndex] ?? ($saved[0] ?? self::normalize(array_merge(
+            ['article_id' => $articleId],
+            $normalized
+        )));
+    }
+
+    /**
      * Firmen-/Lieferanten-Kontakte für Einkaufsquellen.
      * Hinweis: CRM kennt keine eigene Rolle „lieferant“ (wird auf dg_kunde normalisiert).
      * Deshalb: Anrede Firma bzw. Kontakte mit Firmennamen.

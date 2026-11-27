@@ -486,7 +486,7 @@ $paymentTermsPreview = PaymentTermsService::composeText(
               <h3 class="dg-subsection-title">Katalog-Vorschläge</h3>
               <p class="dg-field-hint" id="dg-voucher-extract-matches-hint">
                 Bestehende Artikel/Leistungen zuordnen oder neu anlegen — erst nach Ihrer Bestätigung.
-                Neuanlage ohne Lagerbuchung.
+                Neuanlage ohne Lagerbuchung. Einkaufspreis vom Beleg optional am Artikel speichern.
               </p>
               <div id="dg-voucher-extract-matches-body"></div>
             </div>
