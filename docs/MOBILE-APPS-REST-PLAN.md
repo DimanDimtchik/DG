@@ -142,18 +142,18 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 | **MA3e** | Unterschrift (bestehende `signature_page`) — nur Härte/Fehlerpfade | 🟡 | [x] 2026-11-27 · no_crm_user/Pad/Retry · Dev-E2E + Selftest |
 | **MA3f** | Smoke Emulator/Gerät + Kurznotiz §8 | 🔴 | [x] 2026-11-27 · Flutter analyze/test + Web-UI Chrome · §8 |
 
-**Prompt MA4a:**  
-`Nur Mini-ID MA4a laut docs/MOBILE-APPS-REST-PLAN.md. PHP Selftest Auth + Customer-/Staff-Happy-Path. Kein Flutter-Umbau.`
-
 ---
 
 ### MA4 — Härte / Guards
 
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
-| **MA4a** | PHP: Selftest Auth + ein Customer- + ein Staff-Happy-Path (ohne echte Tenant-Daten hardcoden) | 🟢🟡 | [ ] |
+| **MA4a** | PHP: Selftest Auth + ein Customer- + ein Staff-Happy-Path (ohne echte Tenant-Daten hardcoden) | 🟢🟡 | [x] 2026-11-27 · `mobile-auth-happy-path-selftest.php` |
 | **MA4b** | Flutter: `flutter analyze` / Widget-Tests Mindeststand je App | 🟡 | [ ] |
 | **MA4c** | Rate-Limit / ungültiges Token: UI zeigt verständliche Meldung | 🟢 | [ ] |
+
+**Prompt MA4b:**  
+`Nur Mini-ID MA4b laut docs/MOBILE-APPS-REST-PLAN.md. Flutter analyze + Widget-Tests beide Apps. Kein PHP-API-Umbau.`
 
 ---
 
@@ -329,6 +329,8 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | `bin/mobile-mitarbeiter-clock-selftest.php` | Guard MA3b |
 | `bin/mobile-mitarbeiter-absences-shifts-selftest.php` | Guard MA3c |
 | `bin/mobile-mitarbeiter-profile-konto-docs-selftest.php` | Guard MA3d |
+| `bin/mobile-mitarbeiter-signature-selftest.php` | Guard MA3e |
+| `bin/mobile-auth-happy-path-selftest.php` | Guard MA4a Auth + Customer/Staff Happy-Path |
 | `bin/mobile-app-download-slug-selftest.php` | Guard MA0d |
 | [`CONTACT-SIGNATURE-REST-PLAN.md`](CONTACT-SIGNATURE-REST-PLAN.md) | Unterschrift ES6 (App-Upload) |
 
@@ -357,5 +359,6 @@ Quellen: `src/Mobile/*` · `apps/kalender/lib/main.dart` · `apps/mitarbeiter/li
 | 2026-11-27 | **MA3d ✅** ProfileTab/KontoTab/DocsTab Härte · Dev Profil/Konto/Akte |
 | 2026-11-27 | **MA3e ✅** SignaturePage Härte · no_crm_user · Dev-E2E · `mobile-mitarbeiter-signature-selftest.php` |
 | 2026-11-27 | **MA3f ✅** Mitarbeiter Smoke: Flutter analyze/test · Web/Chrome Bootstrap→Login · §8 · `mobile-mitarbeiter-smoke.sh` · MA3-Block fertig |
+| 2026-11-27 | **MA4a ✅** PHP Auth + Customer-/Staff-Happy-Path · Temp-Konten · `mobile-auth-happy-path-selftest.php` |
 | 2026-11-27 | **MA1a ✅** `api_message.dart` identisch in beiden Apps · UI über `apiUserMessage`/`apiIsOk` · `php bin/mobile-api-message-selftest.php` |
 | 2026-11-27 | **MA0d ✅** CRM-Download-Slug `apps` → `app-download` · Legacy-Migration nur bei `page_kind=mobile_app_download` · `/apps` frei für Website |
