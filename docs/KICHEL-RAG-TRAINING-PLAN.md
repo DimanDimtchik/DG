@@ -59,7 +59,7 @@ Kein Fine-Tuning, kein Gesetzes-Vollimport außerhalb dieser ID.
 | Phase | Kürzel | Inhalt | Status |
 |-------|--------|--------|--------|
 | **A — RAG (jetzt)** | **KR0–KR9** | Verdrahtung Suche → Fakten → Qwen; CRM-Korpus; Quellen; Smoke | **KR0–9 ✅** Gate offen |
-| **B — Rechtskorpus** | **KL0–KL5** | Gesetze/Urteile importieren & indexieren (nach stabilem RAG) | **KL0–2 ✅** · als Nächstes **KL3** |
+| **B — Rechtskorpus** | **KL0–KL5** | Gesetze/Urteile importieren & indexieren (nach stabilem RAG) | **KL0–3 ✅** · als Nächstes **KL4** |
 | **C — Intent-LLM** | **KI0–KI3** | Qwen nur als Frage-Parser (JSON), Suche weiter PHP | geplant |
 | **D — Produkt/Haftung** | **KH0–KH3** | Disclaimer, Protokoll-Felder, Admin-Qualität | geplant |
 | **E — Fine-Tuning** | **KT0–KT5** | LoRA auf Q&A/Stil — **nur nach RAG-Stabil** | später, beschrieben |
@@ -421,7 +421,7 @@ RAG gilt als **stabil**, wenn:
 | **KL0** | Quellenentscheid (Doc) | [x] 2026-11-27 · §4.1 |
 | **KL1** | Import-Pipeline: TOC → AO/UStG/EStG (+ ggf. HGB) → Chunks | [x] 2026-11-27 · §4.2 |
 | **KL2** | Speicher Index (Volltext zuerst) | [x] 2026-11-27 · §4.3 |
-| **KL3** | Retriever → `type=statute` | [ ] |
+| **KL3** | Retriever → `type=statute` | [x] 2026-11-27 · §4.4 |
 | **KL4** | Update-Job TOC-Diff | [ ] |
 | **KL5** | Pilot Urteile (später, eng) | [ ] geparkt bis nach KL1–3 |
 
@@ -521,7 +521,32 @@ Kein Massenimport aller Bundesgesetze in KL1.
 - [x] Inhaltsquery „Fahrzeug / Erwerb“ → `§ 1b`  
 - [x] Bad JSONL / Dedup robust  
 
-**Nächste Mini-ID:** **KL3** (Retriever nutzt Statute-Index).
+**Nächste Mini-ID:** **KL3** ✅ → **KL4**.
+
+### 4.4 KL3 — Retriever ← Statute-Index ✅ 2026-11-27
+
+| Teil | Inhalt | Status |
+|------|--------|--------|
+| **KL3a** | `collectCandidates` + `statuteCandidates` (Min-Score 8) · Config `rag_statute_*` | [x] |
+| **KL3b** | `KichelCorpus` mappt `kind=statute` → `type=statute` / Label GII | [x] |
+| **KL3c** | Selftest + Suite-Haken (KL1–3) | [x] |
+
+| Datei | Rolle |
+|-------|--------|
+| `src/Kichel/KichelRetriever.php` | KL3-Verdrahtung |
+| `src/Kichel/KichelCorpus.php` | statute source_label |
+| `bin/kichel-statute-retriever-selftest.php` | Abnahme |
+| `config/kichel.local.php.example` | `rag_statute_enabled` / `limit` / `dir` |
+
+**Nicht in KL3:** TOC-Diff/Update-Job (→ **KL4**), Urteile.
+
+#### Abnahme KL3
+
+- [x] `§ 19 UStG` → facts `type=statute`, ref `gii:ustg:§19…`  
+- [x] USt-ID-Frage bleibt CRM-Navigation (kein Fantasy-Top-§)  
+- [x] KR3-Retriever-Selftest weiter grün  
+
+**Nächste Mini-ID:** **KL4** (Update-Job TOC-Diff).
 
 ---
 
@@ -638,7 +663,7 @@ KR0 ✅
 
 ## 12. Nächster konkreter Schritt
 
-**KL3** (Retriever → `type=statute` aus `KichelStatuteIndex`).  
+**KL4** (Update-Job: TOC-Diff → geänderte Whitelist-Gesetze neu importieren).  
 Optional: KR8b Dev-Browser. **Kein** KT/KP ohne neues Gate.
 
 ---
@@ -660,3 +685,4 @@ Optional: KR8b Dev-Browser. **Kein** KT/KP ohne neues Gate.
 | 2026-11-27 | **KL0 ✅** Quellenentscheid: GII primär · Bund-API optional · Pilot AO/UStG/EStG |
 | 2026-11-27 | **KL1 ✅** GII-Import Whitelist · XML→§/Abs.-Chunks · JSONL `storage/kichel/gii/` · Selftest |
 | 2026-11-27 | **KL2 ✅** `KichelStatuteIndex` Volltext über JSONL · Selftest · noch ohne Retriever |
+| 2026-11-27 | **KL3 ✅** Retriever ← Statute-Index · `type=statute` in facts/sources · Suite |

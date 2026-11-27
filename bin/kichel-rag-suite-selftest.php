@@ -17,6 +17,9 @@ $scripts = [
     'kichel-sources-selftest.php',
     'kichel-pipeline-selftest.php',
     'kichel-rag-smoke-selftest.php',
+    'kichel-gii-import-selftest.php',
+    'kichel-statute-index-selftest.php',
+    'kichel-statute-retriever-selftest.php',
 ];
 
 $failed = 0;

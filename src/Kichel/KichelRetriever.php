@@ -12,6 +12,9 @@ final class KichelRetriever
     /** Vor-Ranking: max. Rohkandidaten (Feinfilter = KichelRanker). */
     private const MULTI_MAX = 8;
 
+    /** KL3 — Mindest-Score aus Statute-Index, bevor Norm-Kandidat mitläuft. */
+    private const STATUTE_MIN_SCORE = 8;
+
     /**
      * @return array{
      *   path: 'empty'|'legal'|'ledger'|'money'|'candidates',
@@ -147,6 +150,17 @@ final class KichelRetriever
         }
 
         return (bool) $cfg['rag_enabled'];
+    }
+
+    /** KL3 — GII-Normen aus JSONL-Index in der freien Suche. */
+    public static function isStatuteEnabled(): bool
+    {
+        $cfg = self::config();
+        if (!array_key_exists('rag_statute_enabled', $cfg)) {
+            return true;
+        }
+
+        return (bool) $cfg['rag_statute_enabled'];
     }
 
     public static function maxFacts(): int
@@ -366,6 +380,13 @@ final class KichelRetriever
             $raw[] = KichelCorpus::taxEntryToCandidate($entry, $score);
         }
 
+        // KL3 — GII-Normen (Volltext-Index)
+        if (self::isStatuteEnabled()) {
+            foreach (self::statuteCandidates($query, $tokens) as $statuteRow) {
+                $raw[] = $statuteRow;
+            }
+        }
+
         if ($fieldAnswer !== null && ($intent === KichelIntent::EXPLAIN || $raw === [])) {
             $links = is_array($fieldAnswer['action_links'] ?? null) ? $fieldAnswer['action_links'] : [];
             $href = '';
@@ -425,6 +446,59 @@ final class KichelRetriever
         }
 
         usort($out, static fn (array $a, array $b): int => $b['score'] <=> $a['score']);
+
+        return $out;
+    }
+
+    /**
+     * KL3 — Statute-Index → Kandidaten (kind=statute).
+     *
+     * @param list<string> $tokens
+     * @return list<array{kind: string, score: int, title: string, body: string, href: string, action_label: string, dedupe: string, source_label?: string}>
+     */
+    private static function statuteCandidates(string $query, array $tokens): array
+    {
+        $cfg = self::config();
+        $limit = (int) ($cfg['rag_statute_limit'] ?? 5);
+        if ($limit < 1) {
+            $limit = 5;
+        }
+        $dir = null;
+        if (isset($cfg['rag_statute_dir']) && is_string($cfg['rag_statute_dir']) && trim($cfg['rag_statute_dir']) !== '') {
+            $dir = trim($cfg['rag_statute_dir']);
+        }
+
+        $hits = KichelStatuteIndex::searchQuery($query, $limit, $dir);
+        if ($hits === [] && $tokens !== []) {
+            $hits = KichelStatuteIndex::search($tokens, $limit, $dir);
+        }
+
+        $out = [];
+        foreach ($hits as $hit) {
+            $score = (int) ($hit['score'] ?? 0);
+            if ($score < self::STATUTE_MIN_SCORE) {
+                continue;
+            }
+            $chunk = $hit['chunk'] ?? null;
+            if (!is_array($chunk)) {
+                continue;
+            }
+            $ref = trim((string) ($chunk['source_ref'] ?? ''));
+            if ($ref === '') {
+                continue;
+            }
+            $href = trim((string) ($chunk['href'] ?? ''));
+            $out[] = [
+                'kind' => 'statute',
+                'score' => $score,
+                'title' => trim((string) ($chunk['title'] ?? $ref)),
+                'body' => trim((string) ($chunk['body'] ?? '')),
+                'href' => $href,
+                'action_label' => 'Norm bei GII öffnen',
+                'dedupe' => $ref,
+                'source_label' => trim((string) ($chunk['source_label'] ?? 'GII')) ?: 'GII',
+            ];
+        }
 
         return $out;
     }

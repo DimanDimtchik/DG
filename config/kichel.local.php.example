@@ -15,4 +15,8 @@ return [
     'rag_enabled' => true,
     'rag_max_facts' => 5,
     'rag_max_chars' => 4000,
+    // KL3 — Normen aus storage/kichel/gii/*.jsonl (nach KL1-Import)
+    'rag_statute_enabled' => true,
+    'rag_statute_limit' => 5,
+    // 'rag_statute_dir' => null, // optional anderer JSONL-Ordner
 ];

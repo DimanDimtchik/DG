@@ -16,9 +16,27 @@ final class KichelStatuteIndex
 
     private static ?string $loadedDir = null;
 
+    /** Selftest / abweichender Korpus-Pfad (null = storage/kichel/gii). */
+    private static ?string $dirOverride = null;
+
     public static function baseDir(): string
     {
+        if (self::$dirOverride !== null && self::$dirOverride !== '') {
+            return self::$dirOverride;
+        }
+
         return KichelGiiImporter::baseDir();
+    }
+
+    /**
+     * Pfad-Override (Selftests). null = Standard. Leert den Cache.
+     */
+    public static function setDirOverride(?string $dir): void
+    {
+        self::$dirOverride = $dir !== null && $dir !== ''
+            ? rtrim(str_replace('\\', '/', $dir), '/')
+            : null;
+        self::reset();
     }
 
     /**

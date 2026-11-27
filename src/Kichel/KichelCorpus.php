@@ -69,6 +69,7 @@ final class KichelCorpus
             'topic' => KichelRagFact::TYPE_TOPIC,
             'field_help' => KichelRagFact::TYPE_FIELD,
             'tax_note' => KichelRagFact::TYPE_TAX_NOTE,
+            'statute' => KichelRagFact::TYPE_STATUTE,
             'media', 'academy_video', 'academy_course' => KichelRagFact::TYPE_MEDIA,
             default => $kind !== '' ? $kind : KichelRagFact::TYPE_OTHER,
         };
@@ -79,6 +80,7 @@ final class KichelCorpus
         $dedupe = trim((string) ($candidate['dedupe'] ?? ''));
         $score = (int) ($candidate['score'] ?? 0);
         $normLabel = trim((string) ($candidate['norm_label'] ?? ''));
+        $labelOverride = trim((string) ($candidate['source_label'] ?? ''));
 
         if ($type === KichelRagFact::TYPE_TAX_NOTE && $normLabel !== '' && $body !== '' && !str_contains($body, $normLabel)) {
             $body .= "\nNormhinweis: " . $normLabel . '.';
@@ -90,7 +92,8 @@ final class KichelCorpus
             KichelRagFact::TYPE_FIELD => 'CRM-Feldhilfe',
             KichelRagFact::TYPE_MEDIA => 'CRM-Medien',
             KichelRagFact::TYPE_TAX_NOTE => 'CRM-Steuerkurztext',
-            default => 'CRM',
+            KichelRagFact::TYPE_STATUTE => $labelOverride !== '' ? $labelOverride : 'GII',
+            default => $labelOverride !== '' ? $labelOverride : 'CRM',
         };
 
         $sourceRef = $dedupe !== ''
