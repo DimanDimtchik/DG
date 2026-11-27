@@ -47,8 +47,16 @@ assertMa1a(str_contains($kalMainSrc, "import 'api_message.dart'"), 'kalender mai
 assertMa1a(str_contains($maMainSrc, "import 'api_message.dart'"), 'mitarbeiter main import');
 assertMa1a(str_contains($sigSrc, "import 'api_message.dart'"), 'signature_page import');
 
-assertMa1a(str_contains($kalMainSrc, 'apiParseJsonBody('), 'kalender ApiClient parse');
-assertMa1a(str_contains($maMainSrc, 'apiParseJsonBody('), 'mitarbeiter ApiClient parse');
+$kalAuthSrc = (string) file_get_contents($root . '/apps/kalender/lib/api_auth.dart');
+$maAuthSrc = (string) file_get_contents($root . '/apps/mitarbeiter/lib/api_auth.dart');
+assertMa1a(
+    str_contains($kalMainSrc, 'apiParseJsonBody(') || str_contains($kalAuthSrc, 'apiParseJsonBody('),
+    'kalender ApiClient/Auth parse'
+);
+assertMa1a(
+    str_contains($maMainSrc, 'apiParseJsonBody(') || str_contains($maAuthSrc, 'apiParseJsonBody('),
+    'mitarbeiter ApiClient/Auth parse'
+);
 
 assertMa1a(str_contains($kalMainSrc, 'apiUserMessage('), 'kalender zeigt apiUserMessage');
 assertMa1a(str_contains($maMainSrc, 'apiUserMessage('), 'mitarbeiter zeigt apiUserMessage');

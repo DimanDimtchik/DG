@@ -105,7 +105,7 @@ class ApiClient {
   final String baseUrl;
   String? token;
   VoidCallback? onSessionExpired;
-  Future<bool>? _refreshLock;
+  Future<MobileRefreshOutcome>? _refreshLock;
 
   Uri _u(String path, [Map<String, String>? q]) {
     final base = Uri.parse(baseUrl);
@@ -175,16 +175,27 @@ class ApiClient {
           if (token != null && token!.isNotEmpty) 'Authorization': 'Bearer $token',
         });
 
-    var res = await once();
+    late final http.Response res;
+    try {
+      res = await once();
+    } catch (e) {
+      if (apiIsNetworkException(e)) {
+        throw Exception(apiNetworkErrorMessage);
+      }
+      rethrow;
+    }
     if (res.statusCode == 401 && !apiIsAuthPath(path)) {
-      final ok = await mobileTryRefreshToken(
+      final outcome = await mobileTryRefreshToken(
         getToken: () => token,
         setToken: (t) async => token = t,
         sendRefresh: _refreshRequest,
         getRefreshLock: () => _refreshLock,
         setRefreshLock: (f) => _refreshLock = f,
       );
-      if (!ok) {
+      if (outcome == MobileRefreshOutcome.network) {
+        throw Exception(apiNetworkErrorMessage);
+      }
+      if (outcome != MobileRefreshOutcome.success) {
         await _handleSessionExpired();
         throw Exception('Sitzung abgelaufen. Bitte erneut anmelden.');
       }

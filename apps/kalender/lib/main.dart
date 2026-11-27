@@ -150,7 +150,7 @@ class ApiClient {
   final String baseUrl;
   String? token;
   VoidCallback? onSessionExpired;
-  Future<bool>? _refreshLock;
+  Future<MobileRefreshOutcome>? _refreshLock;
 
   Uri _u(String path, [Map<String, String>? q]) {
     final base = Uri.parse(baseUrl);
