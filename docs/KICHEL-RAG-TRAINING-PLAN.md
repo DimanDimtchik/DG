@@ -58,7 +58,7 @@ Kein Fine-Tuning, kein Gesetzes-Vollimport außerhalb dieser ID.
 
 | Phase | Kürzel | Inhalt | Status |
 |-------|--------|--------|--------|
-| **A — RAG (jetzt)** | **KR0–KR9** | Verdrahtung Suche → Fakten → Qwen; CRM-Korpus; Quellen; Smoke | **nächste Arbeit** |
+| **A — RAG (jetzt)** | **KR0–KR9** | Verdrahtung Suche → Fakten → Qwen; CRM-Korpus; Quellen; Smoke | **KR0–1 ✅** · als Nächstes **KR2** |
 | **B — Rechtskorpus** | **KL0–KL5** | Gesetze/Urteile importieren & indexieren (nach stabilem RAG) | geplant |
 | **C — Intent-LLM** | **KI0–KI3** | Qwen nur als Frage-Parser (JSON), Suche weiter PHP | geplant |
 | **D — Produkt/Haftung** | **KH0–KH3** | Disclaimer, Protokoll-Felder, Admin-Qualität | geplant |
@@ -78,7 +78,7 @@ Kein Fine-Tuning, kein Gesetzes-Vollimport außerhalb dieser ID.
 | ID | Aufgabe | Token | Status |
 |----|---------|-------|--------|
 | **KR0** | Plan/Abgrenzung (diese Datei) · Haken in TODOS | 🟢 | [x] 2026-11-27 |
-| **KR1** | Ist-Inventar Kichel-Pipeline (nur lesen) | 🟢 | [ ] |
+| **KR1** | Ist-Inventar Kichel-Pipeline (nur lesen) | 🟢 | [x] 2026-11-27 · §3.2 |
 | **KR2** | Fakten-Objekt + Prompt-Vertrag (`phrase` nur aus Fakten) | 🟡 | [ ] · Kinder a–c |
 | **KR3** | Retrieval-Orchestrierung (Reihenfolge Sucher) | 🟡 | [ ] · Kinder a–d |
 | **KR4** | CRM-Korpus v1 (Knowledge/Nav/Felder → einheitliche Chunks) | 🟡 | [ ] · Kinder a–c |
@@ -93,19 +93,113 @@ Danach erst **KL** (Gesetze) oder Feinschliff KR.
 
 ---
 
-### 3.2 KR1 — Ist-Inventar (nur lesen)
+### 3.2 KR1 — Ist-Inventar (nur lesen) ✅ 2026-11-27
 
-**Ziel:** Eine Seite „wie läuft eine Frage heute“.
+**Ziel:** Eine Seite „wie läuft eine Frage heute“. **Kein Code in KR1.**
 
-| Prüfen | Erwartung (Ist grob) |
-|--------|----------------------|
-| `KichelAssistant::answer` | Token → Intent → Legal/Ledger/Money → Nav/Knowledge/Fields/Media |
-| `KichelOllamaClient` | nur `phrase()` mit vorgegebenen Fakten |
-| `config/kichel.local.php` (Dev) | Ollama via `llm.ganz-soft.de`, Modell z. B. `qwen2.5-coder:14b` |
-| Widget vs. `/superkihel` | beide → `/api/kichel` |
-| Lücken | schwache freie Formulierungen; keine Norm-Suche; kein einheitliches Fakten-Schema für RAG |
+#### Prüfliste (Soll vs. Ist)
 
-**Abnahme:** kurzer Abschnitt „Ist“ in diesem Plan oder Notiz unter §3.2 — **kein Code**.
+| Prüfen | Erwartung | Ist (Repo, 2026-11-27) |
+|--------|-----------|-------------------------|
+| `KichelAssistant::answer` | Token → Intent → Legal/Ledger/Money → Nav/Knowledge/Fields/Media | **ja** — siehe Ablauf unten |
+| `KichelOllamaClient` | nur `phrase()` mit Fakten | **ja**, aber Aufruf **nur** aus `wrapMoney` (Skonto) — **nicht** bei Topic/Nav/Hilfe |
+| `kichel.local.php` (Dev) | HTTPS `llm.ganz-soft.de`, Modell z. B. `qwen2.5-coder:14b` | laut Ops/SKC1 Docs ✅ · Datei **nicht** in Git (`config/kichel.local.php.example`: enabled=false, Default-Modell `llama3.1:8b`) |
+| Widget vs. `/superkihel` | beide → `/api/kichel` | **ja** — `window.dgKichel.apiUrl` · `KichelApi` → `KichelAssistant::answer` |
+| Lücken | freie Formulierung / Norm / einheitliche Fakten | bestätigt — siehe „Lücken für RAG“ |
+
+#### HTTP & UI
+
+```text
+POST /api/kichel  (index.php)
+  → KichelApi::handle()  — Staff + CSRF
+  → KichelAssistant::answer($user, $query)
+  → KichelProtocolRepository::record(..., $result)  — query, answer, response_json
+  → JSON { success, data: $result }
+
+Widget:  assets/js/kichel.js      + views/partials/kichel-widget.php  (apiUrl /api/kichel)
+Seite:   assets/js/superkihel.js  + views/modules/superkihel.php       (gleiche cfg.apiUrl)
+```
+
+Eine Backend-Pipeline — gut für späteres **KR7** (kein Parallelweg nötig, nur absichern).
+
+#### Ablauf `KichelAssistant::answer` (Ist)
+
+```text
+1. trim / leer → emptyResponse
+2. KichelKnowledge::tokenize
+3. KichelIntent::detect  → navigate | explain | calculate | general
+4. Early-Return (ohne Multi-Suche):
+   a. KichelLegalPages::tryAnswer     → wrapLegal (page_links)
+   b. KichelLedgerAccounts::tryAnswer → wrapSimple(ledger_account)
+   c. KichelMoneyLogic::tryAnswer + Intent===calculate → wrapMoney
+5. Parallel sammeln:
+   - KichelFieldCatalog::tryAnswer
+   - KichelNavIndex::search (Limit 8)
+   - KichelKnowledge::matchTopics (Limit 8)
+   - KichelMediaSearch::search (Limit 8)
+6. collectCandidates: Score-Filter (Media≥4, Nav≥6, Topic≥4, Field score 5),
+   relatedCandidates (Belege/Nummernkreise), Dedup, max 5, MULTI_MIN_SCORE=3
+7. 0 Treffer → emptyResponse (Hinweis Stichworte)
+   1 Treffer → wrapSingleCandidate (PHP-Textbausteine)
+   n Treffer → wrapMultiCandidates (nummerierte Liste)
+8. Money-Sonderfall: Money-Treffer ohne andere Candidates → wrapMoney
+```
+
+Antwortform heute: `presentation`, `kind`, `answer`, `follow_up`, optional `action_links` / `page_links` / `calculation`.
+
+#### Ollama / Fakten (Ist)
+
+| Punkt | Befund |
+|-------|--------|
+| Einstieg | `KichelOllamaClient::phrase($userQuery, $baseAnswer, $facts)` |
+| Config | `config/kichel.local.php` · Keys: `ollama_enabled`, `ollama_url`, `ollama_model`, `timeout_seconds` |
+| Endpoint | `{ollama_url}/api/generate` (nicht OpenAI-`/v1`) |
+| Prompt | „Formuliere … STRENG: Beträge nicht ändern“ + JSON-Fakten + Basisantwort |
+| Guard | `numbersConsistent` — bei verdächtigen Amount/Percent-Abweichungen → `null` → Fallback Basisantwort |
+| **Wer ruft phrase?** | **nur** `wrapMoney` |
+| Fakten-Form Money | flaches Assoc: `net_amount`, `skonto_percent`, `discount_amount`, `payable_amount`, `payment_days` — **kein** einheitliches RAG-`facts[]`-Schema |
+
+Topic-/Nav-/Feld-Antworten sind **reine PHP-Strings** — Qwen sieht sie heute nicht.
+
+#### Wissensquellen (Ist)
+
+| Quelle | Datei / Klasse | In Assistant verdrahtet? |
+|--------|----------------|---------------------------|
+| Hilfe-Topics | `src/Kichel/data/knowledge.php` + `KichelKnowledge` | ja |
+| Menü/Nav | `KichelNavIndex` (+ Aliase MenuRegistry/Settings) | ja |
+| Feldhilfe | `KichelFieldCatalog` | ja |
+| Media/Akademie | `KichelMediaSearch` | ja |
+| Pflichtseiten | `KichelLegalPages` | ja (Early) |
+| Konten | `KichelLedgerAccounts` | ja (Early) |
+| Skonto-Rechnung | `KichelMoneyLogic` | ja |
+| Code/Doku-Scan | `KichelCodeSearch` (`src`/`views`/`docs`) | **nein** — Klasse existiert, **kein** Aufruf |
+| Schema-Katalog | `KichelSchemaCatalog` | **nein** — Klasse existiert, **kein** Aufruf |
+| Gesetze / Urteile | — | **nein** |
+| Steuer-Kurztexte mit Norm-Quelle | nur indirekt in Knowledge (CRM-Navigation, kaum §-Nachweis) | schwach |
+
+PHASE2-Doc nennt Code/Schema als Schicht — **Implementierungsstand: tot / ungenutzt** (für KR3/KR4 relevant).
+
+#### Verstehen (Ist)
+
+`KichelIntent`: Regex/Stichworte (Skonto+Zahl → calculate; was/wie → explain; wo/finde → navigate). **Kein** LLM-Parser. Schwache freie Formulierungen ohne Keyword-Treffer landen oft bei `emptyResponse`.
+
+#### Lücken für RAG (Priorität KR2+)
+
+1. **Kein einheitliches Fakten-Objekt** für alle Antwortarten (KR2a).  
+2. **`phrase` nur bei Skonto** — Hilfe/Nav/Steuertext ohne Qwen-Formulierung aus Treffern (KR2b/c + später Orchestrierung).  
+3. **Keine zentrale Retriever-Stelle** — Logik in `answer` + `collectCandidates` vermischt (KR3).  
+4. **CodeSearch/SchemaCatalog unverdrahtet** — „Code durchsuchen“ im Produktgefühl fehlt (KR3/KR4).  
+5. **Keine Norm-/Urteilssuche** (KL nach KR9).  
+6. **Quellenzeile** für Nutzer außer Action-Links / Money-`calculation` schwach (KR6).  
+7. Protokoll speichert `response_json` — gut erweiterbar für RAG-Refs (KR6b).
+
+#### Abnahme KR1
+
+- [x] Ablauf dokumentiert  
+- [x] Ollama-Anbindung und Aufrufstelle geklärt  
+- [x] Widget = Super-Kichel API bestätigt  
+- [x] Lücken für KR2+ benannt  
+- [x] kein Code geändert  
 
 ---
 
@@ -325,8 +419,8 @@ KR0 ✅
 
 ## 12. Nächster konkreter Schritt
 
-**Nur KR1** (Ist-Inventar, lesen) — nach Freigabe.  
-Implementierung RAG beginnt mit **KR2** nach KR1-Ergebnis.
+**KR2** (Fakten-Objekt + Prompt-Vertrag) — empfohlen Start **KR2a** (Schema Doc/PHP-Form).  
+Kein Gesetzesimport, kein Fine-Tuning.
 
 ---
 
@@ -335,3 +429,4 @@ Implementierung RAG beginnt mit **KR2** nach KR1-Ergebnis.
 | Datum | Inhalt |
 |-------|--------|
 | 2026-11-27 | Erstfassung: KR Microschritte · KL/KI/KH · KT/KP/KU beschrieben · RAG zuerst |
+| 2026-11-27 | **KR1 ✅** Ist-Inventar: Pipeline, phrase nur Money, CodeSearch unverdrahtet, Lücken |
