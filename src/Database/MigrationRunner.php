@@ -380,6 +380,10 @@ final class MigrationRunner
             '157_cash_ers_melde.sql' => self::tableExists($pdo, 'dg_cash_ers_taxpayer')
                 && self::tableExists($pdo, 'dg_cash_ers_clients'),
             '158_cash_tse_deferred.sql' => self::columnExists($pdo, 'dg_cash_receipts', 'tse_deferred_pending'),
+            '162_article_properties.sql' => self::tableExists($pdo, 'dg_article_property_groups')
+                && self::tableExists($pdo, 'dg_article_properties')
+                && self::tableExists($pdo, 'dg_article_property_values')
+                && self::tableExists($pdo, 'dg_instance_property_groups'),
             default => false,
         };
     }
@@ -546,6 +550,7 @@ final class MigrationRunner
             '156_cash_journal_receipt.sql' => true,
             '157_cash_ers_melde.sql' => true,
             '158_cash_tse_deferred.sql' => true,
+            '162_article_properties.sql' => true,
         ];
     }
 

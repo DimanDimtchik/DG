@@ -1,6 +1,6 @@
 # DG CRM — Artikel & Leistungen: dynamische Eigenschaften (Zukunft)
 
-> **Status:** Plan / Backlog — **noch nicht implementieren**, außer explizit vorgezogen.  
+> **Status:** Plan · **AP0–AP1 ✅** · ab AP2 nur nach Auftrag.  
 > **Issue:** [#1 Artikel Eigenschaften](https://github.com/DimanDimtchik/DG/issues/1)  
 > **Anker heute:** `dg_calendar_articles` · Lager [`LAGER-WIRTSCHAFT.md`](LAGER-WIRTSCHAFT.md) · FiBu-Anlagenbuch später ([`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZNER-TODO.md) § Jahresblock)  
 > **Agent-Regel:** Pro Chat **eine** Mini-ID (AP…). Spec nur dieser Abschnitt + genannte Dateien.
@@ -114,7 +114,7 @@ Nicht jeder Artikel braucht alle Bereiche. **Aktivierung der Gruppe** steuert Si
 | ID | Thema | Priorität | Status | Token |
 |----|--------|-----------|--------|-------|
 | **AP0** | Dieser Plan + Ist-Inventar + Entscheidungen | — | [x] 2026-11-28 | 🟢 |
-| **AP1** | Datenmodell: Gruppen, Eigenschaften, Werte, Instanz-Aktivierung | 1 | [ ] | 🟡 |
+| **AP1** | Datenmodell: Gruppen, Eigenschaften, Werte, Instanz-Aktivierung | 1 | [x] 2026-11-28 | 🟡 |
 | **AP2** | UI: Artikel maske — aktive Gruppen, Validierung | 2 | [ ] | 🟡 |
 | **AP3** | Seed: Basisgruppen (Allgemein, Maße, Lager, Dienstleistung) | 3 | [ ] | 🟢 |
 | **AP4** | Branchenpakete (Gastronomie, KFZ, …) als **optionale** Seeds | 4 | [ ] | 🟢 |
@@ -129,7 +129,7 @@ Nicht jeder Artikel braucht alle Bereiche. **Aktivierung der Gruppe** steuert Si
 Token: 🟢 Doc/Seed/Guard · 🟡 Service+UI · 🔴 Gate / Lizenz / großer Querschnitt.
 
 **Chat-Prompt-Vorlage:**  
-`Artikel-Eigenschaften AP0 ✅. Nächster Block APn: laut docs/ARTIKEL-EIGENSCHAFTEN-PLAN.md (nur diese Mini-ID).`
+`Artikel-Eigenschaften AP1 ✅. Nächster Block AP2: laut docs/ARTIKEL-EIGENSCHAFTEN-PLAN.md (nur diese Mini-ID).`
 
 ---
 
@@ -144,12 +144,12 @@ Status: `[ ]` offen · `[~]` angefangen · `[x]` erledigt
 - [x] Gruppierung + Instanz-Aktivierung + Cross-Use Inventar/Anlage
 - [x] Verweis Issue #1 · Eintrag Backlog `TODOS.md`
 
-### AP1 — Datenmodell (🟡)
+### AP1 — Datenmodell (🟡) — **erledigt 2026-11-28**
 
-- [ ] Migration: `dg_article_property_groups`, `dg_article_properties`, `dg_article_property_values`, `dg_instance_property_groups` (Namen final bei Umsetzung)
-- [ ] Typisierte Wertespalten; Unique (article_id, property_id)
-- [ ] Repository + Selftest (CRUD, Aktivierung filtert Definitionen)
-- [ ] **Kein** Löschen aktiver Gruppen mit Bestands-Werten ohne Migration/Warnung
+- [x] Migration **162** `162_article_properties.sql`: `dg_article_property_groups`, `dg_article_properties`, `dg_article_property_values`, `dg_instance_property_groups`
+- [x] Typisierte Wertespalten; Unique (article_id, property_id)
+- [x] `ArticlePropertyRepository` + Selftest `bin/article-properties-ap1-selftest.php` (CRUD, Aktivierung filtert Definitionen)
+- [x] Löschschutz: aktive Gruppe / Gruppe mit Werten → Fehler, kein stilles Löschen
 
 ### AP2 — UI Artikel & Leistungen (🟡)
 
@@ -217,4 +217,4 @@ Siehe Parent-Tabelle; erst nach stabilem AP1–AP7 und Kapazität (Hetzner/Lohn/
 
 ## Nächster Schritt
 
-Wenn Umsetzung startet: **AP1** (Datenmodell + Selftest) in eigenem Chat/Branch. Bis dahin: Plan liegt im Backlog; Priorität hinter Phase A / Hetzner / Lohn-Gates, außer Nutzer zieht vor.
+**AP1 ✅.** Nächster baubarer Block: **AP2** (UI Gruppen aktivieren + Artikel-Maske) — nur nach Auftrag. Priorität hinter Phase A / Hetzner / Lohn-Gates, sofern nicht vorgezogen.

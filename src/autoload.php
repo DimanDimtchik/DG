@@ -428,6 +428,7 @@ spl_autoload_register(static function (string $class): void {
         'StockInventoryPrintService' => '/src/Inventory/StockInventoryPrintService.php',
         'StockReservationService' => '/src/Inventory/StockReservationService.php',
         'StockAvailabilityService' => '/src/Inventory/StockAvailabilityService.php',
+        'ArticlePropertyRepository' => '/src/Catalog/ArticlePropertyRepository.php',
         'ArticlePurchaseSourceRepository' => '/src/Inventory/ArticlePurchaseSourceRepository.php',
         'PurchaseListRepository' => '/src/Inventory/PurchaseListRepository.php',
         'PurchaseListService' => '/src/Inventory/PurchaseListService.php',
