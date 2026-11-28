@@ -61,6 +61,7 @@ API: `/api/stock-scan?action=audit&code=…` oder manuell `/api/stock-scan?actio
 - [ ] Mehrere Mandanten-Lager / Filial-Sync
 - [ ] Automatische SKR-Bestandskonten-Buchung
 - [ ] Shop-Bestandsabzug (`shop.ganz-soft.de`)
+- [ ] Dynamische Artikel-Eigenschaften / Branchengruppen am Stamm — Plan [`ARTIKEL-EIGENSCHAFTEN-PLAN.md`](ARTIKEL-EIGENSCHAFTEN-PLAN.md) (nutzen Lager später mit)
 
 ## Test
 

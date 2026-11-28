@@ -27,7 +27,7 @@ Stand: **2026-11-11** — Roadmap: **[`IQ-STROM-HETZNER-TODO.md`](IQ-STROM-HETZN
 
 **Nächster Block:** optional **SKP2** (geparkt) oder Roadmap außerhalb Agent. Cutover/SC2 geparkt. UI/CSS U0–U5 ✅.
 
-**Backlog (nicht jetzt):** Recruiting in HR — Plan [`RECRUITING-HR-PLAN.md`](RECRUITING-HR-PLAN.md) (eigene `/rekrut`-Seite; Xing/LinkedIn nur Anzeigen-Link). · Fließlinie FL0–FL9 ✅ · optionale Verfeinerungen [`FLIESSLINIE-FL8-BACKLOG.md`](FLIESSLINIE-FL8-BACKLOG.md). · Registerkasse/TSE — [`REGISTERKASSE-TSE-PLAN.md`](REGISTERKASSE-TSE-PLAN.md) Kern weitgehend ✅; bewusst später: **K18b**, **K19c**.
+**Backlog (nicht jetzt):** **Artikel-Eigenschaften / Branchengruppen** — Plan [`ARTIKEL-EIGENSCHAFTEN-PLAN.md`](ARTIKEL-EIGENSCHAFTEN-PLAN.md) (Issue [#1](https://github.com/DimanDimtchik/DG/issues/1); AP0 ✅ Spec; Umsetzung AP1+ nur nach Auftrag). · Recruiting in HR — Plan [`RECRUITING-HR-PLAN.md`](RECRUITING-HR-PLAN.md) (eigene `/rekrut`-Seite; Xing/LinkedIn nur Anzeigen-Link). · Fließlinie FL0–FL9 ✅ · optionale Verfeinerungen [`FLIESSLINIE-FL8-BACKLOG.md`](FLIESSLINIE-FL8-BACKLOG.md). · Registerkasse/TSE — [`REGISTERKASSE-TSE-PLAN.md`](REGISTERKASSE-TSE-PLAN.md) Kern weitgehend ✅; bewusst später: **K18b**, **K19c**.
 
 **FiBu 2026-11-01:** Soll/Ist-Versteuerung + GoBD-Härte + Prüferexport + Docs — [`FIBU-VERKAUFSREIFE.md`](FIBU-VERKAUFSREIFE.md) · [`UST-IST-SOLL-VERSTEUERUNG.md`](UST-IST-SOLL-VERSTEUERUNG.md) · Nachweis-Stufen [`FIRMEN-NACHWEIS-MATRIX.md`](FIRMEN-NACHWEIS-MATRIX.md). Verkaufsblocker weiter: AVV/AGB, ELSTER live (nach Hetzner).
 
@@ -238,6 +238,7 @@ Nur **1 Cloud-Chat** + **1 Lokal-Chat** behalten. Agent kann nicht archivieren �
 | `HANDOFF-WEBSITE-MENU-ICONS.md` | Menü-Icons Phase 2 |
 | `LDAP-INTEGRATION.md` | LDAP-Vorbereitung |
 | `LAGER-WIRTSCHAFT.md` | Lager |
+| `ARTIKEL-EIGENSCHAFTEN-PLAN.md` | Zukunft: dynamische Artikel-/Leistungsmerkmale, aktivierbare Branchengruppen, Stamm für Lager+Anlage (Issue #1, AP0–AP11) |
 | `KOMMUNIKATION-POSTFAECHER-TODO.md` | Kommunikation: Postfächer P1–P6 (eigene UI) |
 | `DOKUMENTENVERFASSER-TODO.md` | Dokumentenverfasser: Briefpapier + Editor (B/D) |
 | `USTG-14-DRUCKSTICHPROBE.md` | Manuelle §14-UStG Druck-/PDF-Stichprobe für Ausgangsbelege |
